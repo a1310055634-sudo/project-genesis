@@ -1,6 +1,7 @@
 import { ageYears } from '@genesis/core'
 import { addMoney, Cents, splitMoney } from '@genesis/shared'
 import {
+  buildKinshipIndex,
   createHousehold,
   GenesisSystem,
   Household,
@@ -20,7 +21,8 @@ import {
  *      surviving spouse through the deceased's (still intact) partnerId;
  *   2. widowhood    — clears both sides of a marriage ended by death;
  *   3. marriage     — courtship among friends from the social graph;
- *   4. divorce      — couple-level conflict roll, one roll per couple.
+ *   4. divorce      — couple-level conflict roll, one roll per couple, plus
+ *      child custody for the minors of the shared household.
  *
  * Determinism: every random draw comes from ctx.rng.fork() with a distinct
  * per-step, per-tick label (`family:<phase>:<tick>`); iteration is always in
@@ -34,8 +36,14 @@ import {
  * - estate: spouse 50% + children split the rest; spouse takes all only when
    there are no alive children; unclaimed estates land in an audit gauge;
  * - only opposite-sex marriage is modelled;
+ * - v1 bans marriage only for close kin — parent/child, full/half siblings,
+   grandparent/grandchild (kinship depth v1, GEN-060); cousins are ALLOWED
+   until deeper kinship arrives (recorded limitation);
  * - when spouses from different households marry, only the spouses move into
    the new household — children stay behind in their original household;
+ * - on divorce the minors of the shared household follow their mother (or the
+   father when the mother is absent or dead; otherwise they stay put) —
+   GEN-074 v1 custody rule;
  * - empty households left behind by a move are not garbage-collected.
  */
 
@@ -217,16 +225,19 @@ function marry(ctx: SimContext, households: Map<string, Household>, a: Person, b
 /**
  * Courtship: candidates are the seeker's own friends (social.relationshipIds),
  * filtered to alive, eligible, opposite-sex persons (v1 models opposite-sex
- * marriage only), in relationshipIds order, up to MAX_COURTSHIP_ATTEMPTS
- * attempts. Each attempt rolls p_marry = clamp(0.02 + 0.12 * affinity, 0, 0.2);
- * the first hit marries the pair (mutual partnerId + status) and merges
- * households when they differ.
+ * marriage only) who are NOT close kin (GEN-060: no parent/child, sibling or
+ * grandparent/grandchild marriages; cousins allowed — v1 kinship depth), in
+ * relationshipIds order, up to MAX_COURTSHIP_ATTEMPTS attempts. Each attempt
+ * rolls p_marry = clamp(0.02 + 0.12 * affinity, 0, 0.2); the first hit marries
+ * the pair (mutual partnerId + status) and merges households when they differ.
  */
 function runMarriages(ctx: SimContext, deps: FamilyDeps | undefined): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`family:marriage:${tick}`)
   const personById = indexPersons(ctx)
   const households = indexHouseholds(ctx)
+  // one kinship index per monthly run (O(N) build) — never rebuilt per couple
+  const kin = buildKinshipIndex(ctx.world)
 
   const pool = ctx.world.persons.filter((p) => isMarriageEligible(p, tick))
   for (const seeker of pool) {
@@ -240,7 +251,8 @@ function runMarriages(ctx: SimContext, deps: FamilyDeps | undefined): void {
           c.id !== seeker.id &&
           c.alive &&
           isMarriageEligible(c, tick) &&
-          c.sex !== seeker.sex // v1: opposite-sex marriage only
+          c.sex !== seeker.sex && // v1: opposite-sex marriage only
+          !kin.isCloseKin(seeker, c) // GEN-060: close-kin marriage ban
       )
       .slice(0, MAX_COURTSHIP_ATTEMPTS)
     for (const candidate of candidates) {
@@ -258,12 +270,33 @@ function runMarriages(ctx: SimContext, deps: FamilyDeps | undefined): void {
 // ---------------------------------------------------------------------------
 
 /**
+ * Custodial parent of one minor (GEN-074 v1): the mother while she is alive
+ * and lives in the pre-split household, otherwise the father under the same
+ * conditions, otherwise nobody — the child stays where it is.
+ */
+function custodialParent(
+  minor: Person,
+  personById: Map<string, Person>,
+  householdId: string | null
+): Person | undefined {
+  for (const parentId of [minor.motherId, minor.fatherId]) {
+    if (parentId === null) continue
+    const parent = personById.get(parentId)
+    if (parent !== undefined && parent.alive && parent.householdId === householdId) return parent
+  }
+  return undefined
+}
+
+/**
  * One conflict roll per married couple (a sorted-pair key set makes each
  * couple processed exactly once despite the array-order scan):
  * p_divorce = clamp(0.0005 + 0.02 * conflict, 0, 0.05). On a hit both sides
  * are cleared together (partnerId = null, status 'divorced') so the mutual
  * partnership invariants hold at every instant, and the lexicographically
- * larger id moves out into a new single-person household.
+ * larger id moves out into a new household. Custody (GEN-074 v1): minors of
+ * the shared household whose custodial parent is the mover relocate with them
+ * (mother first, else father, else they stay); the relationship.ended payload
+ * reports how many children moved.
  */
 function runDivorces(ctx: SimContext, deps: FamilyDeps | undefined): void {
   const tick = ctx.tick()
@@ -290,10 +323,31 @@ function runDivorces(ctx: SimContext, deps: FamilyDeps | undefined): void {
     partner.partnerId = null
     partner.maritalStatus = 'divorced'
 
+    // the household being split (spouses cohabit; defensive fallback either way)
+    const householdId = person.householdId ?? partner.householdId
+    const household = householdId !== null ? households.get(householdId) : undefined
+
     const moverId = [person.id, partner.id].sort()[1] as string
     const mover = moverId === person.id ? person : partner
+
+    // custody: resolved BEFORE anyone leaves (it reads parent.householdId);
+    // minors are visited in the household's memberIds (array) order
+    const minors = (household?.memberIds ?? [])
+      .map((memberId) => personById.get(memberId))
+      .filter((m): m is Person => m !== undefined && m.lifeStage === 'child')
+    const relocate: Person[] = []
+    for (const minor of minors) {
+      const custody = custodialParent(minor, personById, householdId)
+      if (custody !== undefined && custody.id === mover.id) relocate.push(minor)
+    }
+
     leaveHousehold(ctx, households, mover)
-    createHousehold(ctx, [mover.id])
+    for (const child of relocate) {
+      if (household !== undefined) household.memberIds = household.memberIds.filter((id) => id !== child.id)
+      child.householdId = null
+    }
+    // 'household.created' is emitted by createHousehold for mover + children
+    createHousehold(ctx, [mover.id, ...relocate.map((c) => c.id)])
 
     ctx.metrics.increment('family.divorces')
     ctx.events.emit({
@@ -301,7 +355,7 @@ function runDivorces(ctx: SimContext, deps: FamilyDeps | undefined): void {
       type: 'relationship.ended',
       tick,
       actorIds: [person.id, partner.id],
-      payload: { reason: 'divorce' }
+      payload: { reason: 'divorce', childrenMoved: relocate.length }
     })
   }
 }
@@ -309,6 +363,19 @@ function runDivorces(ctx: SimContext, deps: FamilyDeps | undefined): void {
 // ---------------------------------------------------------------------------
 // The system
 // ---------------------------------------------------------------------------
+
+/**
+ * Marriage-pool health gauge (batch 6): live population per inhabited
+ * household (0 when no household has members). Marriage/divorce totals are
+ * already streamed as the 'family.marriages' / 'family.divorces' counters.
+ */
+function recordHouseholdMetrics(ctx: SimContext): void {
+  let alive = 0
+  for (const person of ctx.world.persons) if (person.alive) alive++
+  let inhabited = 0
+  for (const household of ctx.world.households) if (household.memberIds.length > 0) inhabited++
+  ctx.metrics.gauge('family.avg_household_size', inhabited === 0 ? 0 : alive / inhabited)
+}
 
 /**
  * Monthly family system: nextFireTick = (floor(tick / 720) + 1) * 720
@@ -325,6 +392,7 @@ export function familySystem(deps?: FamilyDeps): GenesisSystem {
       runWidowhood(ctx)
       runMarriages(ctx, deps)
       runDivorces(ctx, deps)
+      recordHouseholdMetrics(ctx)
       ctx.metrics.increment('family.months_processed')
     }
   }

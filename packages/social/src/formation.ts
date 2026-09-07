@@ -33,14 +33,33 @@ export const GLOBAL_RANDOM_PROBABILITY = 0.1
  */
 export const PRUNE_FAMILIARITY_FLOOR = 0.05
 
+/**
+ * KI-6: mutual friendship edges below this familiarity drift apart — the edge
+ * is removed and both relationshipIds are cleaned. Active friendships can
+ * never cross the floor: every interaction adds >= 0.05 familiarity AND
+ * refreshes lastInteractionTick, while decay only starts after 180 days
+ * without contact (and 1.0 * 0.9^k < 0.15 needs ~18 stale weeks). The floor is
+ * therefore reachable only after roughly half a year of total neglect.
+ */
+export const FRIENDSHIP_PRUNE_FLOOR = 0.15
+
 /** Friendship formation thresholds. */
 export const FRIENDSHIP_FAMILIARITY_THRESHOLD = 0.6
 export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
 
 /**
- * Weekly social system logic — deterministic by construction:
+ * Weekly social system logic — deterministic by construction.
  *
- * Fixed phase order: decay FIRST, then interactions, then pruning.
+ * Fixed phase order: death sweep FIRST, then decay, then interactions, then
+ * pruning.
+ *
+ * 0. Death sweep (KI-3): any edge with a dead endpoint is removed and BOTH
+ *    sides drop each other from relationshipIds — death TERMINATES a
+ *    relationship (this supersedes the earlier freeze semantics, KI-3). Each
+ *    removed edge emits 'relationship.ended' with payload { reason: 'death' }
+ *    (actorIds [liveId, deadId]; canonical [personA, personB] when both are
+ *    dead) and bumps the 'social.edges_cleared_death' counter. The first run
+ *    after this change sweeps all historical dead endpoints at once.
  *
  * 1. Decay: edges whose lastInteractionTick is more than DECAY_AFTER_TICKS
  *    (180 days) in the past get familiarity *= DECAY_FACTOR. Each stale edge
@@ -57,9 +76,7 @@ export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
  *         alive coworker (same employerId);
  *      c. otherwise friend-of-friend, ungated: rng.pick over my
  *         relationshipIds (array order), then rng.pick over that friend's
- *         graph neighbors sorted by id (alive, self excluded). The friend
- *         itself may be dead — frozen ties (KI-3) — its neighborhood is
- *         still usable;
+ *         graph neighbors sorted by id (alive, self excluded);
  *      d. otherwise rng.bool(GLOBAL_RANDOM_PROBABILITY): a uniformly random
  *         alive person (never self).
  *    Effects: familiarity += U[0.05, 0.15]; liking/trust gains scale with the
@@ -72,12 +89,19 @@ export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
  *    other's relationshipIds, both sides push the partner id and a
  *    'relationship.started' event is emitted (actorIds = [a, b]).
  *
- * 4. Pruning (KI-1): acquaintance edges with familiarity below
- *    PRUNE_FAMILIARITY_FLOOR are removed from the graph. Mutual friendship
- *    edges are never pruned, so every relationshipIds pair stays backed by a
- *    live edge (support/conflict semantics). Pruning emits no events (high
- *    frequency, low value) — only the aggregate 'social.edges_pruned' counter
- *    is bumped.
+ * 4. Pruning (KI-1/KI-6), in allEdges() key order:
+ *    - mutual friendship edge below FRIENDSHIP_PRUNE_FLOOR: the friendship
+ *      drifts apart — edge removed, both relationshipIds cleaned,
+ *      'relationship.ended' emitted with payload { reason: 'drift' }, counter
+ *      'social.friendships_drifted' bumped. The 0.05-per-interaction restore
+ *      plus the 180-day decay delay protect active friendships from ever
+ *      reaching the floor (see the constant's doc).
+ *    - acquaintance edge below PRUNE_FAMILIARITY_FLOOR: removed silently
+ *      (KI-1) — no events (high frequency, low value), only the aggregate
+ *      'social.edges_pruned' counter is bumped.
+ *    Mutuality is decided from a snapshot taken when the phase starts; each
+ *    pair is visited exactly once, so mid-loop relationshipIds mutations
+ *    cannot affect other pairs' decisions.
  *
  * All randomness comes from ctx.rng.fork(`social:${tick}`) — no Math.random,
  * no wall-clock time.
@@ -85,6 +109,10 @@ export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
 export function weeklySocialUpdate(ctx: SimContext, graph: RelationshipGraph): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`social:${tick}`)
+  const personById = new Map(ctx.world.persons.map((p) => [p.id, p]))
+
+  // 0) death sweep (KI-3): death terminates relationships
+  sweepDeadEdges(ctx, graph, personById, tick)
 
   // 1) decay stale edges — single pass in canonical key order
   for (const edge of graph.allEdges()) {
@@ -96,7 +124,6 @@ export function weeklySocialUpdate(ctx: SimContext, graph: RelationshipGraph): v
   // 2) at most one social attempt per alive person, in array creation order
   const alive = ctx.world.persons.filter((p) => p.alive)
   if (alive.length >= 2) {
-    const personById = new Map(ctx.world.persons.map((p) => [p.id, p]))
     const memberIdsByHousehold = new Map<string, string[]>()
     for (const household of ctx.world.households) memberIdsByHousehold.set(household.id, household.memberIds)
     const coworkersByEmployer = new Map<string, Person[]>()
@@ -115,9 +142,9 @@ export function weeklySocialUpdate(ctx: SimContext, graph: RelationshipGraph): v
     }
   }
 
-  // 3) prune stale acquaintances (KI-1) — aggregate counter, no events
-  const pruned = pruneAcquaintanceEdges(graph, ctx.world)
-  if (pruned > 0) ctx.metrics.increment('social.edges_pruned', pruned)
+  // 3) pruning (KI-1/KI-6): drift terminations emit events, acquaintance
+  //    prunes are silent — both only move aggregate counters
+  pruneEdges(ctx, graph, personById)
 }
 
 /**
@@ -204,27 +231,84 @@ function interact(ctx: SimContext, graph: RelationshipGraph, rng: Rng, tick: num
   }
 }
 
+/** Remove otherId from person's relationshipIds when present. */
+function removeFromRelationships(person: Person, otherId: string): void {
+  const index = person.social.relationshipIds.indexOf(otherId)
+  if (index >= 0) person.social.relationshipIds.splice(index, 1)
+}
+
 /**
- * Remove acquaintance edges (neither endpoint lists the other in
- * relationshipIds) whose familiarity dropped below PRUNE_FAMILIARITY_FLOOR.
- * Mutual friendship edges are never pruned — including frozen ties to dead
- * persons — so relationshipIds always stay backed by live graph edges.
- * Returns the number of removed edges.
+ * KI-3 death sweep: remove every edge with a dead endpoint, clean both sides'
+ * relationshipIds (death terminates the relationship in BOTH directions — no
+ * residual references), emit one 'relationship.ended' { reason: 'death' } per
+ * edge and count it under 'social.edges_cleared_death'. Single pass over
+ * allEdges() (key order) keeps it deterministic; the first run after this
+ * change sweeps the historical backlog of dead endpoints at once.
  */
-function pruneAcquaintanceEdges(graph: RelationshipGraph, world: WorldState): number {
+function sweepDeadEdges(
+  ctx: SimContext,
+  graph: RelationshipGraph,
+  personById: Map<string, Person>,
+  tick: number
+): void {
+  for (const edge of graph.allEdges()) {
+    const a = personById.get(edge.personA)
+    const b = personById.get(edge.personB)
+    if (a === undefined || b === undefined) continue // defensive: unknown ids are not ours to sweep
+    if (a.alive && b.alive) continue
+    graph.removeEdge(edge.personA, edge.personB)
+    removeFromRelationships(a, b.id)
+    removeFromRelationships(b, a.id)
+    ctx.events.emit({
+      id: ctx.ids.next('event'),
+      type: 'relationship.ended',
+      tick,
+      actorIds: a.alive || b.alive ? [(a.alive ? a : b).id, (a.alive ? b : a).id] : [edge.personA, edge.personB],
+      payload: { reason: 'death' }
+    })
+    ctx.metrics.increment('social.edges_cleared_death')
+  }
+}
+
+/**
+ * Pruning (KI-1/KI-6). Mutual friendship edges below FRIENDSHIP_PRUNE_FLOOR
+ * drift apart: edge removed, both relationshipIds cleaned, 'relationship.ended'
+ * { reason: 'drift' } emitted, 'social.friendships_drifted' counted.
+ * Acquaintance edges below PRUNE_FAMILIARITY_FLOOR are removed silently
+ * ('social.edges_pruned'). Mutuality comes from a snapshot taken at phase
+ * start; each pair is visited exactly once, so mid-loop mutations of
+ * relationshipIds cannot influence other pairs' decisions.
+ */
+function pruneEdges(ctx: SimContext, graph: RelationshipGraph, personById: Map<string, Person>): void {
   // directed[a|b] = a lists b as a relationship; two membership probes decide mutuality
   const directed = new Set<string>()
-  for (const person of world.persons) {
+  for (const person of personById.values()) {
     for (const relId of person.social.relationshipIds) directed.add(`${person.id}|${relId}`)
   }
   let pruned = 0
+  let drifted = 0
   for (const edge of graph.allEdges()) {
-    if (edge.familiarity >= PRUNE_FAMILIARITY_FLOOR) continue
     const mutual =
       directed.has(`${edge.personA}|${edge.personB}`) && directed.has(`${edge.personB}|${edge.personA}`)
-    if (mutual) continue
-    graph.removeEdge(edge.personA, edge.personB)
-    pruned++
+    if (mutual) {
+      if (edge.familiarity < FRIENDSHIP_PRUNE_FLOOR) {
+        graph.removeEdge(edge.personA, edge.personB)
+        removeFromRelationships(personById.get(edge.personA) as Person, edge.personB)
+        removeFromRelationships(personById.get(edge.personB) as Person, edge.personA)
+        ctx.events.emit({
+          id: ctx.ids.next('event'),
+          type: 'relationship.ended',
+          tick: ctx.tick(),
+          actorIds: [edge.personA, edge.personB],
+          payload: { reason: 'drift' }
+        })
+        drifted++
+      }
+    } else if (edge.familiarity < PRUNE_FAMILIARITY_FLOOR) {
+      graph.removeEdge(edge.personA, edge.personB)
+      pruned++
+    }
   }
-  return pruned
+  if (pruned > 0) ctx.metrics.increment('social.edges_pruned', pruned)
+  if (drifted > 0) ctx.metrics.increment('social.friendships_drifted', drifted)
 }

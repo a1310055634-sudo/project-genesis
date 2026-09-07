@@ -8,6 +8,7 @@
 > - Tests: 116 → **137** (all green, strict typecheck clean). Benchmarks updated in benchmarks/RESULTS.md.
 > - Remaining HIGH findings: none. Next: Wave 3.2 (kinship-aware marriage, parenthood effects), Wave 5 experiment framework — see docs/agent/BACKLOG.md.
 > - A final full-stack 10k×10y manifest was written to `out/` as the overnight reference run.
+> - **Batch 6:** Wave 3.2 + Wave 5 both landed. Family: kinship-aware marriage (no parent/child/sibling/grandparent unions), divorce child-custody (children follow the custodial parent), avg household size metric. Social: KI-3 death cleanup + KI-6 friendship drift (residual → KI-8 attention budget). New `@genesis/experiments` package: multi-seed × multi-arm runner, byte-reproducible CSV, CI95 stats, 3 preset experiments; `npm run exp -- --id EXP-002` end-to-end; **EXP-002 confirmed directionally (unemployment arm stress 0.561 vs control 0.457, non-overlapping CI95)**. One integration bug found & fixed (heterogeneous metrics → empty CSV cells). Tests: 137 → **161**.
 
 ## Summary
 - Start commit: (empty repo) · End commit: see `git log` (batch 0..3)

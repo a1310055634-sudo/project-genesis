@@ -33,6 +33,14 @@ describe('family full flow (300 residents, 5 years)', () => {
     // system performed it
     expect(sim.ctx.log.countOf('relationship.ended')).toBeGreaterThan(0)
     expect(sim.ctx.world.persons.some((p) => p.alive && p.maritalStatus === 'widowed')).toBe(true)
+
+    // marriage-pool health gauge (batch 6): matches the raw world state
+    const world = sim.ctx.world
+    const alive = world.persons.filter((p) => p.alive).length
+    const inhabited = world.households.filter((h) => h.memberIds.length > 0).length
+    const avgHousehold = sim.ctx.metrics.gaugeValue('family.avg_household_size')
+    expect(avgHousehold).toBeGreaterThan(0)
+    expect(avgHousehold).toBeCloseTo(inhabited === 0 ? 0 : alive / inhabited, 6)
   }, 240_000)
 
   it('is deterministic: same seed twice => identical Simulation.digest()', () => {

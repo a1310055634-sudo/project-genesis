@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "sim": "tsx apps/simulation-cli/src/main.ts",
+    "exp": "tsx apps/simulation-cli/src/experiment-cli.ts",
     "bench": "tsx benchmarks/bench.ts"
   },
   "devDependencies": {

@@ -1,10 +1,49 @@
-import { ageYears } from '@genesis/core'
-import { demographicsSystem, Person, Simulation } from '@genesis/simulation'
+import { ageYears, TICKS_PER_YEAR } from '@genesis/core'
+import { demographicsSystem, Person, Sex, Simulation } from '@genesis/simulation'
 import { familySystem } from '@genesis/family'
 
 /** Total wealth across ALL persons (alive + dead) — the conservation probe. */
 export function totalWealth(sim: Simulation): number {
   return sim.ctx.world.persons.reduce((sum, p) => sum + p.economy.wealthCents, 0)
+}
+
+/** Hand-built 5-year-old minor with explicit parents (custody/kinship tests). */
+export function makeMinor(id: string, motherId: string | null, fatherId: string | null, sex: Sex = 'female'): Person {
+  return {
+    id,
+    sex,
+    birthTick: -5 * TICKS_PER_YEAR,
+    alive: true,
+    deathTick: null,
+    lifeStage: 'child',
+    householdId: null,
+    partnerId: null,
+    maritalStatus: 'single',
+    motherId,
+    fatherId,
+    personality: { openness: 0.5, conscientiousness: 0.5, extraversion: 0.5, agreeableness: 0.5, neuroticism: 0.5 },
+    psychology: {
+      affectValence: 0,
+      affectArousal: 0.3,
+      stress: 0.2,
+      needRest: 0.7,
+      needSocial: 0.6,
+      needEsteem: 0.6,
+      wellbeing: 0.5
+    },
+    economy: { employerId: null, monthlyIncomeCents: 0, wealthCents: 0, lastMonthConsumptionCents: 0 },
+    social: { relationshipIds: [] }
+  }
+}
+
+/** Register a hand-built person in the world and (optionally) a household. */
+export function addPerson(sim: Simulation, person: Person, householdId: string | null = null): void {
+  sim.ctx.world.persons.push(person)
+  if (householdId === null) return
+  const household = sim.ctx.world.households.find((h) => h.id === householdId)
+  if (household === undefined) throw new Error(`unknown household ${householdId}`)
+  person.householdId = householdId
+  household.memberIds.push(person.id)
 }
 
 /** Kill a person exactly the way the demographics system would. */

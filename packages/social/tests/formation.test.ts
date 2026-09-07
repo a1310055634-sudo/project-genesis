@@ -80,13 +80,21 @@ describe('small-world formation (seed 42, 200 residents, 2 years)', () => {
 
 describe('familiarity decay (> 180 days stale)', () => {
   it('decays a stale edge exactly once per weekly run', () => {
-    const a = makePerson('a')
-    const b = makePerson('b', { alive: false, deathTick: 0 }) // no partner ⇒ no interaction refresh
-    const ctx = makeContext(7, [a, b])
+    // All four persons are alive — a dead endpoint would be swept (KI-3)
+    // before decay. The two households absorb the weekly interaction attempts
+    // so the stale cross edge a-b stays untouched. Seed 1 pinned after
+    // verification: neither a nor b reaches the 10% global fallback toward the
+    // other in either weekly run. Deterministic thereafter.
+    const a = makePerson('a', { householdId: 'h1' })
+    const a2 = makePerson('a2', { householdId: 'h1' })
+    const b = makePerson('b', { householdId: 'h2' })
+    const b2 = makePerson('b2', { householdId: 'h2' })
+    const ctx = makeContext(1, [a, a2, b, b2])
+    ctx.world.households.push({ id: 'h1', memberIds: ['a', 'a2'] }, { id: 'h2', memberIds: ['b', 'b2'] })
     const graph = new RelationshipGraph()
     const edge = graph.ensureEdge(a.id, b.id, 0)
     edge.familiarity = 0.8
-    const staleStamp = ctx.tick() - 24 * 200 // 200 days ago, beyond the 180-day threshold
+    const staleStamp = 0 - 24 * 200 // 200 days ago, beyond the 180-day threshold
     edge.lastInteractionTick = staleStamp
 
     weeklySocialUpdate(ctx, graph)
@@ -99,9 +107,11 @@ describe('familiarity decay (> 180 days stale)', () => {
   })
 
   it('a freshly touched edge is not decayed', () => {
+    // Seed 2 pinned after verification: neither person reaches the 10% global
+    // fallback this run, so the fresh edge is neither refreshed nor decayed.
     const a = makePerson('a')
-    const b = makePerson('b', { alive: false, deathTick: 0 })
-    const ctx = makeContext(7, [a, b])
+    const b = makePerson('b')
+    const ctx = makeContext(2, [a, b])
     const graph = new RelationshipGraph()
     const edge = graph.ensureEdge(a.id, b.id, ctx.tick())
     edge.familiarity = 0.5
@@ -109,5 +119,6 @@ describe('familiarity decay (> 180 days stale)', () => {
 
     weeklySocialUpdate(ctx, graph)
     expect(edge.familiarity).toBe(0.5)
+    expect(edge.lastInteractionTick).toBe(ctx.tick())
   })
 })
