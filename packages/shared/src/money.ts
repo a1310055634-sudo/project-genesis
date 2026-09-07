@@ -8,12 +8,12 @@
 
 export type Cents = number
 
-/** Tag a raw integer as money. Throws on non-integers (incl. NaN/Infinity). */
+/** Tag a raw integer as money. Throws on non-integers (incl. NaN/Infinity). Normalizes -0 to 0. */
 export function cents(value: number): Cents {
   if (!Number.isInteger(value)) {
     throw new Error(`money must be an integer, got: ${value}`)
   }
-  return value
+  return value === 0 ? 0 : value
 }
 
 export function addMoney(a: Cents, b: Cents): Cents {
