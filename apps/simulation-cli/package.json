@@ -4,6 +4,9 @@
   "private": true,
   "main": "src/main.ts",
   "dependencies": {
-    "@genesis/simulation": "*"
+    "@genesis/economy": "*",
+    "@genesis/psychology": "*",
+    "@genesis/simulation": "*",
+    "@genesis/social": "*"
   }
 }

@@ -1,8 +1,9 @@
-import { demographicsSystem, Simulation } from '@genesis/simulation'
+import { Simulation } from '@genesis/simulation'
+import { fullStackSystems } from '../apps/simulation-cli/src/profile'
 
 /**
- * Benchmark harness (GEN-134). Guide §26: record runtime, peak memory,
- * events, events/sec. No optimization without profile evidence.
+ * Benchmark harness (GEN-134), full society stack. Guide §26: record runtime,
+ * peak memory, events, events/sec. No optimization without profile evidence.
  */
 interface BenchResult {
   population: number
@@ -16,9 +17,9 @@ interface BenchResult {
 }
 
 function runBench(population: number, years: number): BenchResult {
-  global.gc?.()
   const t0 = Date.now()
-  const sim = Simulation.create({ seed: 42, populationTarget: population, years }, { systems: [demographicsSystem] })
+  const { systems } = fullStackSystems()
+  const sim = Simulation.create({ seed: 42, populationTarget: population, years }, { systems })
   sim.run()
   const runtimeMs = Date.now() - t0
   const rss = process.memoryUsage().rss / (1024 * 1024)

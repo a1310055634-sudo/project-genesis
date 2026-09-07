@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { configHash, demographicsSystem, populationStats, Simulation } from '@genesis/simulation'
+import { fullStackSystems } from './profile'
 
 /**
  * Simulation CLI (GEN-010): headless batch runner — guide §4.1.
@@ -12,6 +13,8 @@ export interface CliArgs {
   years: number
   out?: string
   checkInvariants?: boolean
+  /** 'full' (default): demography+social+economy+psychology. 'minimal': demography only. */
+  profile?: 'full' | 'minimal'
 }
 
 export interface RunManifest {
@@ -43,9 +46,11 @@ export function runCli(args: CliArgs): RunManifest {
   const startedAtWallClock = new Date().toISOString()
   const t0 = Date.now()
 
+  const profile = args.profile ?? 'full'
+  const systems = profile === 'minimal' ? [demographicsSystem] : fullStackSystems().systems
   const sim = Simulation.create(
     { seed: args.seed, populationTarget: args.population, years: args.years },
-    { systems: [demographicsSystem], checkInvariants: args.checkInvariants !== false }
+    { systems, checkInvariants: args.checkInvariants !== false }
   )
   sim.run()
 
@@ -87,6 +92,7 @@ export function runCli(args: CliArgs): RunManifest {
 
 function printSummary(manifest: RunManifest, outFile: string | null): void {
   const p = manifest.population
+  const m = manifest.metrics
   console.log('=== Project Genesis run ===')
   console.log(`run id        : ${manifest.runId}`)
   console.log(`seed          : ${manifest.seed}`)
@@ -96,9 +102,16 @@ function printSummary(manifest: RunManifest, outFile: string | null): void {
   console.log(`households    : ${p.households}`)
   console.log(`employers     : ${p.employers} (employed: ${p.employed}, unemployment: ${(p.unemploymentRate * 100).toFixed(1)}%)`)
   console.log(`ages          : children ${p.children} / adults ${p.adults} / seniors ${p.seniors}`)
+  console.log(`society       : mean stress ${fmt(m['stress.mean'])} · mean wellbeing ${fmt(m['wellbeing.mean'])} · relationships ${fmt(m['social_edges'])}`)
+  console.log(`economy       : employment ${fmt(m['employment_rate'])} · mean wealth $${fmt((m['mean_wealth'] ?? 0) / 100)}`)
   console.log(`events        : ${manifest.events.totalEvents}`)
   console.log(`digest        : ${manifest.digest}`)
   console.log(`manifest      : ${outFile ?? '(stdout only)'}`)
+}
+
+function fmt(v: number | undefined): string {
+  if (v === undefined) return 'n/a'
+  return String(Math.round(v * 1000) / 1000)
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -115,7 +128,8 @@ function parseArgs(argv: string[]): CliArgs {
     seed: args.seed !== undefined && /^\d+$/.test(args.seed) ? Number(args.seed) : (args.seed ?? 42),
     population: args.population !== undefined ? Number(args.population) : 1_000,
     years: args.years !== undefined ? Number(args.years) : 1,
-    out: args.out
+    out: args.out,
+    profile: args.profile === 'minimal' ? 'minimal' : 'full'
   }
 }
 
