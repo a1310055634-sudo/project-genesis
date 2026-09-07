@@ -1,5 +1,5 @@
 import { ageYears } from '@genesis/core'
-import { addMoney, Cents } from '@genesis/shared'
+import { addMoney, Cents, splitMoney } from '@genesis/shared'
 import {
   createHousehold,
   GenesisSystem,
@@ -31,8 +31,8 @@ import {
  * side loses the other gains, via @genesis/shared addMoney).
  *
  * Recorded v1 simplifications:
- * - inheritance passes the whole estate to the surviving spouse only; child
-   inheritance waits for the parenthood chain;
+ * - estate: spouse 50% + children split the rest; spouse takes all only when
+   there are no alive children; unclaimed estates land in an audit gauge;
  * - only opposite-sex marriage is modelled;
  * - when spouses from different households marry, only the spouses move into
    the new household — children stay behind in their original household;
@@ -88,13 +88,16 @@ function leaveHousehold(ctx: SimContext, households: Map<string, Household>, per
 // ---------------------------------------------------------------------------
 
 /**
- * Every dead person holding a non-zero estate transfers it to the surviving
- * spouse (located via the deceased's partnerId — why this phase runs before
- * widowhood). Without a surviving spouse the estate is unclaimed in v1 (known
- * simplification: child inheritance arrives with the parenthood chain) — the
- * amount is zeroed out of the estate and accumulated into the
- * 'family.estates_unclaimed_cents' gauge so conservation is auditable.
- * No randomness: fully deterministic bookkeeping.
+ * Every dead person holding a non-zero estate distributes it (RT1-01
+ * parenthood chain):
+ *   - surviving spouse AND alive children  → spouse 50% (floor), children split
+ *     the remainder evenly (remainder cents to the first children, array order);
+ *   - spouse only (no children)            → spouse takes the whole estate;
+ *   - children only (no spouse)            → children split the whole estate;
+ *   - neither                              → unclaimed, accumulated into the
+ *     'family.estates_unclaimed_cents' gauge so conservation is auditable.
+ * Heirs are resolved deterministically (world array order, splitMoney keeps
+ * the cent sum exact). No randomness.
  */
 function runInheritance(ctx: SimContext): void {
   const tick = ctx.tick()
@@ -104,18 +107,37 @@ function runInheritance(ctx: SimContext): void {
     if (deceased.alive || deceased.economy.wealthCents === 0) continue
     const estate = deceased.economy.wealthCents
     const partner = deceased.partnerId !== null ? personById.get(deceased.partnerId) : undefined
-    if (partner !== undefined && partner.alive) {
-      // exact conservation: heir gains exactly what the estate is worth
-      partner.economy.wealthCents = addMoney(partner.economy.wealthCents, estate)
+    const spouse = partner !== undefined && partner.alive ? partner : undefined
+    const children = ctx.world.persons.filter(
+      (p) => p.alive && (p.motherId === deceased.id || p.fatherId === deceased.id)
+    )
+
+    const shares: Array<{ heir: Person; amount: Cents; relation: 'spouse' | 'child' }> = []
+    if (spouse !== undefined && children.length === 0) {
+      shares.push({ heir: spouse, amount: estate, relation: 'spouse' })
+    } else if (spouse !== undefined) {
+      const spouseShare = Math.floor(estate / 2)
+      shares.push({ heir: spouse, amount: spouseShare, relation: 'spouse' })
+      const rest = splitMoney(estate - spouseShare, children.length)
+      children.forEach((child, i) => shares.push({ heir: child, amount: rest[i] as Cents, relation: 'child' }))
+    } else if (children.length > 0) {
+      const parts = splitMoney(estate, children.length)
+      children.forEach((child, i) => shares.push({ heir: child, amount: parts[i] as Cents, relation: 'child' }))
+    } else {
+      unclaimed = addMoney(unclaimed, estate)
+    }
+
+    for (const { heir, amount, relation } of shares) {
+      if (amount === 0) continue
+      // exact conservation: heir gains exactly what the estate gives up
+      heir.economy.wealthCents = addMoney(heir.economy.wealthCents, amount)
       ctx.events.emit({
         id: ctx.ids.next('event'),
         type: 'wealth.inherited',
         tick,
-        actorIds: [deceased.id, partner.id],
-        payload: { amountCents: estate }
+        actorIds: [deceased.id, heir.id],
+        payload: { amountCents: amount, relation }
       })
-    } else {
-      unclaimed = addMoney(unclaimed, estate)
     }
     deceased.economy.wealthCents = 0
   }

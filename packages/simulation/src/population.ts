@@ -69,6 +69,12 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
     const household = adultHouseholds[rng.int(0, adultHouseholds.length - 1)]
     household.memberIds.push(minor.id)
     minor.householdId = household.id
+    // parenthood chain (RT1-01): minors get the household's adults as parents
+    const adultMembers = household.memberIds
+      .map((id) => personIndex.get(id))
+      .filter((p): p is Person => p !== undefined && ageYears(p.birthTick, 0) >= 18)
+    minor.fatherId = (adultMembers.find((a) => a.sex === 'male') ?? null)?.id ?? null
+    minor.motherId = (adultMembers.find((a) => a.sex === 'female') ?? null)?.id ?? null
   }
 
   // 4) employers + job assignment (structure only; wage/payroll flows live in @genesis/economy)

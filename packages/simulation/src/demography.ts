@@ -18,11 +18,15 @@ export function monthlyDeathHazard(age: number): number {
 function eligibleBirthHouseholds(ctx: SimContext, personById: Map<string, Person>): Household[] {
   const out: Household[] = []
   for (const household of ctx.world.households) {
-    const members = household.memberIds.map((id) => personById.get(id)).filter((p): p is Person => p !== undefined && p.alive)
-    if (members.length !== 2) continue
-    const male = members.find((p) => p.sex === 'male')
-    const female = members.find((p) => p.sex === 'female')
+    const alive = household.memberIds.map((id) => personById.get(id)).filter((p): p is Person => p !== undefined && p.alive)
+    const male = alive.find((p) => p.sex === 'male')
+    const female = alive.find((p) => p.sex === 'female')
     if (male === undefined || female === undefined) continue
+    // births require a MARRIED couple (red team RT1-01: cohabiting non-spouses
+    // must not produce children), mutually linked via partnerId. Household
+    // size is NOT constrained to 2 (couples with children can breed again).
+    if (male.maritalStatus !== 'married' || female.maritalStatus !== 'married') continue
+    if (male.partnerId !== female.id || female.partnerId !== male.id) continue
     const ageF = ageYears(female.birthTick, ctx.tick())
     if (ageF < 18 || ageF > 45) continue
     out.push(household)
@@ -94,11 +98,17 @@ export const demographicsSystem: GenesisSystem = {
       }
     }
 
-    // 3) births
+    // 3) births (married couples only; newborns carry the parenthood chain)
     const eligible = eligibleBirthHouseholds(ctx, personById)
     for (const household of eligible) {
       if (rng.bool(ctx.config.birthProbabilityPerMonth)) {
-        const newborn = createPerson(ctx, undefined, { birthTick: tick })
+        const members = household.memberIds.map((id) => personById.get(id)).filter((p): p is Person => p !== undefined)
+        const mother = members.find((p) => p.sex === 'female')
+        const father = members.find((p) => p.sex === 'male')
+        const newborn = createPerson(ctx, undefined, {
+          birthTick: tick,
+          parents: { motherId: mother?.id ?? null, fatherId: father?.id ?? null }
+        })
         household.memberIds.push(newborn.id)
         newborn.householdId = household.id
       }

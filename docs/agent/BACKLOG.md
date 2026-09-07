@@ -42,31 +42,32 @@ Priority: P2 · Domain: quality
 Goal: `npm run bench` measuring 1k×1y and 10k×1y runtime/memory; append results to benchmarks/RESULTS.md.
 Acceptance: records runtime, peak RSS, events/sec.
 
-## Wave 2 — Psychology / Economy / Social (P2–P3)
+## Wave 3 — Relationships & Family (P2–P3) — IN PROGRESS
 
-### GEN-030..039 Psychology package (contract in ARCHITECTURE.md)
-Priority: P2 · Domain: psychology · Parallel-safe: yes (packages/psychology only)
-Goal: Big Five generation, affect (valence/arousal + decay + mood inertia), stress (weighted-delta model, clamped [0,1], neuroticism moderation, social-support buffering), needs (rest/social/esteem), wellbeing.
-Acceptance: bounds under adversarial inputs; monotonic scenario (more strain ⇒ ≥ stress); moderator scenario (support buffers); recovery scenario; determinism under fixed seed.
+### GEN-055/056/057 Marriage & divorce & widowhood — DONE (family package, batch 4)
+### GEN-075 Inheritance hooks — DONE (spouse 50% + children split, batch 5)
+### RT1-01 Parenthood chain — DONE (motherId/fatherId, married-couple births, batch 5)
 
-### GEN-090..099 Economy package
-Priority: P2 · Domain: economy · Parallel-safe: yes (packages/economy only)
-Goal: employers with job slots, hiring/unemployment search, monthly payroll, daily consumption, wealth accounting in integer cents.
-Acceptance: wealth conservation on transfers (no money created/destroyed except documented flows); finite values; determinism; employment rate metric.
+### NEXT Wave 3.2 (parallel-safe candidates)
+- GEN-058 Relationship conflict → divorce coupling depth (conflict from interactions, not just edges)
+- GEN-072 Parenthood effects: children need care (needRest/social), parent stress/wellbeing coupling
+- GEN-074 Family links depth: sibling detection via shared parents; household moves for children on divorce/marriage
+- GEN-060 Kinship graph view + kinship-aware interactions (avoid marriage between close kin — currently only friendship-based candidates)
+- KI-3/KI-6: death & decay semantics for friendship edges (relationship.ended on death, friendship decay floor)
+- Empty-household GC after moves (RT1-14)
 
-### GEN-050..053 Social package
-Priority: P2 · Domain: social · Parallel-safe: yes (packages/social only)
-Goal: relationship graph (edge store keyed by sorted pair), interaction engine v1, acquaintance/friendship formation influenced by Big Five + proximity.
-Acceptance: endpoints exist; no duplicate edges; deterministic; graph metrics (edges, mean degree, isolation rate).
+## Wave 5 — Simulation Lab (P2, parallel-safe)
+- GEN-150 Experiment config format (JSON) + CLI `npm run exp`
+- GEN-151 Multi-seed runner (seed sets, parallel runs, CSV export)
+- GEN-153 Aggregation: mean/CI per cohort; EXP-001..005 from guide §23 Wave 5
+- First internal experiments using the full stack (unemployment→stress already validated directionally)
 
-### GEN-115 Integration: wire psychology+social+economy systems into engine CLI profile
-Priority: P2 · Depends on: the three packages above · Parallel-safe: no
-Goal: default system composition; full-suite green; 10k×10y smoke.
+## Platform (P3–P4)
+- GEN-110 API + GEN-112 Dashboard reading real run state (manifest JSON already exists)
+- GEN-135 Observability: run compare tool (diff two manifests by digest)
 
 ## Quality / later (P3–P5)
-- GEN-133 Property tests (money, rng, scheduler, graph) — fast-check-style generators hand-rolled (no new deps)
-- GEN-150+ Experiment framework (multi-seed runner, CSV export, aggregation)
-- GEN-110/112 API + dashboard reading real run state
-- HT-32 morning audit tasks (5 reviewers)
+- GEN-133 Property tests (money, rng, scheduler, graph) — hand-rolled generators (no new deps)
+- HT-32 morning audit tasks (5 reviewers) — RED_TEAM_1.md round 1 done; round 2 after Wave 3.2
 - Fuzz/scenario pack: extreme unemployment, very old population, tiny/huge populations
 - Cross-platform determinism audit (IDLE-029)

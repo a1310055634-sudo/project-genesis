@@ -1,5 +1,14 @@
 # Nightly Report — Night 1 (2026-09-08)
 
+> **Addendum (batches 4–5, later that night):** Wave 3 started ahead of schedule.
+> - Schema v2/v3: `partnerId`, `maritalStatus` ('single'|'married'|'widowed'|'divorced') and parenthood chain (`motherId`/`fatherId`) are now canonical with dedicated invariants.
+> - New package `@genesis/family`: marriage (friendship-driven, affinity from social graph), divorce (conflict-driven), widowhood, inheritance (spouse 50% + children split remainder, unclaimed estates audited by gauge).
+> - Red team round 1 (docs/agent/RED_TEAM_1.md, PASS WITH ISSUES): 5 findings fixed same night — RT1-01 births now require married parents + parenthood chain everywhere; RT1-02 widowhood at death time; RT1-03 endpoint-tick systems now fire; RT1-04 event log ring buffer; RT1-05 generation O(N²) removed.
+> - KI-1 FIXED by social agent: local interaction sampling + edge pruning → 10k×10y 14.9 min → **5.4 min (2.8×)**, edges 248/person → ~15/person.
+> - Tests: 116 → **137** (all green, strict typecheck clean). Benchmarks updated in benchmarks/RESULTS.md.
+> - Remaining HIGH findings: none. Next: Wave 3.2 (kinship-aware marriage, parenthood effects), Wave 5 experiment framework — see docs/agent/BACKLOG.md.
+> - A final full-stack 10k×10y manifest was written to `out/` as the overnight reference run.
+
 ## Summary
 - Start commit: (empty repo) · End commit: see `git log` (batch 0..3)
 - Total major tasks completed: 4 batches (skeleton+core / simulation+CLI / Wave-2 packages ×3 parallel / integration+benchmark)

@@ -55,9 +55,13 @@ describe('retirement', () => {
     )
     // Accelerate aging: shift the whole synthetic cohort to age 70 so every
     // generated job holder is retirement-eligible from month one.
+    // The uniform rewrite breaks parent/child age ordering, so this fixture
+    // models a world of UNRELATED elders: parenthood links are cleared.
     for (const person of sim.ctx.world.persons) {
       person.birthTick = -70 * TICKS_PER_YEAR
       person.lifeStage = 'senior'
+      person.motherId = null
+      person.fatherId = null
     }
 
     let retirementEnds = 0

@@ -76,6 +76,13 @@ export function makeWidowWorld(seed: number | string, estateCents: number) {
   wife.maritalStatus = 'married'
   husband.economy.wealthCents = estateCents
 
+  // the fixture models a CHILDLESS couple: sever any parenthood links the
+  // generated population created, so the estate has no other heirs
+  for (const person of world.persons) {
+    if (person.motherId === husband.id || person.motherId === wife.id) person.motherId = null
+    if (person.fatherId === husband.id || person.fatherId === wife.id) person.fatherId = null
+  }
+
   killLikeDemographics(sim, husband)
   return { sim, husband, wife }
 }

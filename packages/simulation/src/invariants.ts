@@ -94,6 +94,16 @@ export function checkInvariants(world: WorldState, tick: number, seed: number): 
     if (p.maritalStatus !== 'married' && p.partnerId !== null) {
       fail('nonmarried-partner-null', `person ${p.id} status=${p.maritalStatus} but partnerId=${p.partnerId}`, [p.id])
     }
+    // parenthood chain (RT1-01): parents must exist and predate the child
+    for (const [role, parentId] of [['mother', p.motherId], ['father', p.fatherId]] as const) {
+      if (parentId === null) continue
+      const parent = personById.get(parentId)
+      if (parent === undefined) {
+        fail('parent-exists', `person ${p.id} references missing ${role} ${parentId}`, [p.id, parentId])
+      } else if (parent.birthTick >= p.birthTick) {
+        fail('parent-older-than-child', `person ${p.id} ${role} ${parentId} not older than child`, [p.id, parentId])
+      }
+    }
   }
 
   for (const h of world.households) {

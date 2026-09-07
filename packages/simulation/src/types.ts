@@ -58,6 +58,9 @@ export interface Person {
   /** Id of the current spouse/partner; null when single/widowed/divorced. */
   partnerId: string | null
   maritalStatus: MaritalStatus
+  /** Parenthood chain (red team RT1-01): null when unknown (e.g. founders). */
+  motherId: string | null
+  fatherId: string | null
   personality: Personality
   psychology: PsychologyState
   economy: EconomyState

@@ -46,7 +46,7 @@ export function defaultSocial(): SocialState {
 export function createPerson(
   ctx: SimContext,
   init: PersonInitializers | undefined,
-  opts: { sex?: Sex; birthTick: number }
+  opts: { sex?: Sex; birthTick: number; parents?: { motherId?: string | null; fatherId?: string | null } }
 ): Person {
   const rng = ctx.rng.fork(`person:${ctx.ids.issued('person') + 1}`)
   const sex: Sex = opts.sex ?? (rng.bool(0.5) ? 'male' : 'female')
@@ -65,13 +65,21 @@ export function createPerson(
     householdId: null,
     partnerId: null,
     maritalStatus: 'single',
+    motherId: opts.parents?.motherId ?? null,
+    fatherId: opts.parents?.fatherId ?? null,
     personality,
     psychology,
     economy,
     social
   }
   ctx.world.persons.push(person)
-  ctx.events.emit({ id: ctx.ids.next('event'), type: 'person.born', tick: ctx.tick(), actorIds: [person.id] })
+  ctx.events.emit({
+    id: ctx.ids.next('event'),
+    type: 'person.born',
+    tick: ctx.tick(),
+    actorIds: [person.id],
+    payload: { motherId: person.motherId, fatherId: person.fatherId }
+  })
   return person
 }
 

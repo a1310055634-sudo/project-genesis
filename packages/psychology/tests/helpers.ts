@@ -27,6 +27,8 @@ export function makePerson(id: string, personality: Personality): Person {
     householdId: null,
     partnerId: null,
     maritalStatus: 'single',
+    motherId: null,
+    fatherId: null,
     personality,
     psychology: neutralPsychology(),
     economy: { employerId: null, monthlyIncomeCents: 0, wealthCents: 0, lastMonthConsumptionCents: 0 },
