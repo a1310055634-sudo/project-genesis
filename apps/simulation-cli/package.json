@@ -1,0 +1,9 @@
+{
+  "name": "@genesis/simulation-cli",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/main.ts",
+  "dependencies": {
+    "@genesis/simulation": "*"
+  }
+}

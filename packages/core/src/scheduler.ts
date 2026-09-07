@@ -4,37 +4,37 @@
  * Systems register with their next fire tick; the engine pops ticks in
  * ascending order. Persons stay passive — systems batch-process them at their
  * scheduled frequency. Deterministic: ties break by (priority, sequence).
+ * Generic over the context type C (simulation passes its full SimContext).
  */
-export interface ScheduledSystem {
-  readonly id: string
-  /** Lower runs first on equal ticks (0 = default). */
-  readonly priority?: number
-  /** Register the next tick this system wants to run at. */
-  nextFireTick(ctx: SchedulerContext): number
-  run(ctx: SchedulerContext): void
-}
-
-/** Minimal view the engine passes through; extended by packages/simulation. */
 export interface SchedulerContext {
   tick: number
 }
 
-interface HeapEntry {
+export interface ScheduledSystem<C = SchedulerContext> {
+  readonly id: string
+  /** Lower runs first on equal ticks (0 = default). */
+  readonly priority?: number
+  /** Register the next tick this system wants to run at. */
+  nextFireTick(ctx: C): number
+  run(ctx: C): void
+}
+
+interface HeapEntry<C> {
   tick: number
   priority: number
   seq: number
-  system: ScheduledSystem
+  system: ScheduledSystem<C>
 }
 
 /** Binary min-heap ordered by (tick, priority, seq). */
-class MinHeap {
-  private items: HeapEntry[] = []
+class MinHeap<C> {
+  private items: Array<HeapEntry<C>> = []
 
   get size(): number {
     return this.items.length
   }
 
-  push(entry: HeapEntry): void {
+  push(entry: HeapEntry<C>): void {
     this.items.push(entry)
     let i = this.items.length - 1
     while (i > 0) {
@@ -46,7 +46,7 @@ class MinHeap {
     }
   }
 
-  pop(): HeapEntry | undefined {
+  pop(): HeapEntry<C> | undefined {
     const top = this.items[0]
     const last = this.items.pop()
     if (this.items.length > 0 && last !== undefined) {
@@ -67,25 +67,25 @@ class MinHeap {
   }
 
   private less(a: number, b: number): boolean {
-    const x = this.items[a]
-    const y = this.items[b]
+    const x = this.items[a] as HeapEntry<C>
+    const y = this.items[b] as HeapEntry<C>
     if (x.tick !== y.tick) return x.tick < y.tick
     if (x.priority !== y.priority) return x.priority < y.priority
     return x.seq < y.seq
   }
 
   private swap(a: number, b: number): void {
-    const tmp = this.items[a]
-    this.items[a] = this.items[b]
+    const tmp = this.items[a] as HeapEntry<C>
+    this.items[a] = this.items[b] as HeapEntry<C>
     this.items[b] = tmp
   }
 }
 
-export class Scheduler {
-  private heap = new MinHeap()
+export class Scheduler<C = SchedulerContext> {
+  private heap = new MinHeap<C>()
   private seq = 0
 
-  register(system: ScheduledSystem, ctx: SchedulerContext, startTick?: number): void {
+  register(system: ScheduledSystem<C>, ctx: C, startTick?: number): void {
     const fire = startTick ?? system.nextFireTick(ctx)
     if (!Number.isInteger(fire) || fire < 0) {
       throw new Error(`system ${system.id} registered invalid tick ${fire}`)
@@ -94,7 +94,7 @@ export class Scheduler {
   }
 
   /** Fire every system whose next tick is < untilTick, re-registering each after it runs. */
-  fireDue(untilTick: number, ctx: (tick: number) => SchedulerContext, onFire?: (systemId: string, tick: number) => void): void {
+  fireDue(untilTick: number, ctx: (tick: number) => C, onFire?: (systemId: string, tick: number) => void): void {
     for (;;) {
       const top = this.heap.pop()
       if (top === undefined || top.tick >= untilTick) {
