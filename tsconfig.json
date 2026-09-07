@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@genesis/*": ["packages/*/src"]
+    },
+    "types": ["node"]
+  },
+  "include": [
+    "packages/**/src/**/*.ts",
+    "apps/**/src/**/*.ts",
+    "benchmarks/**/*.ts",
+    "vitest.config.ts"
+  ]
+}

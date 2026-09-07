@@ -1,0 +1,22 @@
+{
+  "name": "project-genesis",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI virtual society simulation platform (Project Genesis)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "sim": "tsx apps/simulation-cli/src/main.ts",
+    "bench": "tsx benchmarks/bench.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
