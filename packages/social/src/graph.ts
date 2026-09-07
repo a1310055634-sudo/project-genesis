@@ -6,6 +6,11 @@
  *
  * Edge values (familiarity/trust/liking/conflict) live in [0, 1]; writers must
  * clamp before storing (use clamp01).
+ *
+ * A derived adjacency index (person id -> neighbor ids) supports O(deg)
+ * neighbor lookups for local partner sampling and friend-of-friend cascades
+ * (KI-1). It is rebuilt-in-place on ensure/remove and never serialized; the
+ * edges Map stays the single source of truth.
  */
 
 export interface RelationshipEdge {
@@ -36,6 +41,7 @@ function byKey(a: RelationshipEdge, b: RelationshipEdge): number {
 
 export class RelationshipGraph {
   private readonly edges = new Map<string, RelationshipEdge>()
+  private readonly adjacency = new Map<string, Set<string>>()
 
   /** Existing edge between a and b, if any. */
   edge(a: string, b: string): RelationshipEdge | undefined {
@@ -64,18 +70,28 @@ export class RelationshipGraph {
       lastInteractionTick: tick
     }
     this.edges.set(key, created)
+    this.link(personA, personB)
     return created
   }
 
-  /** Neighbor ids of id, ordered by their edge keys. */
+  /**
+   * Remove the (a, b) edge if present (KI-1 acquaintance pruning).
+   * Returns true when an edge was removed. Idempotent.
+   */
+  removeEdge(a: string, b: string): boolean {
+    const key = edgeKey(a, b)
+    const edge = this.edges.get(key)
+    if (edge === undefined) return false
+    this.edges.delete(key)
+    this.unlink(edge.personA, edge.personB)
+    return true
+  }
+
+  /** Neighbor ids of id, ordered by id (== ordered by their edge keys). */
   neighborsOf(id: string): string[] {
-    const out: Array<{ key: string; other: string }> = []
-    for (const e of this.edges.values()) {
-      if (e.personA === id) out.push({ key: e.key, other: e.personB })
-      else if (e.personB === id) out.push({ key: e.key, other: e.personA })
-    }
-    out.sort((x, y) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0))
-    return out.map((n) => n.other)
+    const neighbors = this.adjacency.get(id)
+    if (neighbors === undefined) return []
+    return [...neighbors].sort()
   }
 
   /** All edges, ordered by key (canonical/deterministic serialization order). */
@@ -83,13 +99,48 @@ export class RelationshipGraph {
     return [...this.edges.values()].sort(byKey)
   }
 
-  /** Edges touching id, ordered by key. */
+  /** Edges touching id, ordered by key (O(deg) via the adjacency index). */
   edgesOf(id: string): RelationshipEdge[] {
-    return this.allEdges().filter((e) => e.personA === id || e.personB === id)
+    const neighbors = this.adjacency.get(id)
+    if (neighbors === undefined) return []
+    const out: RelationshipEdge[] = []
+    for (const other of neighbors) {
+      const edge = this.edges.get(edgeKey(id, other))
+      if (edge !== undefined) out.push(edge) // defensive: adjacency is derived
+    }
+    return out.sort(byKey)
   }
 
   /** Number of distinct edges. */
   size(): number {
     return this.edges.size
+  }
+
+  private link(x: string, y: string): void {
+    let xs = this.adjacency.get(x)
+    if (xs === undefined) {
+      xs = new Set()
+      this.adjacency.set(x, xs)
+    }
+    xs.add(y)
+    let ys = this.adjacency.get(y)
+    if (ys === undefined) {
+      ys = new Set()
+      this.adjacency.set(y, ys)
+    }
+    ys.add(x)
+  }
+
+  private unlink(x: string, y: string): void {
+    const xs = this.adjacency.get(x)
+    if (xs !== undefined) {
+      xs.delete(y)
+      if (xs.size === 0) this.adjacency.delete(x)
+    }
+    const ys = this.adjacency.get(y)
+    if (ys !== undefined) {
+      ys.delete(x)
+      if (ys.size === 0) this.adjacency.delete(y)
+    }
   }
 }

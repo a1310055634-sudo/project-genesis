@@ -29,6 +29,7 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
 
   // 2) couple households among unassigned adults, then singles (queue-based, O(N))
   const persons = ctx.world.persons
+  const personIndex = new Map(persons.map((p) => [p.id, p]))
   const adults = persons.filter((p) => ageYears(p.birthTick, 0) >= 18)
   const shuffled = rng.shuffle(adults)
   const unassignedMales: Person[] = []
@@ -53,13 +54,12 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
   for (const leftovers of [unassignedMales, unassignedFemales]) {
     for (const person of leftovers) householdMembers.push([person.id])
   }
-  for (const members of householdMembers) createHousehold(ctx, members)
+  for (const members of householdMembers) createHousehold(ctx, members, personIndex)
 
   // 3) minors join adult households (simplified: no orphan households)
-  const personById = new Map(persons.map((p) => [p.id, p]))
   const adultHouseholds = ctx.world.households.filter((h) =>
     h.memberIds.some((id) => {
-      const p = personById.get(id)
+      const p = personIndex.get(id)
       return p !== undefined && ageYears(p.birthTick, 0) >= 18
     })
   )

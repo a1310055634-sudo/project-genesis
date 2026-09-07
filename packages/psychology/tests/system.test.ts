@@ -30,7 +30,8 @@ describe('psychologySystem (SimContext integration)', () => {
     expect(inRange(affect!.mean, -1, 1)).toBe(true)
 
     const daysProcessed = sim.ctx.metrics.counterValue('psychology.days_processed')
-    expect(daysProcessed).toBe(359)
+    // 360 days in 1 year — endpoint tick fires since RT1-03 fix
+    expect(daysProcessed).toBe(360)
     for (const p of sim.ctx.world.persons) {
       expect(inRange(p.psychology.stress, 0, 1)).toBe(true)
       expect(inRange(p.psychology.wellbeing, 0, 1)).toBe(true)

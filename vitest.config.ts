@@ -12,6 +12,7 @@ export default defineConfig({
       '@genesis/psychology': r('packages/psychology/src'),
       '@genesis/economy': r('packages/economy/src'),
       '@genesis/social': r('packages/social/src'),
+      '@genesis/family': r('packages/family/src'),
       '@genesis/test-utils': r('packages/test-utils/src')
     }
   },

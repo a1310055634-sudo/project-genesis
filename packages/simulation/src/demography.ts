@@ -57,6 +57,23 @@ export const demographicsSystem: GenesisSystem = {
       if (rng.bool(monthlyDeathHazard(age))) {
         person.alive = false
         person.deathTick = tick
+        // widowhood at death time (red team RT1-02): partnership must stay mutual
+        if (person.partnerId !== null) {
+          const partner = personById.get(person.partnerId)
+          if (partner !== undefined && partner.alive) {
+            partner.partnerId = null
+            partner.maritalStatus = 'widowed'
+          }
+          ctx.events.emit({
+            id: ctx.ids.next('event'),
+            type: 'relationship.ended',
+            tick,
+            actorIds: [person.id],
+            payload: { reason: 'widowhood' }
+          })
+          person.partnerId = null
+          person.maritalStatus = 'widowed'
+        }
         // release job slot
         if (person.economy.employerId !== null) {
           const employer = ctx.world.employers.find((e) => e.id === person.economy.employerId)

@@ -49,4 +49,18 @@ describe('relationship graph basics', () => {
     const graph = new RelationshipGraph()
     expect(() => graph.ensureEdge('a', 'a', 0)).toThrow()
   })
+
+  it('removeEdge deletes the canonical edge and keeps neighbors consistent', () => {
+    const graph = new RelationshipGraph()
+    graph.ensureEdge('a', 'b', 0)
+    graph.ensureEdge('b', 'c', 0)
+    expect(graph.removeEdge('b', 'a')).toBe(true) // argument order is irrelevant
+    expect(graph.size()).toBe(1)
+    expect(graph.edge('a', 'b')).toBeUndefined()
+    expect(graph.neighborsOf('a')).toEqual([])
+    expect(graph.neighborsOf('b')).toEqual(['c'])
+    expect(graph.removeEdge('a', 'b')).toBe(false) // idempotent
+    expect(graph.size()).toBe(1)
+    expect(graph.edgesOf('b').map((e) => e.key)).toEqual(['b|c'])
+  })
 })

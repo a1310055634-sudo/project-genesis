@@ -75,11 +75,13 @@ export function createPerson(
   return person
 }
 
-export function createHousehold(ctx: SimContext, memberIds: string[]): Household {
+export function createHousehold(ctx: SimContext, memberIds: string[], personIndex?: Map<string, Person>): Household {
   const household: Household = { id: ctx.ids.next('household'), memberIds: [...memberIds] }
   ctx.world.households.push(household)
+  // red team RT1-05: callers that create many households pass a shared index
+  const lookup = personIndex ?? new Map(ctx.world.persons.map((p) => [p.id, p]))
   for (const memberId of memberIds) {
-    const person = ctx.world.persons.find((p) => p.id === memberId)
+    const person = lookup.get(memberId)
     if (!person) throw new Error(`household ${household.id}: unknown member ${memberId}`)
     person.householdId = household.id
   }

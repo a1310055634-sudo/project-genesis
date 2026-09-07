@@ -61,16 +61,18 @@ export class Simulation {
     return this.ctx
   }
 
-  /** Advance the simulation to an absolute tick (never backward). */
+  /** Advance the simulation to an absolute tick (never backward).
+   * Systems scheduled AT the target tick fire too (red team RT1-03: year-end
+   * metrics must not be silently skipped). */
   stepTo(targetTick: number): void {
     const clock = this.ctx.clock
     for (;;) {
       const next = this.ctx.scheduler.peekNextTick()
-      if (next === null || next >= targetTick) {
+      if (next === null || next > targetTick) {
         clock.setTick(targetTick)
         return
       }
-      this.ctx.scheduler.fireDue(targetTick, (tick) => this.contextAt(tick))
+      this.ctx.scheduler.fireDue(targetTick + 1, (tick) => this.contextAt(tick))
     }
   }
 

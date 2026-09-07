@@ -33,6 +33,21 @@ describe('small-world formation (seed 42, 200 residents, 2 years)', () => {
     expect(sim.ctx.log.countOf('relationship.started')).toBeGreaterThanOrEqual(3)
   })
 
+  it('creates non-local edges beyond household-mates and coworkers (FoF + fallback paths)', () => {
+    const personById = new Map(sim.ctx.world.persons.map((p) => [p.id, p]))
+    let nonLocal = 0
+    for (const edge of graph.allEdges()) {
+      const a = personById.get(edge.personA)
+      const b = personById.get(edge.personB)
+      if (a === undefined || b === undefined) continue
+      const sameHousehold = a.householdId !== null && a.householdId === b.householdId
+      const sameEmployer = a.economy.employerId !== null && a.economy.employerId === b.economy.employerId
+      if (!sameHousehold && !sameEmployer) nonLocal++
+    }
+    expect(graph.size()).toBeGreaterThan(0)
+    expect(nonLocal / graph.size()).toBeGreaterThan(0)
+  })
+
   it('world invariants hold — every relationshipId references an existing person', () => {
     expect(() => checkInvariants(sim.ctx.world, sim.ctx.tick(), sim.ctx.world.seed)).not.toThrow()
   })

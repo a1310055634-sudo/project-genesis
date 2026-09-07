@@ -5,6 +5,7 @@
   "main": "src/main.ts",
   "dependencies": {
     "@genesis/economy": "*",
+    "@genesis/family": "*",
     "@genesis/psychology": "*",
     "@genesis/simulation": "*",
     "@genesis/social": "*"

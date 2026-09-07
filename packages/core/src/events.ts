@@ -74,23 +74,25 @@ export interface EventLogStats {
 }
 
 export class EventLog {
-  private counts = new Map<string, number>()
-  private recent: SimulationEvent[] = []
+  private ring: SimulationEvent[]
+  private head = 0
   private total = 0
+  private counts = new Map<string, number>()
   private firstTick: number | null = null
   private lastTick: number | null = null
 
-  constructor(private readonly recentWindow = 1_000) {}
+  constructor(private readonly recentWindow = 1_000) {
+    this.ring = new Array<SimulationEvent>(recentWindow)
+  }
 
   append(event: SimulationEvent): void {
     this.total++
     this.counts.set(event.type, (this.counts.get(event.type) ?? 0) + 1)
     if (this.firstTick === null || event.tick < this.firstTick) this.firstTick = event.tick
     if (this.lastTick === null || event.tick > this.lastTick) this.lastTick = event.tick
-    this.recent.push(event)
-    if (this.recent.length > this.recentWindow) {
-      this.recent.splice(0, this.recent.length - this.recentWindow)
-    }
+    // ring buffer (red team RT1-04): O(1) append, no element shifting on hot path
+    this.ring[this.head] = event
+    this.head = (this.head + 1) % this.recentWindow
   }
 
   get count(): number {
@@ -102,8 +104,12 @@ export class EventLog {
   }
 
   /** Most recent events (bounded window), oldest first. */
-  recentEvents(): readonly SimulationEvent[] {
-    return this.recent
+  recentEvents(): SimulationEvent[] {
+    const n = Math.min(this.total, this.recentWindow)
+    if (this.total <= this.recentWindow) {
+      return this.ring.slice(0, n)
+    }
+    return this.ring.slice(this.head).concat(this.ring.slice(0, this.head))
   }
 
   /** Monotonicity check helper (§27: event ticks never go backward). */

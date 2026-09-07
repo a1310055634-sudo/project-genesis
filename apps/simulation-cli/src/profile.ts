@@ -2,11 +2,12 @@ import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { psychologySystem, PsychEnvironment } from '@genesis/psychology'
+import { familySystem } from '@genesis/family'
 import { Person, SimContext } from '@genesis/simulation'
 
 /**
  * Integration profile (GEN-115): composition root wiring all domain systems
- * into the engine. The bridge below is the ONLY place that knows how domains
+ * into the engine. The bridges below are the ONLY place that knows how domains
  * connect; packages stay decoupled from each other.
  */
 
@@ -35,13 +36,18 @@ export interface FullStackProfile {
   graph: RelationshipGraph
 }
 
-/** Full society stack: demography + social + economy + psychology. */
+/** Full society stack: demography + family + social + economy + psychology. */
 export function fullStackSystems(): FullStackProfile {
   const graph = new RelationshipGraph()
   const systems: GenesisSystem[] = [
     demographicsSystem, // priority 10, monthly
+    familySystem({
+      // marriage affinity / divorce conflict come from the social graph's edges
+      affinity: (_ctx, aId, bId) => graph.edge(aId, bId)?.liking ?? 0.3,
+      conflict: (_ctx, aId, bId) => graph.edge(aId, bId)?.conflict ?? 0.1
+    }), // priority 12, monthly
     socialSystem(graph), // priority 15, weekly
-    ...economySystems(), // priorities 20 (daily consumption) / 21 (monthly payroll) / 22 (monthly job market) / 30 (yearly metrics)
+    ...economySystems(), // priorities 20/21/22/30
     psychologySystem(psychEnvBridge(graph)) // priority 20 (same-tick ties resolve by registration order: after consumption)
   ]
   return { systems, graph }
