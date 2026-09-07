@@ -5,7 +5,7 @@
 ```
 apps/simulation-cli
         │
-packages/experiments · packages/psychology · packages/economy · packages/social   (domain)
+packages/experiments · packages/psychology · packages/economy · packages/social · packages/education   (domain)
         │
 packages/simulation   (engine, world state, person schema, invariants)
         │
@@ -41,6 +41,10 @@ Person data is plain structured state (identity + component blocks). All *logic*
 - `PsychologyState` — affect valence/arousal, stress [0,1], needs, wellbeing (psychology package)
 - `EconomyState` — employerId, income/wealth/consumption in integer cents (economy package)
 - `SocialState` — relationship ids (social package)
+
+## Education side-table (DECISIONS.md)
+
+Education records live in `ctx.extensions` (`education.records` Map keyed by personId), NOT in the canonical Person schema — experimental domain first, promoted to schema when the economy needs skill→wage coupling. Consequence: education state is intentionally outside `Simulation.digest()`; its determinism is asserted separately in the package tests.
 
 ## Money
 

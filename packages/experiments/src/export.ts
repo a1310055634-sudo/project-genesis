@@ -20,7 +20,10 @@ function csvCell(value: string): string {
 
 function csvNumber(n: number): string {
   if (!Number.isFinite(n)) throw new Error(`toCsv: non-finite number ${n} cannot be exported`)
-  return String(round6(n))
+  const rounded = round6(n)
+  // red team RT2-05: rounding a huge finite value can overflow to Infinity
+  if (!Number.isFinite(rounded)) throw new Error(`toCsv: number ${n} overflows when rounded`)
+  return String(rounded)
 }
 
 function compareStrings(a: string, b: string): number {

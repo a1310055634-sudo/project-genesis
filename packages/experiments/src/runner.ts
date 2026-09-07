@@ -74,7 +74,9 @@ export function runExperiment(
     for (const seed of config.seeds) {
       const startedAt = now === undefined ? 0 : now()
       const sim = Simulation.create(
-        { seed, populationTarget: config.population, years: config.years, ...arm.overrides },
+        // authoritative keys last (red team RT2-03): arm overrides can tune
+        // model knobs but can never touch seed/population/years
+        { ...arm.overrides, seed, populationTarget: config.population, years: config.years },
         { systems: systemsFactory(), checkInvariants: invariantChecks }
       )
       sim.run()

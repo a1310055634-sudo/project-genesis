@@ -111,6 +111,7 @@ export class Simulation {
         householdId: p.householdId,
         partnerId: p.partnerId,
         maritalStatus: p.maritalStatus,
+        spouseAtDeathId: p.spouseAtDeathId,
         motherId: p.motherId,
         fatherId: p.fatherId,
         employerId: p.economy.employerId,

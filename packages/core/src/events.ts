@@ -86,6 +86,8 @@ export class EventLog {
   }
 
   append(event: SimulationEvent): void {
+    // monotonicity gate (red team RT1-07): event ticks must never go backward
+    this.assertMonotonic(event.tick)
     this.total++
     this.counts.set(event.type, (this.counts.get(event.type) ?? 0) + 1)
     if (this.firstTick === null || event.tick < this.firstTick) this.firstTick = event.tick

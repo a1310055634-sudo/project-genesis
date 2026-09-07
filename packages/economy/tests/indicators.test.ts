@@ -18,6 +18,7 @@ function makePerson(economy: Partial<EconomyState>, overrides: Partial<Person> =
     maritalStatus: 'single',
     motherId: null,
     fatherId: null,
+    spouseAtDeathId: null,
     personality: { openness: 0.5, conscientiousness: 0.5, extraversion: 0.5, agreeableness: 0.5, neuroticism: 0.5 },
     psychology: {
       affectValence: 0,

@@ -19,6 +19,17 @@ function kill(ctx: ReturnType<typeof makeCtx>, personId: string): void {
   if (person === undefined) throw new Error('fixture person missing')
   person.alive = false
   person.deathTick = ctx.clock.tick
+  // modern death flow (RT2-01): snapshot the spouse before clearing
+  if (person.partnerId !== null) {
+    person.spouseAtDeathId = person.partnerId
+    const partner = ctx.world.persons.find((p) => p.id === person.partnerId)
+    if (partner !== undefined && partner.alive) {
+      partner.partnerId = null
+      partner.maritalStatus = 'widowed'
+    }
+    person.partnerId = null
+    person.maritalStatus = 'widowed'
+  }
   if (person.householdId !== null) {
     const household = ctx.world.households.find((h) => h.id === person.householdId)
     if (household !== undefined) household.memberIds = household.memberIds.filter((id) => id !== personId)

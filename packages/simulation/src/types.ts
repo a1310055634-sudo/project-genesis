@@ -58,6 +58,10 @@ export interface Person {
   /** Id of the current spouse/partner; null when single/widowed/divorced. */
   partnerId: string | null
   maritalStatus: MaritalStatus
+  /** Death-time snapshot of the partner id (red team RT2-01): lets the
+   * family system resolve widows for inheritance without ordering coupling
+   * between systems. Non-null only on dead persons who were married. */
+  spouseAtDeathId: string | null
   /** Parenthood chain (red team RT1-01): null when unknown (e.g. founders). */
   motherId: string | null
   fatherId: string | null

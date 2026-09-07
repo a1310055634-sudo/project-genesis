@@ -1,5 +1,6 @@
 import { GenesisSystem, buildKinshipIndex, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
+import { educationSystem } from '@genesis/education'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
@@ -50,7 +51,10 @@ export interface FullStackProfile {
   graph: RelationshipGraph
 }
 
-/** Full society stack: demography + family + social + economy + psychology. */
+/** Full society stack: demography + family + social + economy + psychology.
+ * SINGLE-USE (red team RT2-10): each call builds a fresh graph + bridges bound
+ * to one Simulation. Never reuse the returned systems array for a second
+ * Simulation.create — the social graph and caches would cross worlds. */
 export function fullStackSystems(): FullStackProfile {
   const graph = new RelationshipGraph()
   const systems: GenesisSystem[] = [
@@ -60,6 +64,7 @@ export function fullStackSystems(): FullStackProfile {
       affinity: (_ctx, aId, bId) => graph.edge(aId, bId)?.liking ?? 0.3,
       conflict: (_ctx, aId, bId) => graph.edge(aId, bId)?.conflict ?? 0.1
     }), // priority 12, monthly
+    educationSystem(), // priority 14, monthly (school enrolment, attainment, skill)
     socialSystem(graph), // priority 15, weekly
     ...economySystems(), // priorities 20/21/22/30
     psychologySystem(psychEnvBridge(graph)) // priority 20 (same-tick ties resolve by registration order: after consumption)

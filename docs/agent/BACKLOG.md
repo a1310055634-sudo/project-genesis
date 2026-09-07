@@ -49,7 +49,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 ### RT1-01 Parenthood chain — DONE (motherId/fatherId, married-couple births, batch 5)
 
 ### NEXT Wave 3.2 (parallel-safe candidates)
-- GEN-053b Extraversion → interaction-frequency pathway (EXP-006 found the model gap: extraversion modulates liking/conflict but not interaction attempts or friend-making rate; add per-person interaction attempt probability ~ extraversion, then re-run EXP-006 as regression probe)
+- GEN-053b Extraversion → interaction-frequency pathway — DONE (batch 9; EXP-006 flipped to +30% edges, CI95 disjoint)
 - GEN-058 Relationship conflict → divorce coupling depth (conflict from interactions, not just edges)
 - GEN-072 Parenthood effects: children need care (needRest/social), parent stress/wellbeing coupling
 - GEN-074 Family links depth: sibling detection via shared parents; household moves for children on divorce/marriage

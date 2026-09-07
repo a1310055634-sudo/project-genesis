@@ -58,7 +58,7 @@ export function runCli(args: CliArgs): RunManifest {
   const endedAtWallClock = new Date().toISOString()
   const stats = populationStats(sim.ctx)
   const manifest: RunManifest = {
-    runId: `run-${args.seed}-${configHash(sim.ctx.config)}`,
+    runId: `run-${String(args.seed).replace(/[^\w.-]/g, '_')}-${configHash(sim.ctx.config)}`,
     seed: args.seed,
     configHash: configHash(sim.ctx.config),
     tick: sim.ctx.clock.tick,

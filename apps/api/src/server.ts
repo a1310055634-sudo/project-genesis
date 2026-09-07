@@ -31,10 +31,19 @@ export function createApiServer(controller: SimulationController = new Simulatio
         let data = ''
         req.on('data', (chunk) => {
           data += chunk
-          if (data.length > 1_000_000) reject(new Error('body too large'))
+          if (data.length > 1_000_000) {
+            // red team RT2-04: stop buffering and kill the socket, otherwise
+            // the 1MB limit only schedules the 400 but the buffer keeps growing
+            req.removeAllListeners('data')
+            req.removeAllListeners('end')
+            req.destroy(new Error('body too large'))
+            reject(new Error('body too large'))
+          }
         })
         req.on('end', () => resolve(data))
-        req.on('error', reject)
+        req.on('error', (err) => {
+          if (!req.destroyed) reject(err)
+        })
       })
 
     const route = async (): Promise<void> => {

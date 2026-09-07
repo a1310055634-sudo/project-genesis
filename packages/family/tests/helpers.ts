@@ -19,6 +19,7 @@ export function makeMinor(id: string, motherId: string | null, fatherId: string 
     householdId: null,
     partnerId: null,
     maritalStatus: 'single',
+    spouseAtDeathId: null,
     motherId,
     fatherId,
     personality: { openness: 0.5, conscientiousness: 0.5, extraversion: 0.5, agreeableness: 0.5, neuroticism: 0.5 },
@@ -46,11 +47,31 @@ export function addPerson(sim: Simulation, person: Person, householdId: string |
   household.memberIds.push(person.id)
 }
 
-/** Kill a person exactly the way the demographics system would. */
+/** Kill a person exactly the way the demographics system would — including
+ * the death-time spouse snapshot and widowhood (red team RT2-01: the fixture
+ * must never replicate a pre-RT1-02 death flow, or inheritance tests silently
+ * test an unreachable state). */
 export function killLikeDemographics(sim: Simulation, person: Person): void {
   const world = sim.ctx.world
   person.alive = false
   person.deathTick = 0
+  if (person.partnerId !== null) {
+    const partner = world.persons.find((p) => p.id === person.partnerId)
+    if (partner !== undefined && partner.alive) {
+      partner.partnerId = null
+      partner.maritalStatus = 'widowed'
+    }
+    person.spouseAtDeathId = person.partnerId
+    person.partnerId = null
+    person.maritalStatus = 'widowed'
+    sim.ctx.events.emit({
+      id: sim.ctx.ids.next('event'),
+      type: 'relationship.ended',
+      tick: sim.ctx.clock.tick,
+      actorIds: [person.id],
+      payload: { reason: 'widowhood' }
+    })
+  }
   if (person.economy.employerId !== null) {
     const employer = world.employers.find((e) => e.id === person.economy.employerId)
     if (employer !== undefined) employer.filledSlots = Math.max(0, employer.filledSlots - 1)

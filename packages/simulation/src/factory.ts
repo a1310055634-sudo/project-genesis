@@ -70,6 +70,7 @@ export function createPerson(
     householdId: null,
     partnerId: null,
     maritalStatus: 'single',
+    spouseAtDeathId: null,
     motherId: opts.parents?.motherId ?? null,
     fatherId: opts.parents?.fatherId ?? null,
     personality,

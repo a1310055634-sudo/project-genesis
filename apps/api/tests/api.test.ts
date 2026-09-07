@@ -76,9 +76,13 @@ describe('genesis API (GEN-110/111/112)', () => {
     expect(metrics['population']).toBeGreaterThan(0)
     expect(metrics['employment_rate']).toBeGreaterThan(0)
 
-    // history chart data was sampled
+    // history chart data was sampled — with REAL stress/wellbeing values,
+    // not a series of nulls (red team RT2-02 blind spot)
     const history = final['history'] as Array<Record<string, unknown>>
     expect(history.length).toBeGreaterThan(0)
+    expect(history.some((h) => h['stress'] !== null)).toBe(true)
+    expect(history.some((h) => h['wellbeing'] !== null)).toBe(true)
+    expect(history.some((h) => h['population'] !== null)).toBe(true)
 
     // person inspector returns a real dossier
     const person = await get('/api/persons/person-000001')
@@ -92,8 +96,9 @@ describe('genesis API (GEN-110/111/112)', () => {
     expect(Array.isArray(events.json)).toBe(true)
     expect((events.json as unknown[]).length).toBeLessThanOrEqual(5)
 
-    // export manifest
+    // export manifest (final flag + digest, red team RT2-09)
     const manifest = await get('/api/export')
+    expect((manifest.json as Record<string, unknown>)['final']).toBe(true)
     expect((manifest.json as Record<string, unknown>)['digest']).toBe(final['digest'])
 
     // unknown person → 400 with message

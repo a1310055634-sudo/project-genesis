@@ -26,6 +26,27 @@ export const COWORKER_INTERACTION_PROBABILITY = 0.3
 export const GLOBAL_RANDOM_PROBABILITY = 0.1
 
 /**
+ * GEN-053b: interaction attempts are probabilistic and extraversion-driven.
+ * p_attempt = clamp(BASE + WEIGHT * (extraversion - 0.5), 0, 1) — a recruit
+ * with extraversion 1.0 attempts an interaction almost every week (p ≈ 1.0),
+ * a 0.0-introvert only about one week in five (p ≈ 0.2); the 0.5 midpoint
+ * keeps the population-average attempt rate at BASE. This is the personality
+ * pathway into interaction FREQUENCY (liking/conflict modulation already
+ * existed); a failed attempt skips the interaction but the person still takes
+ * part in the death sweep and pruning phases like everyone else.
+ */
+export const INTERACTION_ATTEMPT_BASE_PROBABILITY = 0.6
+export const INTERACTION_ATTEMPT_EXTRAVERSION_WEIGHT = 0.8
+
+/** Weekly interaction-attempt probability for one person (GEN-053b). */
+export function interactionAttemptProbability(person: Person): number {
+  return clamp01(
+    INTERACTION_ATTEMPT_BASE_PROBABILITY +
+      INTERACTION_ATTEMPT_EXTRAVERSION_WEIGHT * (person.personality.extraversion - 0.5)
+  )
+}
+
+/**
  * Acquaintance edges (neither endpoint lists the other in relationshipIds)
  * below this familiarity are pruned weekly (KI-1 fix). A single interaction
  * adds >= 0.05 familiarity, so the floor only ever catches edges that have
@@ -68,8 +89,11 @@ export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
  *    lastInteractionTick, so a freshly-touched edge is never decayed twice.
  *
  * 2. Interactions: every alive person, in world.persons creation (array)
- *    order, makes at most one social attempt. Partner cascade with fixed rng
- *    draw order (constants documented above):
+ *    order, first rolls ONE attempt bool — rng.bool(interactionAttempt
+ *    Probability(person)) (GEN-053b); a miss skips the person's interaction
+ *    for this week (they still participate in phases 0 and 3). Persons that
+ *    hit the roll then run the partner cascade with fixed rng draw order
+ *    (constants documented above):
  *      a. rng.bool(HOUSEHOLD_INTERACTION_PROBABILITY): a random alive member
  *         of the same household;
  *      b. otherwise rng.bool(COWORKER_INTERACTION_PROBABILITY): a random
@@ -136,6 +160,11 @@ export function weeklySocialUpdate(ctx: SimContext, graph: RelationshipGraph): v
     }
 
     for (const person of alive) {
+      // GEN-053b: one attempt bool per person, drawn in array order BEFORE
+      // any cascade draws of that person — the rng sequence is fully
+      // determined: for each person (array order) [attempt bool, then, when
+      // attempted, the cascade draws]. A miss skips only this interaction.
+      if (!rng.bool(interactionAttemptProbability(person))) continue
       const partner = pickPartner(rng, graph, person, alive, personById, memberIdsByHousehold, coworkersByEmployer)
       if (partner === null || partner.id === person.id) continue
       interact(ctx, graph, rng, tick, person, partner)

@@ -1,5 +1,5 @@
 import { ageYears } from '@genesis/core'
-import { populationStats, Simulation } from '@genesis/simulation'
+import { buildIndex, populationStats, Simulation, WorldIndex } from '@genesis/simulation'
 import { fullStackSystems } from '../../simulation-cli/src/profile'
 
 /**
@@ -49,6 +49,8 @@ export class SimulationController {
   private digest: string | null = null
   private startedWall = 0
   private runtimeMs = 0
+  private index: WorldIndex | null = null
+  private indexForSim: Simulation | null = null
 
   start(cfg: StartConfig): StatusPayload {
     if (this.state === 'running' || this.state === 'paused') {
@@ -64,6 +66,8 @@ export class SimulationController {
     this.history = []
     this.error = null
     this.digest = null
+    this.index = null
+    this.indexForSim = null
     this.state = 'running'
     this.startedWall = Date.now()
     this.timer = setInterval(() => this.chunk(), 15)
@@ -99,11 +103,14 @@ export class SimulationController {
   private recordSample(): void {
     if (this.sim === null) return
     const m = this.sim.ctx.metrics
+    // stress/wellbeing live in the STATS namespace (metrics.record), not gauges
+    // (red team RT2-02) — read via statsOf with last-known-value fallback
+    const stress = m.statsOf('stress')?.mean ?? this.lastSampleValue('stress.mean')
+    const wellbeing = m.statsOf('wellbeing')?.mean ?? this.lastSampleValue('wellbeing.mean')
     const sample: HistorySample = {
       tick: this.sim.ctx.clock.tick,
-      stress: m.gaugeValue('stress.mean') > 0 ? m.gaugeValue('stress.mean') : this.lastSampleValue('stress.mean'),
-      wellbeing:
-        m.gaugeValue('wellbeing.mean') > 0 ? m.gaugeValue('wellbeing.mean') : this.lastSampleValue('wellbeing.mean'),
+      stress,
+      wellbeing,
       population: m.gaugeValue('population') > 0 ? m.gaugeValue('population') : this.lastSampleValue('population')
     }
     this.history.push(sample)
@@ -123,7 +130,12 @@ export class SimulationController {
   }
 
   resume(): void {
-    if (this.state === 'paused' && this.error === null) this.state = 'running'
+    // red team RT2-09: a rejected resume must be visible to the client (400),
+    // not a silent 200 with an unchanged paused state
+    if (this.state === 'paused' && this.error !== null) {
+      throw new Error('cannot resume: simulation halted with an error — stop and restart instead')
+    }
+    if (this.state === 'paused') this.state = 'running'
   }
 
   stop(): void {
@@ -175,10 +187,15 @@ export class SimulationController {
 
   person(personId: string): unknown {
     if (this.sim === null) throw new Error('no active simulation')
-    const person = this.sim.ctx.world.persons.find((p) => p.id === personId)
+    // red team RT2-08: index built once per run (arrays only grow), so the
+    // dossier endpoint stays O(1) instead of scanning 10k+ persons per request
+    if (this.index === null || this.indexForSim !== this.sim) {
+      this.index = buildIndex(this.sim.ctx.world)
+      this.indexForSim = this.sim
+    }
+    const person = this.index.personById.get(personId)
     if (person === undefined) throw new Error(`unknown person '${personId}'`)
-    const household =
-      person.householdId !== null ? this.sim.ctx.world.households.find((h) => h.id === person.householdId) : undefined
+    const household = person.householdId !== null ? this.index.householdById.get(person.householdId) : undefined
     const events = this.sim.ctx.log
       .recentEvents()
       .filter((e) => e.actorIds.includes(personId))
@@ -216,12 +233,16 @@ export class SimulationController {
 
   exportManifest(): Record<string, unknown> {
     if (this.sim === null) throw new Error('no active simulation')
+    const done = this.state === 'done'
     return {
       config: this.config,
       tick: this.sim.ctx.clock.tick,
       state: this.state,
-      runtimeMs: this.state === 'done' ? this.runtimeMs : Date.now() - this.startedWall,
-      digest: this.digest ?? this.sim.digest(),
+      // red team RT2-09: distinguish a final archive digest from an
+      // in-progress intermediate digest
+      final: done,
+      runtimeMs: done ? this.runtimeMs : Date.now() - this.startedWall,
+      digest: this.digest,
       population: populationStats(this.sim.ctx),
       metrics: this.sim.ctx.metrics.snapshot(),
       events: this.sim.ctx.log.stats()

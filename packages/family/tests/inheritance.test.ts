@@ -54,11 +54,17 @@ describe('inheritance (estate -> surviving spouse)', () => {
 })
 
 describe('widowhood', () => {
-  it('the survivor becomes widowed with partnerId=null on the next monthly run', () => {
+  it('the survivor is widowed at death time (demographics) and the family sweep stays an idempotent safety net', () => {
     const { sim, husband, wife } = makeWidowWorld(42, 0) // penniless: inheritance phase is a no-op
+    // killLikeDemographics already replicates the death-time widowhood
+    // (red team RT2-01 semantics) — the state is correct BEFORE any run
+    expect(wife.alive).toBe(true)
+    expect(wife.maritalStatus).toBe('widowed')
+    expect(wife.partnerId).toBeNull()
+
     sim.stepTo(TICKS_PER_MONTH + 1)
 
-    expect(wife.alive).toBe(true)
+    // the family sweep is a no-op safety net: nothing regressed, nothing duplicated
     expect(wife.maritalStatus).toBe('widowed')
     expect(wife.partnerId).toBeNull()
     // the deceased's record is closed out too (keeps invariants green)
@@ -71,10 +77,12 @@ describe('widowhood', () => {
         (e: SimulationEvent) =>
           e.type === 'relationship.ended' &&
           (e.payload as { reason?: string }).reason === 'widowhood' &&
-          e.actorIds.includes(wife.id)
+          e.actorIds.includes(husband.id)
       )
+    // exactly ONE widowhood event (demographics', actorIds=[deceased]); the
+    // safety net must not emit a second one for the same marriage
     expect(ended.length).toBe(1)
-    expect(ended[0]!.actorIds).toEqual([wife.id, husband.id])
+    expect(ended[0]!.actorIds).toEqual([husband.id])
 
     const stats = checkInvariants(sim.ctx.world, sim.ctx.clock.tick, sim.ctx.world.seed)
     expect(stats.violations).toBe(0)

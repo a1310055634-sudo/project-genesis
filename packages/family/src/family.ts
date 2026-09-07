@@ -17,9 +17,11 @@ import {
  * economy payroll (priority 21).
  *
  * Fixed phase order inside a monthly run (order matters):
- *   1. inheritance  — must precede widowhood: the estate transfer locates the
- *      surviving spouse through the deceased's (still intact) partnerId;
- *   2. widowhood    — clears both sides of a marriage ended by death;
+ *   1. inheritance  — resolves the surviving spouse from the deceased's
+ *      death-time snapshot (spouseAtDeathId, written by demographics at the
+ *      moment of death), so ordering vs widowhood no longer matters;
+ *   2. widowhood    — safety net for any married-to-dead state that slipped
+ *      past demographics' death-time handling (normally a no-op now);
  *   3. marriage     — courtship among friends from the social graph;
  *   4. divorce      — couple-level conflict roll, one roll per couple, plus
  *      child custody for the minors of the shared household.
@@ -36,6 +38,9 @@ import {
  * - estate: spouse 50% + children split the rest; spouse takes all only when
    there are no alive children; unclaimed estates land in an audit gauge;
  * - only opposite-sex marriage is modelled;
+ * - affinal/step relations (in-laws, step-parents/step-siblings) are NOT kin
+ *   for the v1 marriage ban (red team RT2-07): blood-depth only until Wave 3.3
+ *   deep kinship lands (recorded gap, not an oversight);
  * - v1 bans marriage only for close kin — parent/child, full/half siblings,
    grandparent/grandchild (kinship depth v1, GEN-060); cousins are ALLOWED
    until deeper kinship arrives (recorded limitation);
@@ -97,8 +102,11 @@ function leaveHousehold(ctx: SimContext, households: Map<string, Household>, per
 
 /**
  * Every dead person holding a non-zero estate distributes it (RT1-01
- * parenthood chain):
- *   - surviving spouse AND alive children  → spouse 50% (floor), children split
+ * parenthood chain; RT2-01 spouse snapshot):
+ *   - the surviving spouse is located via the deceased's spouseAtDeathId —
+ *     a death-time snapshot written by demographics, so inheritance works
+ *     regardless of system ordering (partnerId is already cleared by then);
+ *   - surviving spouse AND alive children → spouse 50% (floor), children split
  *     the remainder evenly (remainder cents to the first children, array order);
  *   - spouse only (no children)            → spouse takes the whole estate;
  *   - children only (no spouse)            → children split the whole estate;
@@ -114,7 +122,8 @@ function runInheritance(ctx: SimContext): void {
   for (const deceased of ctx.world.persons) {
     if (deceased.alive || deceased.economy.wealthCents === 0) continue
     const estate = deceased.economy.wealthCents
-    const partner = deceased.partnerId !== null ? personById.get(deceased.partnerId) : undefined
+    const snapshottedSpouse = deceased.spouseAtDeathId
+    const partner = snapshottedSpouse !== null ? personById.get(snapshottedSpouse) : undefined
     const spouse = partner !== undefined && partner.alive ? partner : undefined
     const children = ctx.world.persons.filter(
       (p) => p.alive && (p.motherId === deceased.id || p.fatherId === deceased.id)

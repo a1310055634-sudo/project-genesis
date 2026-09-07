@@ -35,6 +35,15 @@ function validate(config: ExperimentConfig): ExperimentConfig {
   if (config.arms.length < 2) {
     throw new Error(`experiment ${config.id}: needs at least 2 arms (baseline control + treatment), got ${config.arms.length}`)
   }
+  // red team RT2-03: seed/years are experiment-level contracts — an arm
+  // silently overriding them would poison cross-arm comparisons
+  for (const arm of config.arms) {
+    for (const reserved of ['seed', 'years'] as const) {
+      if (reserved in arm.overrides) {
+        throw new Error(`experiment ${config.id}: arm "${arm.name}" overrides reserved key "${reserved}"`)
+      }
+    }
+  }
   const names = new Set<string>()
   for (const arm of config.arms) {
     if (names.has(arm.name)) throw new Error(`experiment ${config.id}: duplicate arm name "${arm.name}"`)
@@ -108,11 +117,11 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
    * resident's trait at generation; interaction and friendship dynamics in
    * @genesis/social respond to personality.
    *
-   * STATUS 2026-09-08: direction NOT reproduced (extraverted arm had FEWER
-   * edges, 1647 vs 1721). Diagnosis: extraversion currently modulates
-   * liking/conflict growth but has NO pathway into interaction frequency or
-   * friend-making rate — a known model gap (BACKLOG GEN-053b). This experiment
-   * is kept as the regression probe for when that pathway lands.
+   * STATUS 2026-09-08 (updated after GEN-053b): direction REPRODUCED. The
+   * interaction-frequency pathway (p_attempt = 0.6 + 0.8*(extraversion-0.5))
+   * flipped the result: extraverted arm ~1391 edges vs control ~1072 (+30%,
+   * all 3 seeds consistent, CI95 disjoint). First full round trip:
+   * experiment -> negative result -> model gap -> fix -> direction confirmed.
    */
   'EXP-006': validate({
     id: 'EXP-006',

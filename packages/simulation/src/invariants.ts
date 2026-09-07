@@ -44,6 +44,9 @@ export function checkInvariants(world: WorldState, tick: number, seed: number): 
     if (p.alive === false && p.deathTick === null) {
       fail('dead-has-death-tick', `dead person ${p.id} missing deathTick`, [p.id])
     }
+    if (p.spouseAtDeathId !== null && p.alive) {
+      fail('spouse-snapshot-only-on-dead', `alive person ${p.id} has spouseAtDeathId ${p.spouseAtDeathId}`, [p.id])
+    }
     checkPsychology(p, fail)
   }
 
@@ -104,14 +107,22 @@ export function checkInvariants(world: WorldState, tick: number, seed: number): 
         fail('parent-older-than-child', `person ${p.id} ${role} ${parentId} not older than child`, [p.id, parentId])
       }
     }
+    if (p.spouseAtDeathId !== null && !personById.has(p.spouseAtDeathId)) {
+      fail('spouse-snapshot-exists', `person ${p.id} references missing spouseAtDeathId ${p.spouseAtDeathId}`, [p.id])
+    }
   }
 
   for (const h of world.households) {
     checks++
+    const seen = new Set<string>()
     for (const memberId of h.memberIds) {
       if (!personById.has(memberId)) {
         fail('household-members-exist', `household ${h.id} references missing person ${memberId}`, [h.id, memberId])
       }
+      if (seen.has(memberId)) {
+        fail('household-members-unique', `household ${h.id} lists ${memberId} twice`, [h.id, memberId])
+      }
+      seen.add(memberId)
     }
   }
 

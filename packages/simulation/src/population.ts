@@ -69,7 +69,7 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
     if (persons.length === 0) throw new Error('population target must be at least 1')
     adultHouseholds.push(createHousehold(ctx, persons.map((p) => p.id), personIndex))
   }
-  const minors = persons.filter((p) => ageYears(p.birthTick, 0) < 18)
+  const minors = persons.filter((p) => ageYears(p.birthTick, 0) < 18 && p.householdId === null)
   for (const minor of minors) {
     const household = adultHouseholds[rng.int(0, adultHouseholds.length - 1)]
     household.memberIds.push(minor.id)
