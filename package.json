@@ -12,6 +12,7 @@
     "test": "vitest run",
     "sim": "tsx apps/simulation-cli/src/main.ts",
     "exp": "tsx apps/simulation-cli/src/experiment-cli.ts",
+    "api": "tsx apps/api/src/main.ts",
     "bench": "tsx benchmarks/bench.ts"
   },
   "devDependencies": {

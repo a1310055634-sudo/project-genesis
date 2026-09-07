@@ -1,7 +1,8 @@
-import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
+import { GenesisSystem, buildKinshipIndex, demographicsSystem } from '@genesis/simulation'
+import { ageYears } from '@genesis/core'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
-import { psychologySystem, PsychEnvironment } from '@genesis/psychology'
+import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
 import { familySystem } from '@genesis/family'
 import { Person, SimContext } from '@genesis/simulation'
 
@@ -17,16 +18,29 @@ import { Person, SimContext } from '@genesis/simulation'
  * - children are household-supported: low financial/occupational strain
  * - unemployed adults carry elevated occupational strain (v1 constant)
  * - adverseEvents is a constant baseline until a life-events system exists
+ * - caregiverLoad = parents of alive children under 6 (kinship-chain derived)
  */
 export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person, ctx: SimContext) => PsychEnvironment {
-  return (person: Person, _ctx: SimContext): PsychEnvironment => {
+  // kinship index cached per tick: rebuilt at most once per simulated day
+  let cachedTick = -1
+  let cachedKin: ReturnType<typeof buildKinshipIndex> | null = null
+  return (person: Person, ctx: SimContext): PsychEnvironment => {
+    const tick = ctx.tick()
+    if (tick !== cachedTick || cachedKin === null) {
+      cachedKin = buildKinshipIndex(ctx.world)
+      cachedTick = tick
+    }
     const child = person.lifeStage === 'child'
+    const youngChildren = cachedKin
+      .childrenOf(person.id)
+      .filter((c) => c.alive && ageYears(c.birthTick, tick) < 6).length
     return {
       financialStrain: child ? 0.1 : financialStrainOf(person),
       occupationalStrain: child ? 0 : person.economy.employerId !== null ? 0.2 : 0.5,
       relationshipConflict: graph !== null ? relationshipConflictOf(graph, person) : 0,
       socialSupport: graph !== null ? socialSupportOf(graph, person) : 0.3,
-      adverseEvents: 0.05
+      adverseEvents: 0.05,
+      caregiverLoad: child ? 0 : caregiverLoadOf(youngChildren)
     }
   }
 }

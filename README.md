@@ -25,6 +25,23 @@ npm run sim -- --seed 42 --population 10000 --years 10
 
 Outputs a run manifest (seed, config hash, metrics) to `out/`.
 
+## Run an experiment
+
+```bash
+npm run exp -- --id EXP-002   # unemployment -> stress (model-internal check)
+```
+
+Writes byte-reproducible CSV + markdown report to `out/experiments/`.
+
+## Dashboard + API
+
+```bash
+npm run api        # http://localhost:3001
+```
+
+Start/pause/step a live simulation over HTTP; the dashboard reads real
+simulation state (overview metrics, trends, person inspector, events).
+
 ## Documentation
 
 - `ARCHITECTURE.md` — package boundaries, canonical contracts, simulation lifecycle

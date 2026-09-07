@@ -8,7 +8,8 @@ import { Personality } from '@genesis/simulation'
  *   stress_delta = sensitivity * ( W_FIN * financial
  *                                 + W_REL * relationshipConflict
  *                                 + W_OCC * occupationalStrain
- *                                 + W_ADV * adverseEvents )
+ *                                 + W_ADV * adverseEvents
+ *                                 + W_CAR * caregiverLoad )
  *                  - W_SUP * socialSupport - W_COP * copingResources
  *                  + noise
  *   then homeostatic pull toward RESTING_STRESS, then clamp to [0, 1].
@@ -28,6 +29,10 @@ const W_FINANCIAL = 0.02
 const W_RELATIONSHIP = 0.014
 const W_OCCUPATIONAL = 0.014
 const W_ADVERSE = 0.02
+// Caregiving for young children is a chronic low-intensity stressor (GEN-072):
+// at load 1 the pre-sensitivity increment is 0.01/day, i.e. 0.007-0.013/day
+// after neuroticism modulation — deliberately milder than acute stressors.
+const W_CAREGIVER = 0.01
 const W_SUPPORT = 0.01
 const W_COPING = 0.006
 
@@ -49,6 +54,12 @@ export interface StressInputs {
   adverseEvents: number
   socialSupport: number
   copingResources: number
+  /**
+   * Chronic childcare burden in [0, 1] (GEN-072). Optional and backward
+   * compatible: undefined is treated exactly as 0 (zero contribution).
+   * Neuroticism modulation applies, as to every stressor term.
+   */
+  caregiverLoad?: number
 }
 
 /** Returns the new stress value in [0, 1]; deterministic given (inputs, rng). */
@@ -57,7 +68,8 @@ export function updateStress(personality: Personality, currentStress: number, in
     W_FINANCIAL * inputs.financialStrain +
     W_RELATIONSHIP * inputs.relationshipConflict +
     W_OCCUPATIONAL * inputs.occupationalStrain +
-    W_ADVERSE * inputs.adverseEvents
+    W_ADVERSE * inputs.adverseEvents +
+    W_CAREGIVER * (inputs.caregiverLoad ?? 0)
   const negative = W_SUPPORT * inputs.socialSupport + W_COPING * inputs.copingResources
   const sensitivity = NEU_SENS_BASE + NEU_SENS_GAIN * personality.neuroticism
   const noise = (rng.next() * 2 - 1) * NOISE_HALF_WIDTH

@@ -55,6 +55,12 @@ export function meanStress(persons: Person[]): number {
   return sum / persons.length
 }
 
+export function meanRest(persons: Person[]): number {
+  let sum = 0
+  for (const p of persons) sum += p.psychology.needRest
+  return sum / persons.length
+}
+
 export function inRange(v: number, lo: number, hi: number): boolean {
   return Number.isFinite(v) && v >= lo && v <= hi
 }
