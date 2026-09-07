@@ -7,7 +7,13 @@
 - Build status: GREEN (typecheck clean, 195/195 tests, 46 files)
 - Last benchmark: benchmarks/RESULTS.md; last experiments: out/experiments/EXP-002.md, EXP-006.md
 
-## Last batch (9)
+## Last batch (10 — watchdog takeover, 05:00)
+- Trigger: main session idle ≥45 min; build/test GREEN at takeover
+- Task: RT1-14 empty-household GC (family monthly phase 5, metric family.households_gc)
+- Tests: 195 → 198 (3 new GC tests; deterministic constructions, no seed-tuned fixtures)
+- Status: GREEN, committed
+
+## Previous batch (9)
 - Dispatched: red-team round 2 (read-only) + GEN-053b (social) + education package (new agent) — 3 parallel
 - Completed: 3 + Director fixes (RT2-01..06, 09; RT1-07/09/13 carryovers)
 - Red team round 2 verdict: FAIL → all BLOCKER/HIGH/MEDIUM fixed same batch (spouse-snapshot inheritance, API history namespace, experiments guards, body-limit, birth-pair enumeration, manifest final flag)

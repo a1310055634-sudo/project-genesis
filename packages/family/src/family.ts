@@ -387,6 +387,20 @@ function recordHouseholdMetrics(ctx: SimContext): void {
 }
 
 /**
+ * Phase 5 — household GC (red team RT1-14): remove households with zero
+ * members. Moves (marriage/divorce) and deaths leave empty shells behind, and
+ * without GC the household count grows without bound. Safe: a household is
+ * referenced only via person.householdId, and every path that empties it also
+ * clears the members' householdId. Deterministic single in-order filter pass;
+ * no randomness, no events (pure bookkeeping).
+ */
+function runHouseholdGc(ctx: SimContext): void {
+  const before = ctx.world.households.length
+  ctx.world.households = ctx.world.households.filter((h) => h.memberIds.length > 0)
+  ctx.metrics.increment('family.households_gc', before - ctx.world.households.length)
+}
+
+/**
  * Monthly family system: nextFireTick = (floor(tick / 720) + 1) * 720
  * (month boundaries via nextMonthStart), priority 12 — after demographics
  * (10), before economy payroll (21).
@@ -397,10 +411,11 @@ export function familySystem(deps?: FamilyDeps): GenesisSystem {
     priority: 12,
     nextFireTick: nextMonthStart,
     run(ctx: SimContext) {
-      runInheritance(ctx) // before widowhood: needs the deceased's partnerId
+      runInheritance(ctx) // resolves heirs from the death-time spouse snapshot
       runWidowhood(ctx)
       runMarriages(ctx, deps)
       runDivorces(ctx, deps)
+      runHouseholdGc(ctx)
       recordHouseholdMetrics(ctx)
       ctx.metrics.increment('family.months_processed')
     }

@@ -55,7 +55,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 - GEN-074 Family links depth: sibling detection via shared parents; household moves for children on divorce/marriage
 - GEN-060 Kinship graph view + kinship-aware interactions (avoid marriage between close kin — currently only friendship-based candidates)
 - KI-3/KI-6: death & decay semantics for friendship edges (relationship.ended on death, friendship decay floor)
-- Empty-household GC after moves (RT1-14)
+- Empty-household GC after moves (RT1-14) — DONE (watchdog takeover: family monthly phase 5, metric family.households_gc)
 
 ## Wave 5 — Simulation Lab (P2, parallel-safe)
 - GEN-150 Experiment config format (JSON) + CLI `npm run exp`
