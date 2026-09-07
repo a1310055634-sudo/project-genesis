@@ -63,6 +63,8 @@ export function createPerson(
     deathTick: null,
     lifeStage: lifeStageFor(age) as LifeStage,
     householdId: null,
+    partnerId: null,
+    maritalStatus: 'single',
     personality,
     psychology,
     economy,

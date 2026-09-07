@@ -55,4 +55,31 @@ describe('invariant suite (GEN-132 / guide §27)', () => {
     victim.psychology.stress = 1.5
     expect(() => checkInvariants(sim.ctx.world, 0, sim.ctx.world.seed)).toThrow(/psychology-values-in-domain/)
   })
+
+  it('catches broken partnership references (Wave 3 schema)', () => {
+    const sim = makeWorld()
+    const married = sim.ctx.world.persons.find((p) => p.maritalStatus === 'married' && p.partnerId !== null)
+    if (married === undefined) throw new Error('fixture expected at least one married couple')
+    married.partnerId = 'person-999999'
+    expect(() => checkInvariants(sim.ctx.world, 0, sim.ctx.world.seed)).toThrow(/partner-exists/)
+  })
+
+  it('catches asymmetric partnership', () => {
+    const sim = makeWorld()
+    const married = sim.ctx.world.persons.find((p) => p.maritalStatus === 'married' && p.partnerId !== null)
+    if (married === undefined) throw new Error('fixture expected at least one married couple')
+    const partner = sim.ctx.world.persons.find((p) => p.id === married!.partnerId)
+    if (partner === undefined) throw new Error('partner must exist')
+    partner.partnerId = null
+    partner.maritalStatus = 'single'
+    expect(() => checkInvariants(sim.ctx.world, 0, sim.ctx.world.seed)).toThrow(/partner-mutual/)
+  })
+
+  it('catches married-without-partner state', () => {
+    const sim = makeWorld()
+    const married = sim.ctx.world.persons.find((p) => p.maritalStatus === 'married' && p.partnerId !== null)
+    if (married === undefined) throw new Error('fixture expected at least one married couple')
+    married.partnerId = null
+    expect(() => checkInvariants(sim.ctx.world, 0, sim.ctx.world.seed)).toThrow(/married-has-partner/)
+  })
 })

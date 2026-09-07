@@ -38,6 +38,11 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
     const partnerQueue = person.sex === 'male' ? unassignedFemales : unassignedMales
     if (rng.bool(0.55) && partnerQueue.length > 0) {
       const partner = partnerQueue.pop() as Person
+      // generated couples start married (simplification; divorce arrives in Wave 3)
+      person.partnerId = partner.id
+      partner.partnerId = person.id
+      person.maritalStatus = 'married'
+      partner.maritalStatus = 'married'
       householdMembers.push([person.id, partner.id])
     } else if (person.sex === 'male') {
       unassignedMales.push(person)

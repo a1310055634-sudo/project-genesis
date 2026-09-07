@@ -79,6 +79,21 @@ export function checkInvariants(world: WorldState, tick: number, seed: number): 
         fail('relationship-endpoints-exist', `person ${p.id} references missing relationship target ${relId}`, [p.id, relId])
       }
     }
+    // partnership consistency (§27: no incompatible marital states)
+    if (p.partnerId !== null) {
+      const partner = personById.get(p.partnerId)
+      if (partner === undefined) {
+        fail('partner-exists', `person ${p.id} references missing partner ${p.partnerId}`, [p.id, p.partnerId])
+      } else if (partner.partnerId !== p.id) {
+        fail('partner-mutual', `person ${p.id} partners ${p.partnerId} but not vice versa (${partner.partnerId})`, [p.id, p.partnerId])
+      }
+    }
+    if (p.maritalStatus === 'married' && p.partnerId === null) {
+      fail('married-has-partner', `person ${p.id} is married but has no partnerId`, [p.id])
+    }
+    if (p.maritalStatus !== 'married' && p.partnerId !== null) {
+      fail('nonmarried-partner-null', `person ${p.id} status=${p.maritalStatus} but partnerId=${p.partnerId}`, [p.id])
+    }
   }
 
   for (const h of world.households) {

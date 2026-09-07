@@ -107,6 +107,8 @@ export class Simulation {
         deathTick: p.deathTick,
         lifeStage: p.lifeStage,
         householdId: p.householdId,
+        partnerId: p.partnerId,
+        maritalStatus: p.maritalStatus,
         employerId: p.economy.employerId,
         wealthCents: p.economy.wealthCents,
         monthlyIncomeCents: p.economy.monthlyIncomeCents,

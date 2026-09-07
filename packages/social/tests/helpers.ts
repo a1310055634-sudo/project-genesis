@@ -21,6 +21,8 @@ export function makePerson(id: string, overrides: Partial<Person> = {}): Person 
     deathTick: null,
     lifeStage: 'adult',
     householdId: null,
+    partnerId: null,
+    maritalStatus: 'single',
     personality,
     psychology: {
       affectValence: 0,

@@ -6,6 +6,8 @@
 
 export type Sex = 'male' | 'female'
 export type LifeStage = 'child' | 'adult' | 'senior'
+/** Marital state machine (Wave 3 owns transitions; schema is canonical here). */
+export type MaritalStatus = 'single' | 'married' | 'widowed' | 'divorced'
 
 /** Big Five traits in [0, 1]. Generation logic belongs to @genesis/psychology. */
 export interface Personality {
@@ -53,6 +55,9 @@ export interface Person {
   deathTick: number | null
   lifeStage: LifeStage
   householdId: string | null
+  /** Id of the current spouse/partner; null when single/widowed/divorced. */
+  partnerId: string | null
+  maritalStatus: MaritalStatus
   personality: Personality
   psychology: PsychologyState
   economy: EconomyState
