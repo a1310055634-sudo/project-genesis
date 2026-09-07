@@ -22,10 +22,18 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
   const csvPath = path.join(outDir, `${config.id}.csv`)
   const mdPath = path.join(outDir, `${config.id}.md`)
   fs.writeFileSync(csvPath, toCsv(result))
-  fs.writeFileSync(mdPath, reportMarkdown(result, 'stress.mean'))
+  fs.writeFileSync(mdPath, reportMarkdown(result, PRIMARY_METRIC[config.id] ?? 'stress.mean'))
   console.log(`csv     : ${csvPath}`)
   console.log(`report  : ${mdPath}`)
   return { csvPath, mdPath }
+}
+
+/** Headline metric per experiment (the one its question is about). */
+const PRIMARY_METRIC: Record<string, string> = {
+  'EXP-002': 'stress.mean',
+  'EXP-006': 'social_edges',
+  'EXP-027': 'population',
+  'EXP-SANITY': 'population'
 }
 
 function parseArgs(argv: string[]): { id: string; out: string } {

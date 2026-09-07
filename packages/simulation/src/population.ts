@@ -63,7 +63,12 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
       return p !== undefined && ageYears(p.birthTick, 0) >= 18
     })
   )
-  if (adultHouseholds.length === 0 && target > 0) throw new Error('population generated without any adult household')
+  if (adultHouseholds.length === 0) {
+    // Total-function edge case: an all-minor world (e.g. population 1 that
+    // rolled a child) shares one household instead of the generator throwing.
+    if (persons.length === 0) throw new Error('population target must be at least 1')
+    adultHouseholds.push(createHousehold(ctx, persons.map((p) => p.id), personIndex))
+  }
   const minors = persons.filter((p) => ageYears(p.birthTick, 0) < 18)
   for (const minor of minors) {
     const household = adultHouseholds[rng.int(0, adultHouseholds.length - 1)]

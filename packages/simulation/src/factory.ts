@@ -51,6 +51,11 @@ export function createPerson(
   const rng = ctx.rng.fork(`person:${ctx.ids.issued('person') + 1}`)
   const sex: Sex = opts.sex ?? (rng.bool(0.5) ? 'male' : 'female')
   const personality = init?.personality ? init.personality(rng) : defaultPersonality(rng)
+  // population-level extraversion shift (experiment knob, guide EXP-006)
+  const bias = ctx.config.extraversionBias ?? 0
+  if (bias !== 0) {
+    personality.extraversion = Math.min(1, Math.max(0, personality.extraversion + bias))
+  }
   const psychology = init?.psychology ? init.psychology(rng) : defaultPsychology(rng)
   const economy = init?.economy ? init.economy(rng) : defaultEconomy()
   const social = init?.social ? init.social(rng) : defaultSocial()

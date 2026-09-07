@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageYears } from '@genesis/core'
+import { TICKS_PER_YEAR } from '@genesis/core'
 import { checkInvariants, demographicsSystem, Person, Simulation } from '@genesis/simulation'
 import { familySystem } from '@genesis/family'
 
@@ -9,8 +9,11 @@ const YEARS = 2
 /**
  * GEN-060: a father and his daughter who know each other (mutual
  * relationshipIds) and would marry almost surely under affinity = 1.0 must be
- * blocked by the close-kin filter. Seed 7 yields exactly one single male
- * 35-55 and one single female 20-30 (diagnosed), which become the pair.
+ * blocked by the close-kin filter.
+ *
+ * The pair is ENGINEERED from any alive male/female (ages rewritten, partner
+ * and parenthood links normalized) so the test is independent of what a given
+ * seed's generation happened to draw — config-hash shifts must not break it.
  */
 describe('close-kin marriage ban (GEN-060)', () => {
   it('a father and his daughter never marry despite maximal affinity', () => {
@@ -19,16 +22,34 @@ describe('close-kin marriage ban (GEN-060)', () => {
       { systems: [demographicsSystem, familySystem({ affinity: () => 1.0, conflict: () => 0 })] }
     )
     const world = sim.ctx.world
-    const age = (p: Person) => ageYears(p.birthTick, 0)
-    const father = world.persons.find(
-      (p) => p.alive && p.sex === 'male' && p.maritalStatus === 'single' && age(p) >= 35 && age(p) <= 55
-    )
-    const daughter = world.persons.find(
-      (p) => p.alive && p.sex === 'female' && p.maritalStatus === 'single' && age(p) >= 20 && age(p) <= 30
-    )
+    const father = world.persons.find((p) => p.alive && p.sex === 'male')
+    const daughter = world.persons.find((p) => p.alive && p.sex === 'female' && p.id !== father?.id)
     expect(father).toBeDefined()
     expect(daughter).toBeDefined()
-    expect(father!.id).not.toBe(daughter!.id)
+
+    // engineer: father 40, daughter 25, both single, no other family ties
+    for (const person of world.persons) {
+      // sever any generated parenthood link pointing at the pair
+      if (person.motherId === father!.id || person.motherId === daughter!.id) person.motherId = null
+      if (person.fatherId === father!.id || person.fatherId === daughter!.id) person.fatherId = null
+    }
+    for (const person of [father as Person, daughter as Person]) {
+      if (person.partnerId !== null) {
+        const partner = world.persons.find((p) => p.id === person.partnerId)
+        if (partner !== undefined) {
+          partner.partnerId = null
+          partner.maritalStatus = 'single'
+        }
+      }
+      person.partnerId = null
+      person.maritalStatus = 'single'
+      person.motherId = null
+      person.fatherId = null
+    }
+    father!.birthTick = -40 * TICKS_PER_YEAR
+    daughter!.birthTick = -25 * TICKS_PER_YEAR
+    father!.lifeStage = 'adult'
+    daughter!.lifeStage = 'adult'
 
     // parenthood (father strictly older — required by parent-older-than-child)
     // + mutual friendship: without the kinship filter this pair would marry

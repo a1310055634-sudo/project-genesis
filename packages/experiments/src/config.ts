@@ -103,6 +103,34 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   }),
 
   /**
+   * EXP-006: extraversion → network growth (guide §23 Wave 5 / HT-16).
+   * Mechanism under test: the population-level extraversionBias shifts every
+   * resident's trait at generation; interaction and friendship dynamics in
+   * @genesis/social respond to personality.
+   *
+   * STATUS 2026-09-08: direction NOT reproduced (extraverted arm had FEWER
+   * edges, 1647 vs 1721). Diagnosis: extraversion currently modulates
+   * liking/conflict growth but has NO pathway into interaction frequency or
+   * friend-making rate — a known model gap (BACKLOG GEN-053b). This experiment
+   * is kept as the regression probe for when that pathway lands.
+   */
+  'EXP-006': validate({
+    id: 'EXP-006',
+    question:
+      'Model-internal mechanism check: does shifting the whole population\'s extraversion ' +
+      'upward (+0.4 bias) produce a denser social network (more edges, higher mean degree) ' +
+      'than an unbiased population over 2 years? Verifies the personality→network pathway ' +
+      'inside the simulator; no real-world psychological claim.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: { extraversionBias: 0 } },
+      { name: 'extraverted', overrides: { extraversionBias: 0.4 } }
+    ]
+  }),
+
+  /**
    * EXP-SANITY: scale sanity sweep.
    * Mechanism under test: core aggregates stay well-formed as the population
    * scale changes 60 → 200 (no NaN in metrics, shares within [0, 1], digests

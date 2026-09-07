@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageYears, TICKS_PER_YEAR } from '@genesis/core'
+import { TICKS_PER_YEAR } from '@genesis/core'
 import { checkInvariants, demographicsSystem, Person, Simulation } from '@genesis/simulation'
 import { familySystem } from '@genesis/family'
 
@@ -19,26 +19,43 @@ describe('marriage', () => {
       { systems: [demographicsSystem, familySystem({ affinity: () => 1.0, conflict: () => 0 })] }
     )
 
-    // Engineer PAIRS opposite-sex single friends aged 20..55 (stays inside the
-    // eligibility window for the whole run). Singles never had a partner, so
-    // no stale pointers need cleanup.
-    const eligible = (sex: 'male' | 'female'): Person[] =>
-      sim.ctx.world.persons.filter(
-        (p) => p.alive && p.sex === sex && p.maritalStatus === 'single' && ageYears(p.birthTick, 0) >= 20 && ageYears(p.birthTick, 0) <= 55
-      )
-    const males = eligible('male')
-    const females = eligible('female')
+    // Engineer PAIRS of opposite-sex singles aged 20..55 from ANY alive
+    // persons (ages rewritten, partner/parenthood links normalized) so the
+    // fixture is independent of what a given seed's generation drew. Ages
+    // 25+i stay inside the eligibility window for the whole 2-year run.
+    const males = sim.ctx.world.persons.filter((p) => p.alive && p.sex === 'male')
+    const females = sim.ctx.world.persons.filter((p) => p.alive && p.sex === 'female')
     const pairCount = Math.min(PAIRS, males.length, females.length)
-    // the generator's greedy pairing leaves skewed singles pools per seed;
-    // seed 11 yields 5 eligible opposite-sex singles on the short side — with
-    // p(marry) ≈ 0.36/month/pair over 11 monthly runs, at least one marriage
-    // is deterministic-practically-certain
-    expect(pairCount).toBeGreaterThanOrEqual(5) // enough parallel courtships
+    // 200 residents at ~50/50 sex split makes 5 pairs deterministic-practically-certain
+    expect(pairCount).toBeGreaterThanOrEqual(5)
 
     const pairs: Array<[Person, Person]> = []
     for (let i = 0; i < pairCount; i++) {
       const a = males[i] as Person
       const b = females[i] as Person
+      // normalize both sides: single, no stale partner pointers, no parenthood
+      // links that the age rewrite could invalidate
+      for (const person of [a, b]) {
+        if (person.partnerId !== null) {
+          const partner = sim.ctx.world.persons.find((p) => p.id === person.partnerId)
+          if (partner !== undefined) {
+            partner.partnerId = null
+            partner.maritalStatus = 'single'
+          }
+        }
+        person.partnerId = null
+        person.maritalStatus = 'single'
+        person.motherId = null
+        person.fatherId = null
+      }
+      for (const other of sim.ctx.world.persons) {
+        if (other.motherId === a.id || other.motherId === b.id) other.motherId = null
+        if (other.fatherId === a.id || other.fatherId === b.id) other.fatherId = null
+      }
+      a.birthTick = -(25 + i) * TICKS_PER_YEAR
+      b.birthTick = -(24 + i) * TICKS_PER_YEAR
+      a.lifeStage = 'adult'
+      b.lifeStage = 'adult'
       a.social.relationshipIds = [b.id]
       b.social.relationshipIds = [a.id]
       pairs.push([a, b])

@@ -11,6 +11,10 @@ export interface SimulationConfig {
   birthProbabilityPerMonth: number
   /** Share of employable adults holding jobs at generation time. */
   employmentRate: number
+  /** Population-level extraversion shift [-1, 1] applied after trait
+   * generation (experiment knob for guide EXP-006: extraversion → network
+   * growth). 0 = unbiased. */
+  extraversionBias: number
 }
 
 export const DEFAULT_CONFIG: SimulationConfig = {
@@ -18,7 +22,8 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   populationTarget: 1_000,
   years: 1,
   birthProbabilityPerMonth: 0.008,
-  employmentRate: 0.62
+  employmentRate: 0.62,
+  extraversionBias: 0
 }
 
 export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationConfig {
@@ -34,6 +39,9 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (!(merged.employmentRate >= 0 && merged.employmentRate <= 1)) {
     throw new Error(`employmentRate out of [0,1]: ${merged.employmentRate}`)
+  }
+  if (!Number.isFinite(merged.extraversionBias) || merged.extraversionBias < -1 || merged.extraversionBias > 1) {
+    throw new Error(`extraversionBias out of [-1,1]: ${merged.extraversionBias}`)
   }
   return merged
 }
