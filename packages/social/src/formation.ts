@@ -38,6 +38,20 @@ export const GLOBAL_RANDOM_PROBABILITY = 0.1
 export const INTERACTION_ATTEMPT_BASE_PROBABILITY = 0.6
 export const INTERACTION_ATTEMPT_EXTRAVERSION_WEIGHT = 0.8
 
+/**
+ * GEN-058 (stress → conflict pathway, social side): every interaction's
+ * conflict gain includes STRESS_CONFLICT_WEIGHT × mean(both persons'
+ * psychology.stress), so chronically stressed residents clash more often with
+ * the people they interact with. This is the social leg of the
+ * "high stress → conflict" pipeline — the family divorce system settles
+ * divorce probability from per-edge conflict, and this term is what lets
+ * population stress surface in those edges and close the
+ * stress → conflict → divorce chain. The term only enters the formula: no
+ * extra rng draws are added, so the established draw order (attempt bool,
+ * then the cascade, then the four per-interaction writes) is unchanged.
+ */
+export const STRESS_CONFLICT_WEIGHT = 0.06
+
 /** Weekly interaction-attempt probability for one person (GEN-053b). */
 export function interactionAttemptProbability(person: Person): number {
   return clamp01(
@@ -105,7 +119,9 @@ export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
  *         alive person (never self).
  *    Effects: familiarity += U[0.05, 0.15]; liking/trust gains scale with the
  *    pair's mean agreeableness; conflict gain scales with mean neuroticism and
- *    is reduced by agreeableness; noise comes from the forked rng; every write
+ *    the pair's mean psychology.stress (GEN-058 stress → conflict pathway;
+ *    downstream divorce settles from per-edge conflict) and is reduced by
+ *    agreeableness; noise comes from the forked rng; every write
  *    is clamped to [0, 1]; lastInteractionTick = current tick.
  *
  * 3. Friendship: when familiarity > FRIENDSHIP_FAMILIARITY_THRESHOLD and
@@ -235,11 +251,20 @@ function interact(ctx: SimContext, graph: RelationshipGraph, rng: Rng, tick: num
   const edge = graph.ensureEdge(a.id, b.id, tick)
   const agreeableness = (a.personality.agreeableness + b.personality.agreeableness) / 2
   const neuroticism = (a.personality.neuroticism + b.personality.neuroticism) / 2
+  // GEN-058: stress enters the conflict delta only — the rng draw sequence
+  // (familiarity → liking → trust → conflict) stays exactly as before.
+  const stress = (a.psychology.stress + b.psychology.stress) / 2
 
   edge.familiarity = clamp01(edge.familiarity + 0.05 + rng.next() * 0.1)
   edge.liking = clamp01(edge.liking + 0.02 + 0.06 * agreeableness + (rng.next() - 0.5) * 0.04)
   edge.trust = clamp01(edge.trust + 0.02 + 0.05 * agreeableness + (rng.next() - 0.5) * 0.04)
-  edge.conflict = clamp01(edge.conflict + 0.05 * neuroticism - 0.02 * agreeableness + (rng.next() - 0.5) * 0.02)
+  edge.conflict = clamp01(
+    edge.conflict +
+      0.05 * neuroticism +
+      STRESS_CONFLICT_WEIGHT * stress -
+      0.02 * agreeableness +
+      (rng.next() - 0.5) * 0.02
+  )
   edge.lastInteractionTick = tick
 
   if (

@@ -1,4 +1,5 @@
 import { GenesisSystem, nextDayStart, nextMonthStart, nextYearStart, SimContext } from '@genesis/simulation'
+import type { EconomyDeps } from './deps'
 import { dailyConsumption, monthlyJobMarket, monthlyPayroll } from './flows'
 import { recordEconomyMetrics } from './indicators'
 
@@ -11,6 +12,9 @@ import { recordEconomyMetrics } from './indicators'
  *   consumption(20) → payroll(21) → job-market(22) → metrics(30), so a month
  *   starts with the day's spending, then wages are paid, then the labor market
  *   reassigns jobs. Metrics always observe the post-flow state.
+ *
+ * Cross-domain hooks arrive via EconomyDeps (default: none — multipliers fall
+ * back to 1.0 and behavior is unchanged).
  */
 
 export const consumptionSystem: GenesisSystem = {
@@ -31,12 +35,15 @@ export const payrollSystem: GenesisSystem = {
   }
 }
 
-export const jobMarketSystem: GenesisSystem = {
-  id: 'economy.job-market',
-  priority: 22,
-  nextFireTick: nextMonthStart,
-  run(ctx: SimContext) {
-    monthlyJobMarket(ctx)
+/** Monthly job market; optional deps only affect hire-time wage pricing. */
+export function jobMarketSystem(deps?: EconomyDeps): GenesisSystem {
+  return {
+    id: 'economy.job-market',
+    priority: 22,
+    nextFireTick: nextMonthStart,
+    run(ctx: SimContext) {
+      monthlyJobMarket(ctx, deps)
+    }
   }
 }
 
@@ -50,6 +57,6 @@ export const economyMetricsSystem: GenesisSystem = {
 }
 
 /** The full economy system set, in a fixed order. */
-export function economySystems(): GenesisSystem[] {
-  return [consumptionSystem, payrollSystem, jobMarketSystem, economyMetricsSystem]
+export function economySystems(deps?: EconomyDeps): GenesisSystem[] {
+  return [consumptionSystem, payrollSystem, jobMarketSystem(deps), economyMetricsSystem]
 }

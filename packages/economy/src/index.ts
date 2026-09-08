@@ -1,3 +1,4 @@
+export * from './deps'
 export * from './init'
 export * from './flows'
 export * from './indicators'

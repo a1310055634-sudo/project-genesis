@@ -1,6 +1,7 @@
 import { TICKS_PER_MONTH, TICKS_PER_YEAR, ageYears } from '@genesis/core'
-import { addMoney, scaleMoney, subMoney } from '@genesis/shared'
+import { addMoney, cents, scaleMoney, subMoney } from '@genesis/shared'
 import { SimContext } from '@genesis/simulation'
+import type { EconomyDeps } from './deps'
 
 /**
  * Economy flows (GEN-026): payroll, consumption and the job market.
@@ -12,7 +13,15 @@ import { SimContext } from '@genesis/simulation'
  *   debt — spending is capped at current wealth).
  * - All randomness comes from the ctx RNG forked per (system, tick); iteration
  *   is in world.persons / world.employers array (creation) order.
+ *
+ * Cross-domain coupling is injectable only (EconomyDeps, e.g. the education
+ * skill → wage multiplier); with deps omitted behavior is byte-identical to
+ * the pre-HT-12 flows (multiplier 1.0).
  */
+
+function clamp(value: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, value))
+}
 
 // ---------------------------------------------------------------------------
 // Unemployment duration tracking (GEN-151b rehire friction)
@@ -70,6 +79,12 @@ const JOB_SEARCH_PROBABILITY_PER_MONTH = 0.3
 /** Working-age bounds (inclusive min, exclusive max), matching lifeStageFor. */
 const WORKING_AGE_MIN = 18
 const RETIREMENT_AGE = 65
+
+/** Defensive bounds for the injected skill wage multiplier (GEN-151b/HT-12):
+ * the documented callback contract is already [0.5, 2]; the economy side
+ * clamps anyway so a misbehaving injection can never break wage sanity. */
+const WAGE_SKILL_MULTIPLIER_MIN = 0.5
+const WAGE_SKILL_MULTIPLIER_MAX = 2
 
 // ---------------------------------------------------------------------------
 // Payroll (monthly)
@@ -218,10 +233,11 @@ export function applyEconomicShockIfNeeded(ctx: SimContext): void {
  *     (slot released, income zeroed, 'job.ended' reason 'retirement');
  * (b) job search — unemployed persons aged 18..64 search with p = 0.3/month
  *     and take the FIRST employer (array order) with a free slot
- *     ('job.started', wage = employer's monthly wage).
+ *     ('job.started', wage = employer's monthly wage, income = wage priced
+ *     through the injected skill multiplier at hire time, default 1.0).
  * Ages are derived from birthTick via ageYears (no stored age).
  */
-export function monthlyJobMarket(ctx: SimContext): void {
+export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`economy.jobmarket:${tick}`)
 
@@ -260,7 +276,16 @@ export function monthlyJobMarket(ctx: SimContext): void {
     const employer = ctx.world.employers.find((e) => e.filledSlots < e.jobSlots)
     if (employer === undefined) continue
     person.economy.employerId = employer.id
-    person.economy.monthlyIncomeCents = employer.monthlyWageCents
+    // GEN-151b follow-up (HT-12): skill is priced ONCE, at the moment of hire,
+    // and is NOT re-evaluated when the person's skill changes afterwards —
+    // recorded v1 simplification (no mid-employment wage repricing).
+    const multiplier = clamp(
+      deps?.wageSkillMultiplier?.(ctx, person.id) ?? 1,
+      WAGE_SKILL_MULTIPLIER_MIN,
+      WAGE_SKILL_MULTIPLIER_MAX
+    )
+    const incomeCents = cents(Math.round(employer.monthlyWageCents * multiplier))
+    person.economy.monthlyIncomeCents = incomeCents
     markEmployed(ctx, person.id)
     employer.filledSlots++
     ctx.events.emit({
@@ -268,7 +293,8 @@ export function monthlyJobMarket(ctx: SimContext): void {
       type: 'job.started',
       tick,
       actorIds: [person.id, employer.id],
-      payload: { wageCents: employer.monthlyWageCents }
+      // wageCents = employer's standard wage; incomeCents = actually priced pay
+      payload: { wageCents: employer.monthlyWageCents, incomeCents }
     })
   }
 }

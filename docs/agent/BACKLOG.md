@@ -51,12 +51,18 @@ Acceptance: records runtime, peak RSS, events/sec.
 ### NEXT Wave 3.2 (parallel-safe candidates)
 - GEN-053b Extraversion → interaction-frequency pathway — DONE (batch 9; EXP-006 flipped to +30% edges, CI95 disjoint)
 - GEN-151b Experiment metrics: time-sampled series (per-month snapshots) + rehire friction option — DONE (watchdog session: sampleMetrics opt + sampler system + sampleSummarize windows + rehireCooldownMonths knob; EXP-001 direction flipped positive)
-- GEN-058 Relationship conflict → divorce coupling depth (conflict from interactions, not just edges)
+- GEN-058 Relationship conflict → divorce coupling depth — DONE (batch 11: stress→conflict pathway in social formation, STRESS_CONFLICT_WEIGHT=0.06; divorce already reads edge conflict)
 - GEN-072 Parenthood effects: children need care (needRest/social), parent stress/wellbeing coupling
 - GEN-074 Family links depth: sibling detection via shared parents; household moves for children on divorce/marriage
 - GEN-060 Kinship graph view + kinship-aware interactions (avoid marriage between close kin — currently only friendship-based candidates)
 - KI-3/KI-6: death & decay semantics for friendship edges (relationship.ended on death, friendship decay floor)
 - Empty-household GC after moves (RT1-14) — DONE (watchdog takeover: family monthly phase 5, metric family.households_gc)
+
+## Wave 3.3 — Deep kinship ✅ (batch 11)
+- Kinship v2: blood second degree (uncle/niece, cousins) + affinal first degree (in-laws, step-parents via partner & spouseAtDeath edges); marriage ban auto-tightened; depth-boundary simplifications documented (RT2-07 closed)
+
+## Education ↔ Economy ✅ (batch 11)
+- economySystems(deps) wageSkillMultiplier injection; profile wires skillOf → 0.5 + 1.5×skill multiplier at hire time (skill priced once, recorded simplification)
 
 ## Wave 5 — Simulation Lab (P2, parallel-safe)
 - GEN-150 Experiment config format (JSON) + CLI `npm run exp`

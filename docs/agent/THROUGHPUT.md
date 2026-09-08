@@ -7,7 +7,13 @@
 - Build status: GREEN (typecheck clean, 195/195 tests, 46 files)
 - Last benchmark: benchmarks/RESULTS.md; last experiments: out/experiments/EXP-002.md, EXP-006.md
 
-## Last batch (10 — watchdog takeover, 05:00)
+## Last batch (11 — evening session)
+- Dispatched: 3 parallel agents — GEN-058 stress→conflict (social), skill→wage EconomyDeps (economy), kinship v2 deep kinship (simulation+family)
+- Completed: 3 + Director integration (profile wires skillOf → wage multiplier 0.5 + 1.5×skill)
+- Tests: 206 → 222 (51 files)
+- Status: GREEN, committed
+
+## Batch 10 (watchdog takeover, 05:00)
 - Trigger: main session idle ≥45 min; build/test GREEN at takeover
 - Task: RT1-14 empty-household GC (family monthly phase 5, metric family.households_gc)
 - Tests: 195 → 198 (3 new GC tests; deterministic constructions, no seed-tuned fixtures)

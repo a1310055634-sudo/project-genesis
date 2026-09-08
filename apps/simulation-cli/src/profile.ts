@@ -1,6 +1,6 @@
 import { GenesisSystem, buildKinshipIndex, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
-import { educationSystem } from '@genesis/education'
+import { educationSystem, skillOf } from '@genesis/education'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
@@ -66,7 +66,12 @@ export function fullStackSystems(): FullStackProfile {
     }), // priority 12, monthly
     educationSystem(), // priority 14, monthly (school enrolment, attainment, skill)
     socialSystem(graph), // priority 15, weekly
-    ...economySystems(), // priorities 20/21/22/30
+    // HT-12 final link: skill→wage coupling. Hires price once at
+    // income-assignment time as employer wage × (0.5 + 1.5 × skill), so
+    // unskilled hires earn half and fully-educated earn double the base wage.
+    ...economySystems({
+      wageSkillMultiplier: (ctx, personId) => 0.5 + 1.5 * skillOf(ctx, personId)
+    }), // priorities 20/21/22/30
     psychologySystem(psychEnvBridge(graph)) // priority 20 (same-tick ties resolve by registration order: after consumption)
   ]
   return { systems, graph }

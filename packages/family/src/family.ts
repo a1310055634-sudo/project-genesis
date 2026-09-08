@@ -34,16 +34,22 @@ import {
  * Money: estate transfers move exact integer cents (sum preserved — what one
  * side loses the other gains, via @genesis/shared addMoney).
  *
- * Recorded v1 simplifications:
+ * Recorded simplifications:
  * - estate: spouse 50% + children split the rest; spouse takes all only when
    there are no alive children; unclaimed estates land in an audit gauge;
  * - only opposite-sex marriage is modelled;
- * - affinal/step relations (in-laws, step-parents/step-siblings) are NOT kin
- *   for the v1 marriage ban (red team RT2-07): blood-depth only until Wave 3.3
- *   deep kinship lands (recorded gap, not an oversight);
- * - v1 bans marriage only for close kin — parent/child, full/half siblings,
-   grandparent/grandchild (kinship depth v1, GEN-060); cousins are ALLOWED
-   until deeper kinship arrives (recorded limitation);
+ * - the close-kin marriage ban uses kinship depth v2 (GEN-060, Wave 3.3,
+   red team RT2-07): blood to the second degree — parent/child, full/half
+   siblings, grandparent/grandchild, uncle/aunt vs nephew/niece, first
+   cousins — AND first-degree affinity over both spouse-edge kinds
+   (partnerId and the spouseAtDeathId snapshot): parents-in-law /
+   children-in-law, spouse's siblings / siblings' spouses, step-parents /
+   step-children;
+ * - v2 depth boundary (recorded simplification, not an oversight): further
+   relations stay marriage-allowed — great-grandparents, first cousins'
+   children, second cousins, an uncle's/aunt's spouse, a spouse's sibling's
+   spouse, blended step-siblings (a parent's spouse's own children) and
+   double in-law pairs;
  * - when spouses from different households marry, only the spouses move into
    the new household — children stay behind in their original household;
  * - on divorce the minors of the shared household follow their mother (or the
@@ -234,11 +240,13 @@ function marry(ctx: SimContext, households: Map<string, Household>, a: Person, b
 /**
  * Courtship: candidates are the seeker's own friends (social.relationshipIds),
  * filtered to alive, eligible, opposite-sex persons (v1 models opposite-sex
- * marriage only) who are NOT close kin (GEN-060: no parent/child, sibling or
- * grandparent/grandchild marriages; cousins allowed — v1 kinship depth), in
- * relationshipIds order, up to MAX_COURTSHIP_ATTEMPTS attempts. Each attempt
- * rolls p_marry = clamp(0.02 + 0.12 * affinity, 0, 0.2); the first hit marries
- * the pair (mutual partnerId + status) and merges households when they differ.
+ * marriage only) who are NOT close kin (GEN-060 via kinship v2: no blood kin
+ * to the second degree — parent/child, sibling, grandparent/grandchild,
+ * uncle/aunt, first cousin — and no first-degree affinity: in-laws and
+ * step-relations), in relationshipIds order, up to MAX_COURTSHIP_ATTEMPTS
+ * attempts. Each attempt rolls p_marry = clamp(0.02 + 0.12 * affinity, 0,
+ * 0.2); the first hit marries the pair (mutual partnerId + status) and merges
+ * households when they differ.
  */
 function runMarriages(ctx: SimContext, deps: FamilyDeps | undefined): void {
   const tick = ctx.tick()
