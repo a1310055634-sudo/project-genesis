@@ -173,11 +173,12 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
    * resident's trait at generation; interaction and friendship dynamics in
    * @genesis/social respond to personality.
    *
-   * STATUS 2026-09-08 (updated after GEN-053b): direction REPRODUCED. The
-   * interaction-frequency pathway (p_attempt = 0.6 + 0.8*(extraversion-0.5))
-   * flipped the result: extraverted arm ~1391 edges vs control ~1072 (+30%,
-   * all 3 seeds consistent, CI95 disjoint). First full round trip:
-   * experiment -> negative result -> model gap -> fix -> direction confirmed.
+   * STATUS 2026-09-08/09: direction REPRODUCED and STRENGTHENED by the KI-8
+   * attention budget (friendCap = 20 + 20*extraversion). Full-stack early
+   * window (months 1-6): extraverted 344 edges vs control 250 (+38%, CI95
+   * disjoint). History: endpoint means flat (0.460 vs 0.467) -> interaction-
+   * frequency pathway (GEN-053b) flipped it (+30%) -> attention cap amplified
+   * it (+38%). Two full experiment->diagnosis->fix->confirm round trips.
    */
   'EXP-006': validate({
     id: 'EXP-006',

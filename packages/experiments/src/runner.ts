@@ -223,6 +223,10 @@ export function sampleSummarize(
         .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
       if (inWindow.length > 0) values.push(mean(inWindow))
     }
+    // arms with no window samples (sparse metrics, e.g. event-dependent
+    // gauges) are OMITTED rather than crashing on an empty mean — same
+    // convention as toCsv's empty cells
+    if (values.length === 0) continue
     summaries.push({
       arm: arm.name,
       n: values.length,

@@ -15,3 +15,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-09 02:00 TAKEOVER (idle 88min, build/test GREEN) — task: EXP-003 communitySupportBias knob + experiment
 - 2026-09-09 02:xx TAKEOVER COMPLETE — EXP-003 knob+experiment (support buffers stress: 0.443 vs 0.488, CI95 disjoint); replay path-dependence P0 fixed (endpoint gauge); EXP-001 window honestly re-scoped (minimal-factory signal +0.002, sub-noise; full-stack +0.011); 222/222 green, committed
 - 2026-09-09 03:40 TAKEOVER COMPLETE — KI-8 attention budget (friendCap = 20 + 20×extraversion, gates new friendships both-sides; existing ties unaffected), 223/223 green, committed
+- 2026-09-09 04:00 TAKEOVER (idle 45min, build/test GREEN) — task: KI-8 regression probe (re-run EXP-006, record post-cap numbers)
+- 2026-09-09 04:xx TAKEOVER COMPLETE — KI-8 regression probe: EXP-006 re-run post-cap, extraverted 344 vs control 250 edges (+38%, CI95 disjoint, stronger than pre-cap +30%); also fixed sampleSummarize empty-mean crash + CLI per-experiment sampling list; 223/223 green, committed

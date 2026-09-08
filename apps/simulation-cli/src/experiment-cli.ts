@@ -15,9 +15,11 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
     throw new Error(`unknown experiment '${id}'. Available: ${Object.keys(EXPERIMENTS).sort().join(', ')}`)
   }
   console.log(`=== Experiment ${config.id}: ${config.question} ===`)
-  const result = runExperiment(config, () => fullStackSystems().systems, {
-    sampleMetrics: ['stress.mean', 'wellbeing.mean', 'population']
-  })
+  // always sample the experiment's own headline metric (watchdog fix: the
+  // EXP-006 window was empty because social_edges was never sampled)
+  const primaryMetric = PRIMARY_METRIC[config.id] ?? 'stress.mean'
+  const sampleMetrics = [...new Set(['stress.mean', 'wellbeing.mean', 'population', primaryMetric])]
+  const result = runExperiment(config, () => fullStackSystems().systems, { sampleMetrics })
   for (const summary of result.outcomes) {
     console.log(`  arm=${summary.arm} seed=${summary.seed} alive=${summary.alive} runtime=${summary.runtimeMs}ms digest=${summary.digest}`)
   }
@@ -25,16 +27,13 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
   const csvPath = path.join(outDir, `${config.id}.csv`)
   const mdPath = path.join(outDir, `${config.id}.md`)
   fs.writeFileSync(csvPath, toCsv(result))
-  fs.writeFileSync(mdPath, reportMarkdown(result, PRIMARY_METRIC[config.id] ?? 'stress.mean'))
+  fs.writeFileSync(mdPath, reportMarkdown(result, primaryMetric))
   // GEN-151b: early-window summary catches transient effects endpoint means dilute
-  const window = sampleSummarize(result, PRIMARY_METRIC[config.id] ?? 'stress.mean', TICKS_PER_MONTH, 6 * TICKS_PER_MONTH)
+  const window = sampleSummarize(result, primaryMetric, TICKS_PER_MONTH, 6 * TICKS_PER_MONTH)
   const windowLines = window
     .map((w) => `  arm=${w.arm} n=${w.n} mean=${Math.round(w.mean * 1e6) / 1e6} ± ${Math.round(w.ci95 * 1e6) / 1e6}`)
     .join('\n')
-  fs.appendFileSync(
-    mdPath,
-    `\n## Early-window means (months 1-6, ${PRIMARY_METRIC[config.id] ?? 'stress.mean'})\n\n${windowLines}\n`
-  )
+  fs.appendFileSync(mdPath, `\n## Early-window means (months 1-6, ${primaryMetric})\n\n${windowLines}\n`)
   console.log(`window (months 1-6):`)
   console.log(windowLines)
   console.log(`csv     : ${csvPath}`)
