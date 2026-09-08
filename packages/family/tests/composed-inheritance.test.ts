@@ -14,6 +14,12 @@ describe('composed-stack inheritance through real demographic deaths (RT2-01)', 
       { seed: 1234, populationTarget: 300, years: 20 },
       { systems: [demographicsSystem, familySystem()] }
     )
+    let spouseInheritances = 0
+    sim.ctx.events.onAny((event) => {
+      if (event.type === 'wealth.inherited' && (event.payload as { relation?: string }).relation === 'spouse') {
+        spouseInheritances++
+      }
+    })
     sim.run()
 
     const stats = sim.ctx.log.stats()
@@ -35,6 +41,12 @@ describe('composed-stack inheritance through real demographic deaths (RT2-01)', 
 
     // no married-wealth ever leaked to unclaimed while a spouse snapshot
     // existed: conservation check on estates distribution semantics
+    // the RT2-01 pathway actually fired: at least one spouse inherited.
+    // (Unclaimed estates CAN legitimately exist here — widowed-before-
+    // inheritance races and never-married wealth holders — so only the
+    // spouse-inheritance regression is asserted, per the mutation check.)
+    expect(spouseInheritances).toBeGreaterThan(0)
+
     const invariants = checkInvariants(sim.ctx.world, sim.ctx.clock.tick, sim.ctx.world.seed)
     expect(invariants.violations).toBe(0)
   }, 240_000)

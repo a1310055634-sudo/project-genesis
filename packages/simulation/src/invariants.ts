@@ -1,5 +1,6 @@
 import { Person, WorldState } from './types'
 import { buildIndex } from './context'
+import { buildKinshipIndex } from './kinship'
 
 /**
  * Global invariant suite (guide §27). Violations throw with seed/tick/entity
@@ -135,6 +136,19 @@ export function checkInvariants(world: WorldState, tick: number, seed: number): 
         `employer ${employerId} filledSlots=${employer.filledSlots} but ${count} persons reference it`,
         [employerId]
       )
+    }
+  }
+
+  // semantic marriage check (red team RT3-07): married couples must never be
+  // close kin — guards GEN-060 against future refactor regressions
+  const kin = buildKinshipIndex(world)
+  for (const person of world.persons) {
+    if (!person.alive || person.maritalStatus !== 'married' || person.partnerId === null) continue
+    checks++
+    const partner = personById.get(person.partnerId)
+    if (partner === undefined) continue // already covered by partner-exists
+    if (kin.isCloseKin(person, partner)) {
+      fail('married-not-close-kin', `married pair ${person.id}/${partner.id} are close kin`, [person.id, partner.id])
     }
   }
 

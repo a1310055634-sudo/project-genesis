@@ -7,6 +7,8 @@ export interface NumericStats {
   mean: number
   min: number
   max: number
+  /** Running sum — enables monthly differencing for time sampling (RT3-03). */
+  sum: number
 }
 
 export class MetricsRegistry {
@@ -53,7 +55,7 @@ export class MetricsRegistry {
   statsOf(name: string): NumericStats | null {
     const cur = this.stats.get(name)
     if (cur === undefined) return null
-    return { count: cur.count, mean: cur.sum / cur.count, min: cur.min, max: cur.max }
+    return { count: cur.count, mean: cur.sum / cur.count, min: cur.min, max: cur.max, sum: cur.sum }
   }
 
   /** Deterministic snapshot: ALL keys globally sorted, values rounded to 6 decimals to avoid float noise in digests. */

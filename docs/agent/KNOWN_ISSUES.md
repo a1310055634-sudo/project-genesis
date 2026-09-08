@@ -32,3 +32,19 @@ The population generator's greedy pairing leaves skewed single-sex pools for som
 - RT1-03 systems scheduled at the final tick never fired → FIXED: stepTo fires entries ≤ target tick.
 - RT1-04 EventLog O(n) splice per append → FIXED: ring buffer.
 - RT1-05 createHousehold O(N²) in generation → FIXED: shared person index.
+
+## KI-9 · psychEnvBridge rebuilds the kinship index every simulated day (P3, perf, red team RT3-10)
+The caregiverLoad computation only needs per-person young-child counts, but rebuilds the full O(ever-born) kinship index daily (~3,600 rebuilds per 10k×10y run). Fix direction: incremental per-person young-child counter maintained on person.born/person.died events (same pattern as the education side-table). Tracked as a benchmark regression observation.
+
+## Red team round 3 (2026-09-09, verdict PASS WITH ISSUES) — disposition
+- RT3-01 widow-side affinal kinship — FIXED (deadSpouseOf reverse map + unified spouseEdgeIds/hasSpouseEdge + regression test)
+- RT3-02 EXP-SANITY populationTarget silently ignored — FIXED (runner allows arm populationTarget override; seed/years stay reserved)
+- RT3-03 sampler reads cumulative stats means — FIXED (monthly differencing via stats sum/count deltas, in experiment sampler AND API history)
+- RT3-04 API person index blind to newborns — FIXED (monotonic size staleness check)
+- RT3-05 hire-cohort wage pricing artifact — DOCUMENTED (DECISIONS.md: generation-time hires priced at base wage by design until education bootstrap exists)
+- RT3-06 unemployedSince dead entries never cleaned — FIXED (search loop garbage-collects dead residents)
+- RT3-07 no semantic marriage invariant — FIXED (married-not-close-kin invariant via kinship index)
+- RT3-08 composed RT2-01 test couldn't catch its regression — FIXED (spouse-inheritance event counter + assertions)
+- RT3-09 tautological GC assertion + EXP-001 text mismatch — FIXED both
+- RT3-10 kinship daily rebuild — tracked as KI-9
+- Carryovers RT1-10/11/12 remain LOW/backlog.

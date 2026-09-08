@@ -104,7 +104,7 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   'EXP-001': validate({
     id: 'EXP-001',
     question:
-      'Model-internal mechanism check: does a mid-run layoff shock (40% of employed at the ' +
+      'Model-internal mechanism check: does a mid-run layoff shock (50% of employed at the ' +
       'start of year 1) produce higher mean stress than an economy that keeps full ' +
       'employment, measured after 2 simulated years? Verifies the shock→strain→stress ' +
       'pathway inside the simulator; no real-world causal claim.',

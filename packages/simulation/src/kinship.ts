@@ -57,6 +57,18 @@ export function buildKinshipIndex(world: WorldState): KinshipIndex {
       else list.push(person.id)
     }
   }
+  // widow-side spouse edges (red team RT3-01): the death-time snapshot lives
+  // on the DECEASED, so a living widow(er) has no forward reference to the
+  // deceased spouse. Reverse-map survivor -> deceased so affinal kinship
+  // queries for widows/widowers work (e.g. widow vs her late husband's brother).
+  const deadSpouseOf = new Map<string, string>()
+  for (const person of world.persons) {
+    if (!person.alive && person.spouseAtDeathId !== null) {
+      if (!deadSpouseOf.has(person.spouseAtDeathId)) {
+        deadSpouseOf.set(person.spouseAtDeathId, person.id)
+      }
+    }
+  }
 
   const childrenOf = (personId: string): Person[] =>
     (parentToChildren.get(personId) ?? [])
@@ -68,6 +80,7 @@ export function buildKinshipIndex(world: WorldState): KinshipIndex {
       .filter((id): id is string => id !== null)
       .map((id) => byId.get(id))
       .filter((p): p is Person => p !== undefined)
+
 
   const siblingsOf = (personId: string): Person[] => {
     const person = byId.get(personId)
@@ -128,20 +141,24 @@ export function buildKinshipIndex(world: WorldState): KinshipIndex {
     return out
   }
 
-  /** Spouse-edge targets of a person: the living marriage (partnerId) plus
-   * the death-time snapshot (spouseAtDeathId) — both anchor affinity. */
+  /** Spouse-edge targets of a person: the living marriage (partnerId), the
+   * death-time snapshot (spouseAtDeathId), and — for a living widow(er) —
+   * the reverse-mapped deceased spouse (RT3-01). All anchor affinity. */
   const spouseEdgeIds = (person: Person): string[] => {
     const edges: string[] = []
     if (person.partnerId !== null) edges.push(person.partnerId)
     if (person.spouseAtDeathId !== null && person.spouseAtDeathId !== person.partnerId) {
       edges.push(person.spouseAtDeathId)
     }
+    const widowed = deadSpouseOf.get(person.id)
+    if (widowed !== undefined && !edges.includes(widowed)) edges.push(widowed)
     return edges
   }
 
-  /** Directed spouse edge person -> target (either edge kind). */
+  /** Directed spouse edge person -> target (either edge kind, both directions
+   * of the death-time snapshot). */
   const hasSpouseEdge = (person: Person, targetId: string): boolean =>
-    person.partnerId === targetId || person.spouseAtDeathId === targetId
+    spouseEdgeIds(person).includes(targetId) || deadSpouseOf.get(targetId) === person.id
 
   const isCloseKin = (a: Person, b: Person): boolean => {
     if (a.id === b.id) return true

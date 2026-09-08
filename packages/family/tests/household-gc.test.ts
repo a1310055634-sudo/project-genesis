@@ -85,8 +85,7 @@ describe('household GC (RT1-14)', () => {
     const b = build()
     b.run()
     expect(a.digest()).toBe(b.digest())
-    // GC actually did something in a 3-year run with marriages/deaths
-    expect(a.ctx.metrics.counterValue('family.households_gc')).toBeGreaterThanOrEqual(0)
+    // (this fixture has no social system, so no moves and legitimately no GC)
     expect(checkInvariants(a.ctx.world, a.ctx.clock.tick, a.ctx.world.seed).violations).toBe(0)
   })
 })

@@ -73,9 +73,16 @@ const POP_CHILDREN_SHARE = 'population.childrenShare'
 
 const SAMPLES_KEY = 'experiments.samples'
 
-/** Builds the monthly sampler system (GEN-151b). Priority 9 — before all
- * domain systems, so a row reflects the state entering the month. */
+/**
+ * Builds the monthly sampler system (GEN-151b). Priority 9 — before all
+ * domain systems, so a row reflects the state entering the month.
+ * Stats keys ('x.mean') are MONTHLY DIFFERENCES of the cumulative stats
+ * (red team RT3-03): Δsum / Δcount versus the previous sample — a true
+ * within-month mean, not a diluted running average. Gauges are point-in-time.
+ */
 function samplerSystem(sampleMetrics: string[]): GenesisSystem {
+  // previous cumulative stats per stats-key, for differencing
+  const prevStats = new Map<string, { sum: number; count: number }>()
   return {
     id: 'experiment-sampler',
     priority: 9,
@@ -85,8 +92,15 @@ function samplerSystem(sampleMetrics: string[]): GenesisSystem {
       const values: Record<string, number> = {}
       for (const key of sampleMetrics) {
         if (key.endsWith('.mean')) {
-          const v = ctx.metrics.statsOf(key.slice(0, -'.mean'.length))?.mean
-          if (v !== null && v !== undefined) values[key] = v
+          const base = key.slice(0, -'.mean'.length)
+          const stats = ctx.metrics.statsOf(base)
+          if (stats === null) continue
+          const prev = prevStats.get(base)
+          prevStats.set(base, { sum: stats.sum, count: stats.count })
+          if (prev === undefined) continue // first sample: no previous window yet
+          const deltaCount = stats.count - prev.count
+          if (deltaCount <= 0) continue // nothing recorded this month
+          values[key] = (stats.sum - prev.sum) / deltaCount
         } else if (ctx.metrics.hasGauge(key)) {
           values[key] = ctx.metrics.gaugeValue(key)
         }
@@ -127,9 +141,10 @@ export function runExperiment(
       const baseSystems = systemsFactory()
       const systems = sampleMetrics.length > 0 ? [...baseSystems, samplerSystem(sampleMetrics)] : baseSystems
       const sim = Simulation.create(
-        // authoritative keys last (red team RT2-03): arm overrides can tune
-        // model knobs but can never touch seed/population/years
-        { ...arm.overrides, seed, populationTarget: config.population, years: config.years },
+        // authoritative keys last (red team RT2-03 + RT3-02): seed/years are
+        // never overridable (config validate rejects them); populationTarget
+        // IS arm-overridable (EXP-SANITY scale sweep depends on it)
+        { ...arm.overrides, seed, years: config.years, populationTarget: arm.overrides.populationTarget ?? config.population },
         { systems, checkInvariants: invariantChecks }
       )
       sim.run()

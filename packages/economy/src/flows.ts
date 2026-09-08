@@ -266,8 +266,13 @@ export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
 
   // (b) job search — gated by rehire friction (GEN-151b): an unemployment
   // spell younger than rehireCooldownMonths cannot search yet
+  const unemployedMap = unemployedSinceMap(ctx)
   for (const person of ctx.world.persons) {
-    if (!person.alive) continue
+    if (!person.alive) {
+      // red team RT3-06: dead residents' side-table entries are garbage
+      unemployedMap.delete(person.id)
+      continue
+    }
     if (person.economy.employerId !== null) continue
     const age = ageYears(person.birthTick, tick)
     if (age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) continue

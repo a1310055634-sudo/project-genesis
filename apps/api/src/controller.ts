@@ -100,13 +100,28 @@ export class SimulationController {
     return null
   }
 
+  private prevStats = new Map<string, { sum: number; count: number }>()
+
+  /** Monthly-difference mean of a stats metric (red team RT3-03): true
+   * within-month value instead of a diluted running average. */
+  private deltaMean(m: { statsOf(name: string): { sum: number; count: number } | null }, base: string): number | null {
+    const stats = m.statsOf(base)
+    if (stats === null) return null
+    const prev = this.prevStats.get(base)
+    this.prevStats.set(base, { sum: stats.sum, count: stats.count })
+    if (prev === undefined) return null
+    const deltaCount = stats.count - prev.count
+    if (deltaCount <= 0) return null
+    return (stats.sum - prev.sum) / deltaCount
+  }
+
   private recordSample(): void {
     if (this.sim === null) return
     const m = this.sim.ctx.metrics
     // stress/wellbeing live in the STATS namespace (metrics.record), not gauges
-    // (red team RT2-02) — read via statsOf with last-known-value fallback
-    const stress = m.statsOf('stress')?.mean ?? this.lastSampleValue('stress.mean')
-    const wellbeing = m.statsOf('wellbeing')?.mean ?? this.lastSampleValue('wellbeing.mean')
+    // (red team RT2-02) — read via monthly differencing with last-known fallback
+    const stress = this.deltaMean(m, 'stress') ?? this.lastSampleValue('stress.mean')
+    const wellbeing = this.deltaMean(m, 'wellbeing') ?? this.lastSampleValue('wellbeing.mean')
     const sample: HistorySample = {
       tick: this.sim.ctx.clock.tick,
       stress,
@@ -187,9 +202,9 @@ export class SimulationController {
 
   person(personId: string): unknown {
     if (this.sim === null) throw new Error('no active simulation')
-    // red team RT2-08: index built once per run (arrays only grow), so the
-    // dossier endpoint stays O(1) instead of scanning 10k+ persons per request
-    if (this.index === null || this.indexForSim !== this.sim) {
+    // red team RT2-08 + RT3-04: index cached per run but REBUILT when new
+    // persons are born (persons.length is monotonic — a cheap staleness check)
+    if (this.index === null || this.indexForSim !== this.sim || this.index.personById.size !== this.sim.ctx.world.persons.length) {
       this.index = buildIndex(this.sim.ctx.world)
       this.indexForSim = this.sim
     }

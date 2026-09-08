@@ -37,6 +37,24 @@ describe('kinship index (Wave 3.2 contract)', () => {
     expect(kin.isCloseKin(father, father)).toBe(true)
   })
 
+  it('widow side: a widow is close kin to her late husband brother-in-law (RT3-01)', () => {
+    const ctx = makeCtx()
+    // two brothers via a shared father (areSiblings needs a common parent)
+    const father = createPerson(ctx, undefined, { sex: 'male', birthTick: -60 * TICKS_PER_YEAR })
+    const husband = createPerson(ctx, undefined, { sex: 'male', birthTick: -40 * TICKS_PER_YEAR, parents: { fatherId: father.id } })
+    const brother = createPerson(ctx, undefined, { sex: 'male', birthTick: -38 * TICKS_PER_YEAR, parents: { fatherId: father.id } })
+    const widow = createPerson(ctx, undefined, { sex: 'female', birthTick: -38 * TICKS_PER_YEAR })
+    // husband dies: death-time snapshot written on the DECEASED (demographics flow)
+    husband.alive = false
+    husband.deathTick = 0
+    husband.spouseAtDeathId = widow.id
+    const kin = buildKinshipIndex(ctx.world)
+    // the LIVING widow must resolve affinity through the reverse map — this is
+    // the production query pair (two living people), unlike the dead-side case
+    expect(kin.isCloseKin(widow, brother)).toBe(true)
+    expect(kin.isCloseKin(brother, widow)).toBe(true)
+  })
+
   it('integration: generated minors resolve to siblings via the index', () => {
     const sim = Simulation.create({ seed: 42, populationTarget: 200, years: 1 })
     const kin = buildKinshipIndex(sim.ctx.world)
