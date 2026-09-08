@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
+import { TICKS_PER_MONTH } from '@genesis/core'
 import * as path from 'node:path'
-import { EXPERIMENTS, reportMarkdown, runExperiment, toCsv } from '@genesis/experiments'
+import { EXPERIMENTS, reportMarkdown, runExperiment, sampleSummarize, toCsv } from '@genesis/experiments'
 import { fullStackSystems } from './profile'
 
 /**
@@ -14,7 +15,9 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
     throw new Error(`unknown experiment '${id}'. Available: ${Object.keys(EXPERIMENTS).sort().join(', ')}`)
   }
   console.log(`=== Experiment ${config.id}: ${config.question} ===`)
-  const result = runExperiment(config, () => fullStackSystems().systems)
+  const result = runExperiment(config, () => fullStackSystems().systems, {
+    sampleMetrics: ['stress.mean', 'wellbeing.mean', 'population']
+  })
   for (const summary of result.outcomes) {
     console.log(`  arm=${summary.arm} seed=${summary.seed} alive=${summary.alive} runtime=${summary.runtimeMs}ms digest=${summary.digest}`)
   }
@@ -23,6 +26,17 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
   const mdPath = path.join(outDir, `${config.id}.md`)
   fs.writeFileSync(csvPath, toCsv(result))
   fs.writeFileSync(mdPath, reportMarkdown(result, PRIMARY_METRIC[config.id] ?? 'stress.mean'))
+  // GEN-151b: early-window summary catches transient effects endpoint means dilute
+  const window = sampleSummarize(result, PRIMARY_METRIC[config.id] ?? 'stress.mean', TICKS_PER_MONTH, 6 * TICKS_PER_MONTH)
+  const windowLines = window
+    .map((w) => `  arm=${w.arm} n=${w.n} mean=${Math.round(w.mean * 1e6) / 1e6} ± ${Math.round(w.ci95 * 1e6) / 1e6}`)
+    .join('\n')
+  fs.appendFileSync(
+    mdPath,
+    `\n## Early-window means (months 1-6, ${PRIMARY_METRIC[config.id] ?? 'stress.mean'})\n\n${windowLines}\n`
+  )
+  console.log(`window (months 1-6):`)
+  console.log(windowLines)
   console.log(`csv     : ${csvPath}`)
   console.log(`report  : ${mdPath}`)
   return { csvPath, mdPath }

@@ -50,7 +50,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 
 ### NEXT Wave 3.2 (parallel-safe candidates)
 - GEN-053b Extraversion → interaction-frequency pathway — DONE (batch 9; EXP-006 flipped to +30% edges, CI95 disjoint)
-- GEN-151b Experiment metrics: time-sampled series (per-month snapshots) + rehire friction option — EXP-001 showed a mid-run layoff shock's stress bump is invisible in endpoint means (rehire ~1-2 months); needs intra-run sampling to discriminate (recorded EXP-001 negative result)
+- GEN-151b Experiment metrics: time-sampled series (per-month snapshots) + rehire friction option — DONE (watchdog session: sampleMetrics opt + sampler system + sampleSummarize windows + rehireCooldownMonths knob; EXP-001 direction flipped positive)
 - GEN-058 Relationship conflict → divorce coupling depth (conflict from interactions, not just edges)
 - GEN-072 Parenthood effects: children need care (needRest/social), parent stress/wellbeing coupling
 - GEN-074 Family links depth: sibling detection via shared parents; household moves for children on divorce/marriage

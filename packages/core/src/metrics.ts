@@ -44,6 +44,12 @@ export class MetricsRegistry {
     return this.gauges.get(name) ?? 0
   }
 
+  /** Whether the gauge was ever set this run (GEN-151b: lets samplers
+   * distinguish 'recorded 0' from 'never recorded'). */
+  hasGauge(name: string): boolean {
+    return this.gauges.has(name)
+  }
+
   statsOf(name: string): NumericStats | null {
     const cur = this.stats.get(name)
     if (cur === undefined) return null

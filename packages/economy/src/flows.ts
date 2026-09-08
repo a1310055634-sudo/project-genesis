@@ -15,6 +15,40 @@ import { SimContext } from '@genesis/simulation'
  */
 
 // ---------------------------------------------------------------------------
+// Unemployment duration tracking (GEN-151b rehire friction)
+// ---------------------------------------------------------------------------
+
+const UNEMPLOYED_SINCE = 'economy.unemployedSince'
+
+/** Side-table: personId -> tick at which the current unemployment spell began
+ * (GEN-151b). Residents absent from the map are considered long-unemployed or
+ * never employed (search-eligible once the cooldown passes from tick 0). */
+function unemployedSinceMap(ctx: SimContext): Map<string, number> {
+  const existing = ctx.extensions.get(UNEMPLOYED_SINCE)
+  if (existing instanceof Map) return existing as Map<string, number>
+  const created = new Map<string, number>()
+  ctx.extensions.set(UNEMPLOYED_SINCE, created)
+  return created
+}
+
+function markUnemployed(ctx: SimContext, personId: string, tick: number): void {
+  const map = unemployedSinceMap(ctx)
+  if (!map.has(personId)) map.set(personId, tick)
+}
+
+function markEmployed(ctx: SimContext, personId: string): void {
+  unemployedSinceMap(ctx).delete(personId)
+}
+
+/** Search eligibility under rehire friction: the unemployment spell must be
+ * at least rehireCooldownMonths old (or the person absent from the map). */
+function searchEligible(ctx: SimContext, personId: string, tick: number): boolean {
+  const since = unemployedSinceMap(ctx).get(personId)
+  if (since === undefined) return true
+  return tick - since >= ctx.config.rehireCooldownMonths * TICKS_PER_MONTH
+}
+
+// ---------------------------------------------------------------------------
 // Tunables (named constants with rationale; v1 values are illustrative, not
 // calibrated against real data — recorded simplification).
 // ---------------------------------------------------------------------------
@@ -165,6 +199,7 @@ export function applyEconomicShockIfNeeded(ctx: SimContext): void {
     if (employer !== undefined) employer.filledSlots = Math.max(0, employer.filledSlots - 1)
     person.economy.employerId = null
     person.economy.monthlyIncomeCents = 0
+    markUnemployed(ctx, person.id, tick)
     ctx.events.emit({
       id: ctx.ids.next('event'),
       type: 'job.ended',
@@ -203,6 +238,7 @@ export function monthlyJobMarket(ctx: SimContext): void {
     if (employer !== undefined) employer.filledSlots = Math.max(0, employer.filledSlots - 1)
     person.economy.employerId = null
     person.economy.monthlyIncomeCents = 0
+    markUnemployed(ctx, person.id, tick)
     ctx.events.emit({
       id: ctx.ids.next('event'),
       type: 'job.ended',
@@ -212,17 +248,20 @@ export function monthlyJobMarket(ctx: SimContext): void {
     })
   }
 
-  // (b) job search
+  // (b) job search — gated by rehire friction (GEN-151b): an unemployment
+  // spell younger than rehireCooldownMonths cannot search yet
   for (const person of ctx.world.persons) {
     if (!person.alive) continue
     if (person.economy.employerId !== null) continue
     const age = ageYears(person.birthTick, tick)
     if (age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) continue
+    if (!searchEligible(ctx, person.id, tick)) continue
     if (!rng.bool(JOB_SEARCH_PROBABILITY_PER_MONTH)) continue
     const employer = ctx.world.employers.find((e) => e.filledSlots < e.jobSlots)
     if (employer === undefined) continue
     person.economy.employerId = employer.id
     person.economy.monthlyIncomeCents = employer.monthlyWageCents
+    markEmployed(ctx, person.id)
     employer.filledSlots++
     ctx.events.emit({
       id: ctx.ids.next('event'),

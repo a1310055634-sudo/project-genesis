@@ -19,6 +19,10 @@ export interface SimulationConfig {
    * `atYear`, a single layoff wave removes `layoffShare` of all employed
    * residents (reason 'economic_shock'). Optional — absent = no shock. */
   economicShock?: EconomicShock
+  /** Rehire friction (GEN-151b): months a resident must stay unemployed
+   * before job search eligibility. 0 = no friction (legacy behavior).
+   * Models real labor-market matching delays; makes shock effects persist. */
+  rehireCooldownMonths: number
 }
 
 export interface EconomicShock {
@@ -34,7 +38,8 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   years: 1,
   birthProbabilityPerMonth: 0.008,
   employmentRate: 0.62,
-  extraversionBias: 0
+  extraversionBias: 0,
+  rehireCooldownMonths: 0
 }
 
 export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationConfig {
@@ -53,6 +58,9 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (!Number.isFinite(merged.extraversionBias) || merged.extraversionBias < -1 || merged.extraversionBias > 1) {
     throw new Error(`extraversionBias out of [-1,1]: ${merged.extraversionBias}`)
+  }
+  if (!Number.isInteger(merged.rehireCooldownMonths) || merged.rehireCooldownMonths < 0 || merged.rehireCooldownMonths > 24) {
+    throw new Error(`rehireCooldownMonths must be an integer in [0, 24], got ${merged.rehireCooldownMonths}`)
   }
   if (merged.economicShock !== undefined) {
     const shock = merged.economicShock
