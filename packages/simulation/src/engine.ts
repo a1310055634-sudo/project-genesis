@@ -76,18 +76,26 @@ export class Simulation {
     }
   }
 
+  /** Post-run invariant check: refreshes the endpoint gauge over the FINAL
+   * world so digests are path-independent (watchdog session fix: stepped and
+   * one-shot runs previously disagreed on this stale derived metric). */
+  private runFinalInvariantCheck(): void {
+    const stats = checkInvariants(this.ctx.world, this.ctx.clock.tick, this.ctx.world.seed)
+    this.ctx.metrics.gauge('invariant_checks_last', stats.checks)
+  }
+
   /** Run N more years from the current position. */
   runYears(years: number): void {
     const target = this.ctx.clock.tick + Math.ceil(years * TICKS_PER_YEAR)
     this.stepTo(target)
+    this.runFinalInvariantCheck()
   }
 
   /** Run from tick 0 (no-op after generation) through config.years. */
   run(years?: number): void {
     const yearsToRun = years ?? this.config.years
     this.stepTo(Math.ceil(yearsToRun * TICKS_PER_YEAR))
-    const stats = checkInvariants(this.ctx.world, this.ctx.clock.tick, this.ctx.world.seed)
-    this.ctx.metrics.gauge('invariant_checks_last', stats.checks)
+    this.runFinalInvariantCheck()
   }
 
   /**

@@ -44,6 +44,7 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
 
 /** Headline metric per experiment (the one its question is about). */
 const PRIMARY_METRIC: Record<string, string> = {
+  'EXP-003': 'stress.mean',
   'EXP-002': 'stress.mean',
   'EXP-006': 'social_edges',
   'EXP-027': 'population',

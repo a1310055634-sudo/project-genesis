@@ -7,7 +7,13 @@
 - Build status: GREEN (typecheck clean, 195/195 tests, 46 files)
 - Last benchmark: benchmarks/RESULTS.md; last experiments: out/experiments/EXP-002.md, EXP-006.md
 
-## Last batch (11 — evening session)
+## Last batch (12 — watchdog takeover, 02:00)
+- EXP-003 landed: communitySupportBias knob + experiment (supported 0.443 vs control 0.488 — buffering direction confirmed, CI95 disjoint)
+- P0 determinism fix: endpoint invariant gauge was path-dependent (stepped vs one-shot digests diverged); final check now unified in run/runYears
+- EXP-001 window honestly re-scoped: minimal-factory signal ~+0.002 at months 4-5 (sub-noise at n=5), full stack +0.011 — bounded non-inverse assertion replaces over-claimed direction
+- Tests: 222 (51 files), GREEN
+
+## Batch 11 (evening session)
 - Dispatched: 3 parallel agents — GEN-058 stress→conflict (social), skill→wage EconomyDeps (economy), kinship v2 deep kinship (simulation+family)
 - Completed: 3 + Director integration (profile wires skillOf → wage multiplier 0.5 + 1.5×skill)
 - Tests: 206 → 222 (51 files)

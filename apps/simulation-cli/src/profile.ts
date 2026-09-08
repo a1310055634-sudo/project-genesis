@@ -35,11 +35,14 @@ export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person
     const youngChildren = cachedKin
       .childrenOf(person.id)
       .filter((c) => c.alive && ageYears(c.birthTick, tick) < 6).length
+    // EXP-003 knob: population-level community support shift, clamped [0, 1]
+    const baseSupport = graph !== null ? socialSupportOf(graph, person) : 0.3
+    const socialSupport = Math.min(1, Math.max(0, baseSupport + ctx.config.communitySupportBias))
     return {
       financialStrain: child ? 0.1 : financialStrainOf(person),
       occupationalStrain: child ? 0 : person.economy.employerId !== null ? 0.2 : 0.5,
       relationshipConflict: graph !== null ? relationshipConflictOf(graph, person) : 0,
-      socialSupport: graph !== null ? socialSupportOf(graph, person) : 0.3,
+      socialSupport,
       adverseEvents: 0.05,
       caregiverLoad: child ? 0 : caregiverLoadOf(youngChildren)
     }

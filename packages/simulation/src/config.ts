@@ -23,6 +23,10 @@ export interface SimulationConfig {
    * before job search eligibility. 0 = no friction (legacy behavior).
    * Models real labor-market matching delays; makes shock effects persist. */
   rehireCooldownMonths: number
+  /** Population-level community support shift [-1, 1] added to every
+   * resident's social support input (experiment knob for guide EXP-003:
+   * social support moderates stress). 0 = unbiased. */
+  communitySupportBias: number
 }
 
 export interface EconomicShock {
@@ -39,7 +43,8 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   birthProbabilityPerMonth: 0.008,
   employmentRate: 0.62,
   extraversionBias: 0,
-  rehireCooldownMonths: 0
+  rehireCooldownMonths: 0,
+  communitySupportBias: 0
 }
 
 export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationConfig {
@@ -61,6 +66,9 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (!Number.isInteger(merged.rehireCooldownMonths) || merged.rehireCooldownMonths < 0 || merged.rehireCooldownMonths > 24) {
     throw new Error(`rehireCooldownMonths must be an integer in [0, 24], got ${merged.rehireCooldownMonths}`)
+  }
+  if (!Number.isFinite(merged.communitySupportBias) || merged.communitySupportBias < -1 || merged.communitySupportBias > 1) {
+    throw new Error(`communitySupportBias out of [-1,1]: ${merged.communitySupportBias}`)
   }
   if (merged.economicShock !== undefined) {
     const shock = merged.economicShock

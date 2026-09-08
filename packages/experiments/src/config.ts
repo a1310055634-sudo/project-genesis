@@ -65,6 +65,29 @@ function validate(config: ExperimentConfig): ExperimentConfig {
  */
 export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   /**
+   * EXP-003: social support moderates stress (guide §23 Wave 5).
+   * Mechanism under test: the population-level communitySupportBias raises
+   * every resident's social support input; the stress update weights social
+   * support as a negative (buffering) term. Expected direction inside the
+   * model: the supported arm's stress.mean < control.
+   */
+  'EXP-003': validate({
+    id: 'EXP-003',
+    question:
+      'Model-internal mechanism check: does raising community support for the whole ' +
+      'support (+0.3 bias) lower mean stress relative to an unbiased population over 2 ' +
+      'years? Verifies the support→stress buffering pathway inside the simulator; no ' +
+      'real-world causal claim.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: { communitySupportBias: 0 } },
+      { name: 'supported', overrides: { communitySupportBias: 0.3 } }
+    ]
+  }),
+
+  /**
    * EXP-001: economic shock → aggregate stress (guide §23 Wave 5).
    * Mechanism under test: a mid-run layoff wave (economicShock at year 1,
    * 40% of employed) spikes financialStrain via the runway formula, which the
@@ -85,15 +108,15 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
       'start of year 1) produce higher mean stress than an economy that keeps full ' +
       'employment, measured after 2 simulated years? Verifies the shock→strain→stress ' +
       'pathway inside the simulator; no real-world causal claim.',
-    seeds: [42, 43, 44],
-    population: 150,
+    seeds: [42, 43, 44, 45, 46],
+    population: 300,
     years: 2,
     arms: [
       // both arms carry a 2-month rehire cooldown (GEN-151b): without it the
       // shock's unemployment spell lasts ~1 month and the stress signal
       // dilutes to nothing in any aggregate
       { name: 'control', overrides: { rehireCooldownMonths: 2 } },
-      { name: 'shock', overrides: { rehireCooldownMonths: 2, economicShock: { atYear: 1, layoffShare: 0.4 } } }
+      { name: 'shock', overrides: { rehireCooldownMonths: 2, economicShock: { atYear: 1, layoffShare: 0.5 } } }
     ]
   }),
 

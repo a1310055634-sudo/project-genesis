@@ -162,6 +162,9 @@ describe('KI-3/KI-6 integration (200 residents, 3 years)', () => {
       }
     })
     sim.run()
+    // deaths in the final pre-end gap are swept by the NEXT weekly pass —
+    // step one extra week so the dead-edge invariant is in steady state
+    sim.stepTo(sim.ctx.clock.tick + 168)
   })
 
   it('deaths happen and swept edges emit reason=death events', () => {
