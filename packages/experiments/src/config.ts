@@ -65,6 +65,35 @@ function validate(config: ExperimentConfig): ExperimentConfig {
  */
 export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   /**
+   * EXP-001: economic shock → aggregate stress (guide §23 Wave 5).
+   * Mechanism under test: a mid-run layoff wave (economicShock at year 1,
+   * 40% of employed) spikes financialStrain via the runway formula, which the
+   * composition bridge feeds into the stress update.
+   *
+   * STATUS 2026-09-08: direction NOT significant (shock 0.460 vs control
+   * 0.467 — flat). Diagnosis: re-hire friction is absent — laid-off workers
+   * search at p=0.3/month into their own freed slots, so unemployment spells
+   * last ~1-2 months and the 24-month mean dilutes the bump. Backlog
+   * GEN-151b (time-sampled experiment metrics + rehire friction) before this
+   * experiment can discriminate. Kept as the probe for that work.
+   */
+  'EXP-001': validate({
+    id: 'EXP-001',
+    question:
+      'Model-internal mechanism check: does a mid-run layoff shock (40% of employed at the ' +
+      'start of year 1) produce higher mean stress than an economy that keeps full ' +
+      'employment, measured after 2 simulated years? Verifies the shock→strain→stress ' +
+      'pathway inside the simulator; no real-world causal claim.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: {} },
+      { name: 'shock', overrides: { economicShock: { atYear: 1, layoffShare: 0.4 } } }
+    ]
+  }),
+
+  /**
    * EXP-002: unemployment → aggregate stress.
    * Mechanism under test: the composition-bridged pathway
    * employmentRate → financialStrainOf (@genesis/economy, unemployed = 0.85)

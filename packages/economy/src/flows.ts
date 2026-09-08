@@ -1,4 +1,4 @@
-import { TICKS_PER_MONTH, ageYears } from '@genesis/core'
+import { TICKS_PER_MONTH, TICKS_PER_YEAR, ageYears } from '@genesis/core'
 import { addMoney, scaleMoney, subMoney } from '@genesis/shared'
 import { SimContext } from '@genesis/simulation'
 
@@ -141,7 +141,44 @@ export function dailyConsumption(ctx: SimContext): void {
 // ---------------------------------------------------------------------------
 
 /**
+ * Mid-run economic shock (guide EXP-001): fires ONCE at the first month
+ * boundary of simulated year `atYear`, laying off floor(layoffShare ×
+ * employed) residents via a deterministic stride sweep over array order.
+ * One-shot guard lives in ctx.extensions (no module-global state).
+ */
+export function applyEconomicShockIfNeeded(ctx: SimContext): void {
+  const shock = ctx.config.economicShock
+  if (shock === undefined) return
+  const tick = ctx.tick()
+  if (tick < (shock.atYear - 1) * TICKS_PER_YEAR) return
+  const guardKey = 'economy.economic_shock_applied'
+  if (ctx.extensions.get(guardKey) === true) return
+  ctx.extensions.set(guardKey, true)
+
+  const employed = ctx.world.persons.filter((p) => p.alive && p.economy.employerId !== null)
+  const layoffCount = Math.floor(employed.length * shock.layoffShare)
+  // deterministic victim selection: stride sweep over array order
+  const stride = layoffCount > 0 ? employed.length / layoffCount : Infinity
+  for (let i = 0; i < layoffCount; i++) {
+    const person = employed[Math.floor(i * stride)] as NonNullable<(typeof employed)[number]>
+    const employer = ctx.world.employers.find((e) => e.id === person.economy.employerId)
+    if (employer !== undefined) employer.filledSlots = Math.max(0, employer.filledSlots - 1)
+    person.economy.employerId = null
+    person.economy.monthlyIncomeCents = 0
+    ctx.events.emit({
+      id: ctx.ids.next('event'),
+      type: 'job.ended',
+      tick,
+      actorIds: [person.id],
+      payload: { reason: 'economic_shock' }
+    })
+  }
+  ctx.metrics.increment('economy.shock_layoffs', layoffCount)
+}
+
+/**
  * Monthly labor-market round:
+ * (0) economic shock — a single mid-run layoff wave if configured (EXP-001);
  * (a) retirement — employed persons at/over age 65 quit with p = 0.5/month
  *     (slot released, income zeroed, 'job.ended' reason 'retirement');
  * (b) job search — unemployed persons aged 18..64 search with p = 0.3/month
@@ -152,6 +189,9 @@ export function dailyConsumption(ctx: SimContext): void {
 export function monthlyJobMarket(ctx: SimContext): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`economy.jobmarket:${tick}`)
+
+  // (0) economic shock (EXP-001)
+  applyEconomicShockIfNeeded(ctx)
 
   // (a) retirement
   for (const person of ctx.world.persons) {

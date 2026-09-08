@@ -15,6 +15,17 @@ export interface SimulationConfig {
    * generation (experiment knob for guide EXP-006: extraversion → network
    * growth). 0 = unbiased. */
   extraversionBias: number
+  /** Mid-run economic shock (guide EXP-001): at the start of simulated year
+   * `atYear`, a single layoff wave removes `layoffShare` of all employed
+   * residents (reason 'economic_shock'). Optional — absent = no shock. */
+  economicShock?: EconomicShock
+}
+
+export interface EconomicShock {
+  /** Simulated year (1-based) whose first month boundary fires the shock. */
+  atYear: number
+  /** Share of currently employed residents laid off, in [0, 1]. */
+  layoffShare: number
 }
 
 export const DEFAULT_CONFIG: SimulationConfig = {
@@ -42,6 +53,15 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (!Number.isFinite(merged.extraversionBias) || merged.extraversionBias < -1 || merged.extraversionBias > 1) {
     throw new Error(`extraversionBias out of [-1,1]: ${merged.extraversionBias}`)
+  }
+  if (merged.economicShock !== undefined) {
+    const shock = merged.economicShock
+    if (!Number.isInteger(shock.atYear) || shock.atYear < 1) {
+      throw new Error(`economicShock.atYear must be a positive integer, got ${shock.atYear}`)
+    }
+    if (!(Number.isFinite(shock.layoffShare) && shock.layoffShare >= 0 && shock.layoffShare <= 1)) {
+      throw new Error(`economicShock.layoffShare out of [0,1]: ${shock.layoffShare}`)
+    }
   }
   return merged
 }
