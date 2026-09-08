@@ -19,3 +19,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-09 04:xx TAKEOVER COMPLETE — KI-8 regression probe: EXP-006 re-run post-cap, extraverted 344 vs control 250 edges (+38%, CI95 disjoint, stronger than pre-cap +30%); also fixed sampleSummarize empty-mean crash + CLI per-experiment sampling list; 223/223 green, committed
 - 2026-09-09 05:01 TAKEOVER (idle 54min, build/test GREEN) — task: red team round 3 (read-only audit)
 - 2026-09-09 05:xx TAKEOVER COMPLETE — red team round 3 triaged: all 3 MEDIUM + 4 LOW fixed same session, 224/224 green (incl. new widow-side kinship + married-not-kin invariant tests), committed
+- 2026-09-09 06:00 RUNNING
+- 2026-09-09 07:01 TAKEOVER (idle 88min, build/test GREEN) — task: housing domain starter + EXP-004
+- 2026-09-09 07:xx TAKEOVER COMPLETE — housing domain (side-table units + burden pathway + housingCostMultiplier knob) + EXP-004 (high-rent 0.530 vs control 0.493, CI95 disjoint); 229/229 green, committed

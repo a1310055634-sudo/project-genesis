@@ -14,6 +14,7 @@ export default defineConfig({
       '@genesis/social': r('packages/social/src'),
       '@genesis/family': r('packages/family/src'),
       '@genesis/education': r('packages/education/src'),
+      '@genesis/housing': r('packages/housing/src'),
       '@genesis/experiments': r('packages/experiments/src'),
       '@genesis/test-utils': r('packages/test-utils/src')
     }

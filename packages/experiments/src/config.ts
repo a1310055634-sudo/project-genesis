@@ -88,6 +88,28 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   }),
 
   /**
+   * EXP-004: housing burden → wellbeing (guide §23 Wave 5).
+   * Mechanism under test: doubling assigned rent doubles the housing burden
+   * indicator, which folds into financial strain (60/40 mixture in the
+   * composition bridge) and via it into stress/wellbeing. Expected direction
+   * inside the model: high-rent arm stress.mean > control, wellbeing lower.
+   */
+  'EXP-004': validate({
+    id: 'EXP-004',
+    question:
+      'Model-internal mechanism check: does doubling housing costs (housingCostMultiplier 2) ' +
+      'raise mean stress and lower mean wellbeing relative to baseline rent over 2 years? ' +
+      'Verifies the housing→strain→stress pathway inside the simulator; no real-world causal claim.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: { housingCostMultiplier: 1 } },
+      { name: 'high-rent', overrides: { housingCostMultiplier: 2 } }
+    ]
+  }),
+
+  /**
    * EXP-001: economic shock → aggregate stress (guide §23 Wave 5).
    * Mechanism under test: a mid-run layoff wave (economicShock at year 1,
    * 40% of employed) spikes financialStrain via the runway formula, which the

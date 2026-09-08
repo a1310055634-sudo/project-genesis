@@ -7,7 +7,12 @@
 - Build status: GREEN (typecheck clean, 195/195 tests, 46 files)
 - Last benchmark: benchmarks/RESULTS.md; last experiments: out/experiments/EXP-002.md, EXP-006.md
 
-## Last batch (12 — watchdog takeover, 02:00)
+## Last batch (13 — watchdog takeover, 07:01)
+- Task: housing domain starter (packages/housing, education side-table pattern) + EXP-004 experiment
+- Status: GREEN — 229/229 tests (53 files); EXP-004 direction confirmed (high-rent stress 0.530 vs control 0.493, CI95 disjoint)
+- Notes: fullstack tests now carry explicit 120s timeouts (housing made the 300×3y run cross the 5s default under parallel load)
+
+## Batch 12 (watchdog takeover, 02:00)
 - EXP-003 landed: communitySupportBias knob + experiment (supported 0.443 vs control 0.488 — buffering direction confirmed, CI95 disjoint)
 - P0 determinism fix: endpoint invariant gauge was path-dependent (stepped vs one-shot digests diverged); final check now unified in run/runYears
 - EXP-001 window honestly re-scoped: minimal-factory signal ~+0.002 at months 4-5 (sub-noise at n=5), full stack +0.011 — bounded non-inverse assertion replaces over-claimed direction

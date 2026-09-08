@@ -25,7 +25,7 @@ describe('full-stack integration (GEN-115)', () => {
     expect(sim.ctx.metrics.statsOf('stress')?.mean ?? 2).toBeLessThanOrEqual(1)
     expect(sim.ctx.metrics.gaugeValue('social_edges')).toBeGreaterThan(0)
     expect(sim.ctx.metrics.gaugeValue('employment_rate')).toBeGreaterThan(0)
-  })
+  }, 120_000)
 
   it('is deterministic with the full stack', () => {
     const run = () => {
@@ -35,7 +35,7 @@ describe('full-stack integration (GEN-115)', () => {
       return sim.digest()
     }
     expect(run()).toBe(run())
-  })
+  }, 120_000)
 
   it('unemployment pressure raises cohort stress (EXP-002 direction, model-internal)', () => {
     const build = (employmentRate: number) => {
@@ -51,5 +51,5 @@ describe('full-stack integration (GEN-115)', () => {
     const highEmployment = build(0.95)
     // model-internal validation only — NOT a real-world causal claim
     expect(lowEmployment).toBeGreaterThan(highEmployment)
-  })
+  }, 120_000)
 })

@@ -27,6 +27,10 @@ export interface SimulationConfig {
    * resident's social support input (experiment knob for guide EXP-003:
    * social support moderates stress). 0 = unbiased. */
   communitySupportBias: number
+  /** Housing cost scenario multiplier [0.1, 5] applied to assigned rent
+   * (experiment knob for guide EXP-004: housing burden → wellbeing).
+   * 1 = baseline. */
+  housingCostMultiplier: number
 }
 
 export interface EconomicShock {
@@ -44,7 +48,8 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   employmentRate: 0.62,
   extraversionBias: 0,
   rehireCooldownMonths: 0,
-  communitySupportBias: 0
+  communitySupportBias: 0,
+  housingCostMultiplier: 1
 }
 
 export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationConfig {
@@ -69,6 +74,9 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (!Number.isFinite(merged.communitySupportBias) || merged.communitySupportBias < -1 || merged.communitySupportBias > 1) {
     throw new Error(`communitySupportBias out of [-1,1]: ${merged.communitySupportBias}`)
+  }
+  if (!(Number.isFinite(merged.housingCostMultiplier) && merged.housingCostMultiplier >= 0.1 && merged.housingCostMultiplier <= 5)) {
+    throw new Error(`housingCostMultiplier out of [0.1, 5]: ${merged.housingCostMultiplier}`)
   }
   if (merged.economicShock !== undefined) {
     const shock = merged.economicShock

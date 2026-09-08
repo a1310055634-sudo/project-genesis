@@ -1,6 +1,7 @@
 import { GenesisSystem, buildKinshipIndex, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
 import { educationSystem, skillOf } from '@genesis/education'
+import { housingBurdenOf, housingSystem } from '@genesis/housing'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
@@ -38,8 +39,14 @@ export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person
     // EXP-003 knob: population-level community support shift, clamped [0, 1]
     const baseSupport = graph !== null ? socialSupportOf(graph, person) : 0.3
     const socialSupport = Math.min(1, Math.max(0, baseSupport + ctx.config.communitySupportBias))
+    // EXP-004 pathway: housing burden folds into financial strain (both are
+    // budget-pressure channels; documented mixture 60/40)
+    const housing = child ? 0.1 : housingBurdenOf(ctx, person)
+    const financialStrain = child
+      ? 0.1
+      : Math.min(1, Math.max(0, 0.6 * financialStrainOf(person) + 0.4 * housing))
     return {
-      financialStrain: child ? 0.1 : financialStrainOf(person),
+      financialStrain,
       occupationalStrain: child ? 0 : person.economy.employerId !== null ? 0.2 : 0.5,
       relationshipConflict: graph !== null ? relationshipConflictOf(graph, person) : 0,
       socialSupport,
@@ -54,10 +61,11 @@ export interface FullStackProfile {
   graph: RelationshipGraph
 }
 
-/** Full society stack: demography + family + social + economy + psychology.
- * SINGLE-USE (red team RT2-10): each call builds a fresh graph + bridges bound
- * to one Simulation. Never reuse the returned systems array for a second
- * Simulation.create — the social graph and caches would cross worlds. */
+/** Full society stack: demography + family + housing + social + economy +
+ * psychology. SINGLE-USE (red team RT2-10): each call builds a fresh graph +
+ * bridges bound to one Simulation. Never reuse the returned systems array for
+ * a second Simulation.create — the social graph and caches would cross worlds.
+ * `housingCostMultiplier` defaults to 1 (baseline rent). */
 export function fullStackSystems(): FullStackProfile {
   const graph = new RelationshipGraph()
   const systems: GenesisSystem[] = [
@@ -68,6 +76,7 @@ export function fullStackSystems(): FullStackProfile {
       conflict: (_ctx, aId, bId) => graph.edge(aId, bId)?.conflict ?? 0.1
     }), // priority 12, monthly
     educationSystem(), // priority 14, monthly (school enrolment, attainment, skill)
+    housingSystem(), // priority 13, monthly (units + burden; reads config knob)
     socialSystem(graph), // priority 15, weekly
     // HT-12 final link: skill→wage coupling. Hires price once at
     // income-assignment time as employer wage × (0.5 + 1.5 × skill), so

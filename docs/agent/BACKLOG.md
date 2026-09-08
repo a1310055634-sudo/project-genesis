@@ -64,6 +64,10 @@ Acceptance: records runtime, peak RSS, events/sec.
 ## Education ↔ Economy ✅ (batch 11)
 - economySystems(deps) wageSkillMultiplier injection; profile wires skillOf → 0.5 + 1.5×skill multiplier at hire time (skill priced once, recorded simplification)
 
+## Housing ✅ (batch 12, 2026-09-09)
+- packages/housing: side-table units (housing.units), rent/burden indicator (no money flow — documented), monthly system (assign/GC-orphans/metrics), housingCostMultiplier knob wired through profile + psychEnvBridge (burden folds 40% into financialStrain)
+- EXP-004 landed: high-rent arm stress 0.530 vs control 0.493 (CI95 disjoint) — direction confirmed
+
 ## Wave 5 — Simulation Lab (P2, parallel-safe)
 - GEN-150 Experiment config format (JSON) + CLI `npm run exp`
 - GEN-151 Multi-seed runner (seed sets, parallel runs, CSV export)
