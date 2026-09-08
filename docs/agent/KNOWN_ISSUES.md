@@ -12,8 +12,8 @@ Weekly "death sweep" phase now removes edges of dead persons, cleans the survivo
 ## KI-6 · Friendship edges accumulate monotonically — PARTIALLY FIXED (batch 6)
 Friendship edges now end by drift (familiarity < 0.15 after ~6 months of no contact → edge removed, relationshipIds cleaned, `relationship.ended {reason: 'drift'}`). Active friendships are protected by design (interactions refresh familiarity). Residual: per-person edge count plateaus around ~13 rather than declining further, because FoF local sampling keeps converting repeat contacts into new active friendships. True reduction needs an attention-budget / interaction-cap mechanism (new decision) → tracked as KI-8.
 
-## KI-8 · Human attention budget not modeled (P3, decision needed)
-Edge-growth floor (~13 edges/person) is set by unbounded interaction willingness. Real networks cap active ties (Dunbar-like limits). Options: per-person weekly interaction budget, friendship cap with replacement, or drift floor that rises with person's edge count. Decide in Wave 3.3; needs experiment EXP (network size vs personality) first (HT-16 EXP-006).
+## KI-8 · Human attention budget not modeled — FIXED (2026-09-09 watch-dog session)
+Edge-growth floor (~13 edges/person) is set by unbounded interaction willingness. Real networks cap active ties (Dunbar-like limits). Options: per-person weekly interaction budget, friendship cap with replacement, or drift floor that rises with person's edge count. DECIDED + IMPLEMENTED: friendship cap — friendCap = round(20 + 20 × extraversion), gating only NEW friendship formation (both parties need a free slot); maintenance interactions unaffected. Re-run EXP-006 as the regression probe: the extraversion→network-size pathway should now be capped per person.
 
 ## KI-4 · Income/wealth distribution is synthetic (P4)
 Wages are uniform $2,200–$8,000/month; no education/skill premium yet. Fine for engine validation; calibrate when education lands (HT-12).

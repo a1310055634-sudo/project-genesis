@@ -55,7 +55,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 - GEN-072 Parenthood effects: children need care (needRest/social), parent stress/wellbeing coupling
 - GEN-074 Family links depth: sibling detection via shared parents; household moves for children on divorce/marriage
 - GEN-060 Kinship graph view + kinship-aware interactions (avoid marriage between close kin — currently only friendship-based candidates)
-- KI-3/KI-6: death & decay semantics for friendship edges (relationship.ended on death, friendship decay floor)
+- KI-3/KI-6 death & decay semantics — DONE (batch 6); friendship cap (KI-8) — DONE (2026-09-09 session)
 - Empty-household GC after moves (RT1-14) — DONE (watchdog takeover: family monthly phase 5, metric family.households_gc)
 
 ## Wave 3.3 — Deep kinship ✅ (batch 11)

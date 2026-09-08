@@ -83,6 +83,23 @@ export const FRIENDSHIP_FAMILIARITY_THRESHOLD = 0.6
 export const FRIENDSHIP_LIKING_THRESHOLD = 0.5
 
 /**
+ * Attention budget (KI-8, guide HT-12 social network realism): a person can
+ * hold at most friendCap(person) mutual friendships, where
+ *   friendCap = round(FRIENDSHIP_CAP_BASE + FRIENDSHIP_CAP_EXTRAVERSION_SPAN
+ *                     × extraversion)
+ * i.e. ~20 for an introvert and ~40 for a maximal extravert. The cap gates
+ * only NEW friendship formation — maintaining existing ties is unaffected
+ * (interaction/decay/pruning phases unchanged). Both parties' caps must have
+ * room (min rule): attention is spent by both sides of a new tie.
+ */
+export const FRIENDSHIP_CAP_BASE = 20
+export const FRIENDSHIP_CAP_EXTRAVERSION_SPAN = 20
+
+export function friendCap(person: Person): number {
+  return Math.round(FRIENDSHIP_CAP_BASE + FRIENDSHIP_CAP_EXTRAVERSION_SPAN * person.personality.extraversion)
+}
+
+/**
  * Weekly social system logic — deterministic by construction.
  *
  * Fixed phase order: death sweep FIRST, then decay, then interactions, then
@@ -271,7 +288,10 @@ function interact(ctx: SimContext, graph: RelationshipGraph, rng: Rng, tick: num
     edge.familiarity > FRIENDSHIP_FAMILIARITY_THRESHOLD &&
     edge.liking > FRIENDSHIP_LIKING_THRESHOLD &&
     !a.social.relationshipIds.includes(b.id) &&
-    !b.social.relationshipIds.includes(a.id)
+    !b.social.relationshipIds.includes(a.id) &&
+    // attention budget (KI-8): both sides need a free friendship slot
+    a.social.relationshipIds.length < friendCap(a) &&
+    b.social.relationshipIds.length < friendCap(b)
   ) {
     a.social.relationshipIds.push(b.id)
     b.social.relationshipIds.push(a.id)
