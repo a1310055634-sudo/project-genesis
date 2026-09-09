@@ -88,9 +88,8 @@ describe('education progression (HT-12)', () => {
 
 describe('skillRateModifier injection (KI-8 follow-up: school quality → skill)', () => {
   it('a 2x modifier makes in-school skill grow faster; default stays legacy', async () => {
-    const { demographicsSystem, EducationRecord, Simulation } = await import('@genesis/simulation')
+    const { demographicsSystem, Simulation } = await import('@genesis/simulation')
     const { educationSystem } = await import('@genesis/education')
-    void EducationRecord
     const fast = Simulation.create(
       { seed: 42, populationTarget: 150, years: 4 },
       { systems: [demographicsSystem, educationSystem({ skillRateModifier: () => 2 })] }

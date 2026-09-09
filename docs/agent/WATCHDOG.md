@@ -35,3 +35,4 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-09 03:40 TAKEOVER COMPLETE — institutions domain starter (school entities + capacity assignment + overflow + age-out revocation, side-table), 238/238 green, committed
 - 2026-09-10 04:01 TAKEOVER (idle 56min, build/test GREEN 238/238) — task: school quality → skill coupling (education deps injection)
 - 2026-09-09 04:xx TAKEOVER COMPLETE — school quality → skill coupling landed (EducationDeps.skillRateModifier injection + profile wiring; circular import broken via types.ts), 238/238 green, committed
+- 2026-09-10 07:57 TAKEOVER — idle 3.8h; initial typecheck RED (latent bad import EducationRecord in education progression test, appended without typecheck in prior session) FIXED; then GREEN 239/239; proceeding with red team round 4 (read-only)
