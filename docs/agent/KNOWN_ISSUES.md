@@ -47,4 +47,4 @@ The caregiverLoad computation only needs per-person young-child counts, but rebu
 - RT3-08 composed RT2-01 test couldn't catch its regression — FIXED (spouse-inheritance event counter + assertions)
 - RT3-09 tautological GC assertion + EXP-001 text mismatch — FIXED both
 - RT3-10 kinship daily rebuild — tracked as KI-9
-- Carryovers RT1-10/11/12 remain LOW/backlog.
+- Carryovers: RT1-10 (accumulator GC) FIXED, RT1-11 (NaN clamps) DISPOSITIONED as intentional design, RT1-12 (dead samplePerson) REMOVED — red team LOW carryover list fully closed (RT1-08 bench RSS caveat unreviewed, cosmetic).

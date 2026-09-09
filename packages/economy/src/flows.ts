@@ -151,7 +151,12 @@ export function dailyConsumption(ctx: SimContext): void {
   const accumulators = consumptionAccumulator(ctx)
 
   for (const person of ctx.world.persons) {
-    if (!person.alive) continue
+    if (!person.alive) {
+      // red team RT1-10: dead residents' accumulator entries are garbage —
+      // collected here (same pattern as the unemployedSince side-table)
+      accumulators.delete(person.id)
+      continue
+    }
     const economy = person.economy
 
     const incomeShare = scaleMoney(economy.monthlyIncomeCents, CONSUMPTION_INCOME_DAILY_SHARE, 'floor')

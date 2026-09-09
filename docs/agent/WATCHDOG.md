@@ -22,3 +22,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-09 06:00 RUNNING
 - 2026-09-09 07:01 TAKEOVER (idle 88min, build/test GREEN) — task: housing domain starter + EXP-004
 - 2026-09-09 07:xx TAKEOVER COMPLETE — housing domain (side-table units + burden pathway + housingCostMultiplier knob) + EXP-004 (high-rent 0.530 vs control 0.493, CI95 disjoint); 229/229 green, committed
+- 2026-09-09 08:00 RUNNING
+- 2026-09-09 08:05 CORRECTION: re-triaged as idle 51min (>=40min threshold); health GREEN (223->229 tests at last commit); taking over a small closed-loop task instead of a multi-hour domain (see next entry)
+- 2026-09-09 08:10 TAKEOVER COMPLETE — red-team LOW carryover sweep: RT1-10 accumulator GC + RT1-12 dead code removed + RT1-11 dispositioned (NaN-to-zero clamp is intentional, documented); 229/229 green, committed

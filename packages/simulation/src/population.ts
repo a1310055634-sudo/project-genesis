@@ -163,9 +163,3 @@ export function populationStats(ctx: SimContext): PopulationStats {
     female
   }
 }
-
-export function samplePerson(ctx: SimContext, rng: Rng): Person {
-  const alive = ctx.world.persons.filter((p) => p.alive)
-  if (alive.length === 0) throw new Error('no alive persons to sample')
-  return alive[rng.int(0, alive.length - 1)] as Person
-}
