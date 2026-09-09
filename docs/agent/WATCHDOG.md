@@ -27,3 +27,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-09 08:10 TAKEOVER COMPLETE — red-team LOW carryover sweep: RT1-10 accumulator GC + RT1-12 dead code removed + RT1-11 dispositioned (NaN-to-zero clamp is intentional, documented); 229/229 green, committed
 - 2026-09-09 09:00 TAKEOVER (idle 51min, build/test GREEN) — task: EXP-029 wage inequality sweep knob
 - 2026-09-09 09:xx TAKEOVER COMPLETE — EXP-029 wage inequality sweep (wageSpreadMultiplier optional knob, mean-preserving, landscape-safe optional pattern) + normalizeConfig undefined-strip hardening; 230/230 green, committed
+- 2026-09-10 01:01 TAKEOVER (idle 50min, build/test GREEN 230/230) — task: KI-9 lightweight daily young-child counts (RT3-10)
+- 2026-09-10 01:xx TAKEOVER COMPLETE — KI-9 fixed (lightweight buildYoungChildCounts single-pass replaces daily kinship rebuild; regression-tested), 231/231 green, committed

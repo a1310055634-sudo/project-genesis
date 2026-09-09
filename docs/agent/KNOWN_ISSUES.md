@@ -33,7 +33,7 @@ The population generator's greedy pairing leaves skewed single-sex pools for som
 - RT1-04 EventLog O(n) splice per append → FIXED: ring buffer.
 - RT1-05 createHousehold O(N²) in generation → FIXED: shared person index.
 
-## KI-9 · psychEnvBridge rebuilds the kinship index every simulated day (P3, perf, red team RT3-10)
+## KI-9 · psychEnvBridge rebuilds the kinship index every simulated day — FIXED (2026-09-10 session)
 The caregiverLoad computation only needs per-person young-child counts, but rebuilds the full O(ever-born) kinship index daily (~3,600 rebuilds per 10k×10y run). Fix direction: incremental per-person young-child counter maintained on person.born/person.died events (same pattern as the education side-table). Tracked as a benchmark regression observation.
 
 ## Red team round 3 (2026-09-09, verdict PASS WITH ISSUES) — disposition

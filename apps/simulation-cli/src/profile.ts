@@ -1,4 +1,4 @@
-import { GenesisSystem, buildKinshipIndex, demographicsSystem } from '@genesis/simulation'
+import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
 import { educationSystem, skillOf } from '@genesis/education'
 import { housingBurdenOf, housingSystem } from '@genesis/housing'
@@ -22,20 +22,37 @@ import { Person, SimContext } from '@genesis/simulation'
  * - adverseEvents is a constant baseline until a life-events system exists
  * - caregiverLoad = parents of alive children under 6 (kinship-chain derived)
  */
+/**
+ * KI-9 (red team RT3-10): lightweight daily caregiver counts. A single O(N)
+ * pass over persons replaces the full kinship-index rebuild the bridge used
+ * to pay every simulated day — the caregiver pathway only needs per-parent
+ * young-child counts, not the whole affinity graph.
+ */
+export function buildYoungChildCounts(world: { persons: Person[] }, tick: number): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const child of world.persons) {
+    if (!child.alive) continue
+    if (ageYears(child.birthTick, tick) >= 6) continue
+    for (const parentId of [child.motherId, child.fatherId]) {
+      if (parentId === null) continue
+      counts.set(parentId, (counts.get(parentId) ?? 0) + 1)
+    }
+  }
+  return counts
+}
+
 export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person, ctx: SimContext) => PsychEnvironment {
-  // kinship index cached per tick: rebuilt at most once per simulated day
+  // young-child counts cached per tick: rebuilt at most once per simulated day
   let cachedTick = -1
-  let cachedKin: ReturnType<typeof buildKinshipIndex> | null = null
+  let cachedCounts: Map<string, number> | null = null
   return (person: Person, ctx: SimContext): PsychEnvironment => {
     const tick = ctx.tick()
-    if (tick !== cachedTick || cachedKin === null) {
-      cachedKin = buildKinshipIndex(ctx.world)
+    if (tick !== cachedTick || cachedCounts === null) {
+      cachedCounts = buildYoungChildCounts(ctx.world, tick)
       cachedTick = tick
     }
     const child = person.lifeStage === 'child'
-    const youngChildren = cachedKin
-      .childrenOf(person.id)
-      .filter((c) => c.alive && ageYears(c.birthTick, tick) < 6).length
+    const youngChildren = cachedCounts.get(person.id) ?? 0
     // EXP-003 knob: population-level community support shift, clamped [0, 1]
     const baseSupport = graph !== null ? socialSupportOf(graph, person) : 0.3
     const socialSupport = Math.min(1, Math.max(0, baseSupport + ctx.config.communitySupportBias))

@@ -1,7 +1,34 @@
 import { describe, it, expect } from 'vitest'
 import { checkInvariants } from '@genesis/simulation'
 import { Simulation } from '@genesis/simulation'
-import { fullStackSystems } from '../src/profile'
+import { buildYoungChildCounts, fullStackSystems } from '../src/profile'
+
+describe('buildYoungChildCounts (KI-9)', () => {
+  it('counts match a manual scan over parents of under-6 children', () => {
+    const sim = Simulation.create({ seed: 42, populationTarget: 200, years: 3 }, { systems: [] })
+    sim.run()
+    const tick = sim.ctx.clock.tick
+    const counts = buildYoungChildCounts(sim.ctx.world, tick)
+    const expected = new Map<string, number>()
+    for (const child of sim.ctx.world.persons) {
+      if (!child.alive) continue
+      if ((tick - child.birthTick) / 8640 >= 6) continue
+      for (const parentId of [child.motherId, child.fatherId]) {
+        if (parentId === null) continue
+        expected.set(parentId, (expected.get(parentId) ?? 0) + 1)
+      }
+    }
+    let sumCounts = 0
+    let sumExpected = 0
+    for (const [parentId, n] of expected) {
+      expect(counts.get(parentId)).toBe(n)
+      sumCounts += counts.get(parentId) ?? 0
+      sumExpected += n
+    }
+    expect(sumCounts).toBe(sumExpected)
+    expect(sumExpected).toBeGreaterThan(0)
+  })
+})
 
 describe('full-stack integration (GEN-115)', () => {
   it('runs demography + economy + social + psychology together, invariants green', () => {
