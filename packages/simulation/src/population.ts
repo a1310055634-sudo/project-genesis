@@ -91,9 +91,14 @@ export function generatePopulation(ctx: SimContext, initializers?: PersonInitial
   const hired = rng.shuffle([...employable]).slice(0, employedCount)
   const employerCount = Math.max(1, Math.ceil(employedCount / 20))
   const employers: Employer[] = []
+  // wage spread knob (EXP-029): scales the VARIANCE around the same mean
+  // (510k ± halfRange). spread=1 reproduces the legacy draws exactly; absent
+  // config = spread 1. Clamped low so wages stay positive at high spread.
+  const spread = ctx.config.wageSpreadMultiplier ?? 1
+  const halfRangeK = Math.round(290 * spread)
   for (let i = 0; i < employerCount; i++) {
     const slots = Math.max(1, Math.ceil(employedCount / employerCount))
-    const wage = cents(220_000 + rng.int(0, 580) * 1_000) // $2,200 .. $8,000 / month
+    const wage = cents(Math.max(50_000, 510_000 - halfRangeK * 1_000 + rng.int(0, halfRangeK * 2) * 1_000))
     employers.push(createEmployer(ctx, `Employer-${i + 1}`, slots, wage))
   }
   hired.forEach((person, i) => {

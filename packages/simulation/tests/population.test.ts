@@ -30,6 +30,28 @@ describe('population generator (GEN-024)', () => {
     expect(a.digest()).not.toBe(b.digest())
   })
 
+  it('wage spread knob scales wage std around a stable mean (EXP-029)', () => {
+    // 3000 residents -> ~55 employers: enough samples for a stable std ratio
+    const wagesFor = (spread: number | undefined) => {
+      const sim = Simulation.create({ seed: 42, populationTarget: 3000, years: 1, wageSpreadMultiplier: spread })
+      const wages = sim.ctx.world.employers.map((e) => e.monthlyWageCents)
+      const mu = wages.reduce((x, y) => x + y, 0) / wages.length
+      const variance = wages.reduce((acc, w) => acc + (w - mu) * (w - mu), 0) / wages.length
+      return { mean: mu, std: Math.sqrt(variance) }
+    }
+    const control = wagesFor(undefined)
+    const spread = wagesFor(1.4)
+    // config-hash semantics: spread=1-explicit and absent are DIFFERENT
+    // worlds (different numeric seed), so arms are compared against the
+    // absolute design anchor (uniform centered on 510k), not each other
+    for (const arm of [control, spread]) {
+      expect(Math.abs(arm.mean - 510_000)).toBeLessThan(510_000 * 0.1)
+    }
+    // std scales with the spread parameter (~1.4x ± sampling noise at n≈55)
+    expect(spread.std).toBeGreaterThan(control.std * 1.15)
+    expect(spread.std).toBeLessThan(control.std * 2.2) // n≈58 std sampling noise is wide
+  })
+
   it('passes the full invariant suite on a fresh world', () => {
     const sim = Simulation.create({ seed: 7, populationTarget: 400, years: 1 })
     const result = checkInvariants(sim.ctx.world, 0, sim.ctx.world.seed)

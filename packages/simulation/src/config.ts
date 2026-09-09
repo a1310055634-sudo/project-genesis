@@ -31,6 +31,11 @@ export interface SimulationConfig {
    * (experiment knob for guide EXP-004: housing burden → wellbeing).
    * 1 = baseline. */
   housingCostMultiplier: number
+  /** Employer wage spread multiplier [0.1, 1.5] for guide EXP-029 (wage
+   * inequality sweep). Scales the VARIANCE of generated employer wages around
+   * the same mean; 1 (or absent) = legacy distribution. Optional: absent keeps
+   * the config hash unchanged for non-users (economicShock pattern). */
+  wageSpreadMultiplier?: number
 }
 
 export interface EconomicShock {
@@ -54,6 +59,12 @@ export const DEFAULT_CONFIG: SimulationConfig = {
 
 export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationConfig {
   const merged: SimulationConfig = { ...DEFAULT_CONFIG, ...partial }
+  // optional scenario knobs: explicitly-passed undefined must equal absent,
+  // otherwise configHash (and thus the whole random landscape) would diverge
+  // between callers that omit the key and callers that pass undefined
+  for (const key of ['economicShock', 'wageSpreadMultiplier'] as const) {
+    if (merged[key] === undefined) delete merged[key]
+  }
   if (!Number.isInteger(merged.populationTarget) || merged.populationTarget <= 0) {
     throw new Error(`populationTarget must be a positive integer, got ${merged.populationTarget}`)
   }
@@ -77,6 +88,12 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (!(Number.isFinite(merged.housingCostMultiplier) && merged.housingCostMultiplier >= 0.1 && merged.housingCostMultiplier <= 5)) {
     throw new Error(`housingCostMultiplier out of [0.1, 5]: ${merged.housingCostMultiplier}`)
+  }
+  if (merged.wageSpreadMultiplier !== undefined) {
+    const spread = merged.wageSpreadMultiplier
+    if (!(Number.isFinite(spread) && spread >= 0.1 && spread <= 1.5)) {
+      throw new Error(`wageSpreadMultiplier out of [0.1, 1.5]: ${spread}`)
+    }
   }
   if (merged.economicShock !== undefined) {
     const shock = merged.economicShock

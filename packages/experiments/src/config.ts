@@ -219,6 +219,29 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   }),
 
   /**
+   * EXP-029: wage inequality sweep (guide HT-16).
+   * Mechanism under test: wageSpreadMultiplier scales generated employer-wage
+   * VARIANCE around a constant mean. Expected direction inside the model:
+   * the high-spread arm ends with higher wage dispersion (stress.max-mean
+   * income spread) and higher wealth inequality than the control.
+   */
+  'EXP-029': validate({
+    id: 'EXP-029',
+    question:
+      'Model-internal parameter sweep: does doubling the employer-wage spread ' +
+      '(wageSpreadMultiplier 1 vs 1.4, same mean) widen end-of-run wage dispersion and ' +
+      'wealth inequality? Verifies the wage-distribution knob of the internal economy ' +
+      'model; no real-world causal claim.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: { wageSpreadMultiplier: 1 } },
+      { name: 'high-spread', overrides: { wageSpreadMultiplier: 1.4 } }
+    ]
+  }),
+
+  /**
    * EXP-SANITY: scale sanity sweep.
    * Mechanism under test: core aggregates stay well-formed as the population
    * scale changes 60 → 200 (no NaN in metrics, shares within [0, 1], digests
