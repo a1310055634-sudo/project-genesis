@@ -36,6 +36,11 @@ export interface SimulationConfig {
    * the same mean; 1 (or absent) = legacy distribution. Optional: absent keeps
    * the config hash unchanged for non-users (economicShock pattern). */
   wageSpreadMultiplier?: number
+  /** Monthly welfare transfer (integer cents) paid to unemployed working-age
+   * residents (guide EXP-030: policy transfer abstraction). Money is CREATED
+   * (government deficit abstraction) and audited via
+   * 'economy.welfare_paid_cents'. Optional/0 = policy off. */
+  welfareTransferCents?: number
 }
 
 export interface EconomicShock {
@@ -62,7 +67,7 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   // optional scenario knobs: explicitly-passed undefined must equal absent,
   // otherwise configHash (and thus the whole random landscape) would diverge
   // between callers that omit the key and callers that pass undefined
-  for (const key of ['economicShock', 'wageSpreadMultiplier'] as const) {
+  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents'] as const) {
     if (merged[key] === undefined) delete merged[key]
   }
   if (!Number.isInteger(merged.populationTarget) || merged.populationTarget <= 0) {
@@ -93,6 +98,12 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
     const spread = merged.wageSpreadMultiplier
     if (!(Number.isFinite(spread) && spread >= 0.1 && spread <= 1.5)) {
       throw new Error(`wageSpreadMultiplier out of [0.1, 1.5]: ${spread}`)
+    }
+  }
+  if (merged.welfareTransferCents !== undefined) {
+    const transfer = merged.welfareTransferCents
+    if (!Number.isInteger(transfer) || transfer < 0 || transfer > 2_000_000) {
+      throw new Error(`welfareTransferCents must be an integer in [0, 2000000], got ${transfer}`)
     }
   }
   if (merged.economicShock !== undefined) {

@@ -29,3 +29,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-09 09:xx TAKEOVER COMPLETE — EXP-029 wage inequality sweep (wageSpreadMultiplier optional knob, mean-preserving, landscape-safe optional pattern) + normalizeConfig undefined-strip hardening; 230/230 green, committed
 - 2026-09-10 01:01 TAKEOVER (idle 50min, build/test GREEN 230/230) — task: KI-9 lightweight daily young-child counts (RT3-10)
 - 2026-09-10 01:xx TAKEOVER COMPLETE — KI-9 fixed (lightweight buildYoungChildCounts single-pass replaces daily kinship rebuild; regression-tested), 231/231 green, committed
+- 2026-09-10 02:01 TAKEOVER (idle 54min, build/test GREEN 230/230) — task: EXP-030 welfare transfer abstraction
+- 2026-09-10 02:40 TAKEOVER COMPLETE — EXP-030 welfare transfer landed (config knob + monthlyWelfare flow + strain softening + experiment); direction confirmed: welfare 0.457 vs control 0.493 early-window; 234/234 green, committed

@@ -110,6 +110,29 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   }),
 
   /**
+   * EXP-030: policy transfer abstraction (guide HT-16).
+   * Mechanism under test: a monthly welfare transfer to unemployed
+   * working-age residents (welfareTransferCents) softens the unemployed
+   * strain floor, lowering cohort stress relative to a no-transfer economy.
+   * Expected direction inside the model: welfare arm stress.mean < control.
+   */
+  'EXP-030': validate({
+    id: 'EXP-030',
+    question:
+      'Model-internal policy check: does a 250k-cents/month welfare transfer to unemployed ' +
+      'working-age residents lower cohort stress relative to a no-transfer economy over 2 ' +
+      'years? Verifies the policy→strain softening pathway inside the simulator (model ' +
+      'internal only; no real-world policy claim).',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: {} },
+      { name: 'welfare', overrides: { welfareTransferCents: 250_000 } }
+    ]
+  }),
+
+  /**
    * EXP-001: economic shock → aggregate stress (guide §23 Wave 5).
    * Mechanism under test: a mid-run layoff wave (economicShock at year 1,
    * 40% of employed) spikes financialStrain via the runway formula, which the

@@ -242,9 +242,48 @@ export function applyEconomicShockIfNeeded(ctx: SimContext): void {
  *     through the injected skill multiplier at hire time, default 1.0).
  * Ages are derived from birthTick via ageYears (no stored age).
  */
+/**
+ * Welfare transfer (guide EXP-030 policy abstraction): unemployed working-age
+ * residents receive `config.welfareTransferCents` per month. Money is CREATED
+ * (government deficit abstraction — the one deliberate exception to closed
+ * private-economy conservation) and audited via the
+ * 'economy.welfare_paid_cents' counter. Income lands in
+ * monthlyIncomeCents (total-monthly-income semantics) and is overwritten when
+ * employment resumes. Deterministic: no randomness.
+ */
+export function monthlyWelfare(ctx: SimContext): void {
+  const transfer = ctx.config.welfareTransferCents ?? 0
+  if (transfer <= 0) return
+  const tick = ctx.tick()
+  for (const person of ctx.world.persons) {
+    if (!person.alive) continue
+    if (person.economy.employerId !== null) continue
+    const age = ageYears(person.birthTick, tick)
+    if (age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) continue
+    if (person.economy.monthlyIncomeCents === transfer) continue // already receiving
+    person.economy.monthlyIncomeCents = transfer
+    ctx.events.emit({
+      id: ctx.ids.next('event'),
+      type: 'welfare.paid',
+      tick,
+      actorIds: [person.id],
+      payload: { amountCents: transfer }
+    })
+  }
+  const recipients = ctx.world.persons.filter(
+    (p) => p.alive && p.economy.employerId === null && p.economy.monthlyIncomeCents === transfer &&
+      ageYears(p.birthTick, tick) >= WORKING_AGE_MIN && ageYears(p.birthTick, tick) < RETIREMENT_AGE
+  ).length
+  ctx.metrics.gauge('economy.welfare_recipients', recipients)
+}
+
 export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`economy.jobmarket:${tick}`)
+
+  // (-1) welfare transfer (EXP-030) — before hire pricing so the cooldown
+  // exit cohort carries the transfer income into their strain calculation
+  monthlyWelfare(ctx)
 
   // (0) economic shock (EXP-001)
   applyEconomicShockIfNeeded(ctx)

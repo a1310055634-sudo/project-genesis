@@ -36,7 +36,13 @@ export const STRAIN_INCOME_BURN_SHARE = 0.6
  */
 export function financialStrainOf(person: Person): number {
   const economy = person.economy
-  if (economy.employerId === null) return STRAIN_UNEMPLOYED
+  if (economy.employerId === null) {
+    // welfare softens the unemployed floor (EXP-030): each 125k cents/month
+    // of transfer income removes 0.1 of strain, floored at 0.45
+    const welfare = Math.max(0, economy.monthlyIncomeCents)
+    const relief = 0.1 * Math.floor(welfare / 125_000)
+    return Math.min(1, Math.max(0, STRAIN_UNEMPLOYED - relief))
+  }
   const incomeBurn = scaleMoney(economy.monthlyIncomeCents, STRAIN_INCOME_BURN_SHARE, 'floor')
   const monthlyBurn = Math.max(STRAIN_MIN_MONTHLY_BURN_CENTS, economy.lastMonthConsumptionCents, incomeBurn)
   const runwayMonths = Math.max(0, economy.wealthCents) / monthlyBurn
