@@ -68,6 +68,9 @@ Acceptance: records runtime, peak RSS, events/sec.
 - packages/housing: side-table units (housing.units), rent/burden indicator (no money flow — documented), monthly system (assign/GC-orphans/metrics), housingCostMultiplier knob wired through profile + psychEnvBridge (burden folds 40% into financialStrain)
 - EXP-004 landed: high-rent arm stress 0.530 vs control 0.493 (CI95 disjoint) — direction confirmed
 
+## Institutions ✅ (batch 15, 2026-09-09)
+- packages/institutions: school entities (capacity/quality, side-table), deterministic capacity assignment with overflow + age-out revocation; wired into full stack; education quality coupling deferred (deps injection pattern ready)
+
 ## EXP-030 ✅ (batch 14, 2026-09-10)
 - welfareTransferCents policy knob + monthlyWelfare flow (money-created abstraction, audited) + strain softening; welfare arm 0.457 vs control 0.493 — direction confirmed
 

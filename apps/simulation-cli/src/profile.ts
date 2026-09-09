@@ -1,6 +1,7 @@
 import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
 import { educationSystem, skillOf } from '@genesis/education'
+import { institutionsSystem } from '@genesis/institutions'
 import { housingBurdenOf, housingSystem } from '@genesis/housing'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
@@ -93,6 +94,7 @@ export function fullStackSystems(): FullStackProfile {
       conflict: (_ctx, aId, bId) => graph.edge(aId, bId)?.conflict ?? 0.1
     }), // priority 12, monthly
     educationSystem(), // priority 14, monthly (school enrolment, attainment, skill)
+    institutionsSystem(), // priority 14, monthly (school entities + pupil assignment; registered after education)
     housingSystem(), // priority 13, monthly (units + burden; reads config knob)
     socialSystem(graph), // priority 15, weekly
     // HT-12 final link: skill→wage coupling. Hires price once at
