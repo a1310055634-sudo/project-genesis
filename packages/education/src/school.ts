@@ -1,5 +1,6 @@
 import { ageYears } from '@genesis/core'
 import { SimContext } from '@genesis/simulation'
+import { EducationDeps } from './types'
 import { Attainment, EducationRecord, ensureRecords } from './types'
 
 /**
@@ -129,20 +130,28 @@ export function schoolAgeAssignments(ctx: SimContext): void {
  * run's transitions (post-state rule): in-school gains by stage, graduates
  * gain the small on-the-job rate, dropouts decay toward 0.
  */
-function applyMonthlySkillDelta(record: EducationRecord): void {
+function applyMonthlySkillDelta(
+  record: EducationRecord,
+  rateModifier: number
+): void {
   if (record.droppedOut) {
     record.skill = clampSkill(record.skill - DROPOUT_SKILL_DECAY_PER_MONTH)
     return
   }
+  // school-quality style modifier scales IN-SCHOOL gains only (clamped
+  // [0.5, 2], mirroring the economy multiplier contract); graduates and
+  // dropouts follow the fixed legacy rates. No new rng draws — the modifier
+  // is deterministic per (deps, person), preserving draw sequences.
+  const inSchoolGain = (base: number): number => base * Math.min(2, Math.max(0.5, rateModifier))
   switch (record.attainment) {
     case 'in_primary':
-      record.skill = clampSkill(record.skill + PRIMARY_SKILL_GAIN_PER_MONTH)
+      record.skill = clampSkill(record.skill + inSchoolGain(PRIMARY_SKILL_GAIN_PER_MONTH))
       break
     case 'in_secondary':
-      record.skill = clampSkill(record.skill + SECONDARY_SKILL_GAIN_PER_MONTH)
+      record.skill = clampSkill(record.skill + inSchoolGain(SECONDARY_SKILL_GAIN_PER_MONTH))
       break
     case 'in_tertiary':
-      record.skill = clampSkill(record.skill + TERTIARY_SKILL_GAIN_PER_MONTH)
+      record.skill = clampSkill(record.skill + inSchoolGain(TERTIARY_SKILL_GAIN_PER_MONTH))
       break
     case 'secondary':
     case 'tertiary':
@@ -165,7 +174,8 @@ function applyMonthlySkillDelta(record: EducationRecord): void {
  * Every processed person then receives the monthly skill delta of their
  * post-transition state.
  */
-export function monthlyProgress(ctx: SimContext): void {
+export function monthlyProgress(ctx: SimContext, deps?: EducationDeps): void {
+  const rateFor = (ctx: SimContext, personId: string): number => deps?.skillRateModifier?.(ctx, personId) ?? 1
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`education:${tick}`)
   const records = ensureRecords(ctx)
@@ -218,7 +228,7 @@ export function monthlyProgress(ctx: SimContext): void {
       }
     }
 
-    applyMonthlySkillDelta(record)
+    applyMonthlySkillDelta(record, rateFor(ctx, record.personId))
   }
 }
 

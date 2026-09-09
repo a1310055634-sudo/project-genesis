@@ -52,3 +52,12 @@ export function ensureRecords(ctx: SimContext): Map<string, EducationRecord> {
   }
   return records
 }
+
+
+/** Injected domain hooks (GEN-151b pattern, mirrors EconomyDeps/FamilyDeps).
+ * Lives in types.ts to avoid a school.ts <-> system.ts circular import. */
+export interface EducationDeps {
+  /** School-quality style skill-rate multiplier for one person this month;
+   * economy-side clamp contract: [0.5, 2]. Default 1.0 (legacy behavior). */
+  skillRateModifier?: (ctx: SimContext, personId: string) => number
+}

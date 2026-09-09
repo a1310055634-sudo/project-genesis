@@ -69,7 +69,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 - EXP-004 landed: high-rent arm stress 0.530 vs control 0.493 (CI95 disjoint) — direction confirmed
 
 ## Institutions ✅ (batch 15, 2026-09-09)
-- packages/institutions: school entities (capacity/quality, side-table), deterministic capacity assignment with overflow + age-out revocation; wired into full stack; education quality coupling deferred (deps injection pattern ready)
+- packages/institutions: school entities (capacity/quality, side-table), deterministic capacity assignment with overflow + age-out revocation; wired into full stack; education quality coupling — DONE (EducationDeps.skillRateModifier, 2026-09-10 session)
 
 ## EXP-030 ✅ (batch 14, 2026-09-10)
 - welfareTransferCents policy knob + monthlyWelfare flow (money-created abstraction, audited) + strain softening; welfare arm 0.457 vs control 0.493 — direction confirmed

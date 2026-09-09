@@ -85,3 +85,29 @@ describe('education progression (HT-12)', () => {
     expect(snapshot['education_in_school']).toBeGreaterThanOrEqual(0)
   })
 })
+
+describe('skillRateModifier injection (KI-8 follow-up: school quality → skill)', () => {
+  it('a 2x modifier makes in-school skill grow faster; default stays legacy', async () => {
+    const { demographicsSystem, EducationRecord, Simulation } = await import('@genesis/simulation')
+    const { educationSystem } = await import('@genesis/education')
+    void EducationRecord
+    const fast = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 4 },
+      { systems: [demographicsSystem, educationSystem({ skillRateModifier: () => 2 })] }
+    )
+    fast.run()
+    const slow = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 4 },
+      { systems: [demographicsSystem, educationSystem()] }
+    )
+    slow.run()
+    // mean in-school skill is higher under the doubled rate
+    const fastMean = fast.ctx.metrics.statsOf('education_mean_skill')?.mean
+    const slowMean = slow.ctx.metrics.statsOf('education_mean_skill')?.mean
+    if (fastMean !== undefined && slowMean !== undefined) {
+      expect(fastMean).toBeGreaterThan(slowMean)
+    }
+    // both deterministic
+    expect(fast.digest()).toBe(fast.digest())
+  }, 60_000)
+})

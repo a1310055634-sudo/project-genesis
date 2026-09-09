@@ -1,5 +1,6 @@
 import { ageYears } from '@genesis/core'
 import { GenesisSystem, nextMonthStart, SimContext } from '@genesis/simulation'
+import { EducationDeps } from './types'
 import { educationMetrics, monthlyProgress, schoolAgeAssignments } from './school'
 
 /**
@@ -14,14 +15,14 @@ import { educationMetrics, monthlyProgress, schoolAgeAssignments } from './schoo
  *   2. monthlyProgress      — graduation/dropout rolls + monthly skill update;
  *   3. educationMetrics     — gauges observe the post-progress state.
  */
-export function educationSystem(): GenesisSystem {
+export function educationSystem(deps?: EducationDeps): GenesisSystem {
   return {
     id: 'education',
     priority: 14,
     nextFireTick: nextMonthStart,
     run(ctx: SimContext) {
       schoolAgeAssignments(ctx)
-      monthlyProgress(ctx)
+      monthlyProgress(ctx, deps)
       educationMetrics(ctx)
       ctx.metrics.increment('education.months_processed')
     }
