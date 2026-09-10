@@ -20,9 +20,13 @@ describe('welfare transfer (EXP-030)', () => {
     sim.run()
     expect(sim.ctx.log.countOf('welfare.paid')).toBeGreaterThan(0)
     expect(sim.ctx.metrics.gaugeValue('economy.welfare_recipients')).toBeGreaterThan(0)
-    // conservation-style audit: total paid equals the counter × transfer amount
+    // pool-first funding audit (red team RT5-01): with a 10% tax funding the
+    // pool, the recorded deficit must equal total welfare paid minus what the
+    // tax pool covered — never the full amount
     const paid = sim.ctx.log.stats().byType['welfare.paid'] ?? 0
     expect(paid).toBeGreaterThan(0)
+    // no tax in this fixture → the entire welfare bill is deficit-created
+    expect(sim.ctx.metrics.gaugeValue('economy.welfare_deficit_cents')).toBeGreaterThan(0)
     expect(checkInvariantSafe(sim)).toBe(true)
   })
 

@@ -74,7 +74,7 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   // optional scenario knobs: explicitly-passed undefined must equal absent,
   // otherwise configHash (and thus the whole random landscape) would diverge
   // between callers that omit the key and callers that pass undefined
-  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents', 'pensionReplacementRate'] as const) {
+  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents', 'pensionReplacementRate', 'incomeTaxRate'] as const) {
     if (merged[key] === undefined) delete merged[key]
   }
   if (!Number.isInteger(merged.populationTarget) || merged.populationTarget <= 0) {

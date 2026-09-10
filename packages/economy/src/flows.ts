@@ -312,9 +312,6 @@ export function monthlyWelfare(ctx: SimContext): void {
   const transfer = ctx.config.welfareTransferCents ?? 0
   if (transfer <= 0) return
   const tick = ctx.tick()
-  const paidAtStart = ctx.metrics.counterValue('economy.welfare_paid_cents')
-  const poolAtStart = getTaxPool(ctx)
-  let deficit = 0
   for (const person of ctx.world.persons) {
     if (!person.alive) continue
     if (person.economy.employerId !== null) continue
@@ -331,7 +328,6 @@ export function monthlyWelfare(ctx: SimContext): void {
     // funded from the taxation pool first; only the shortfall is deficit.
     person.economy.monthlyIncomeCents = transfer
     person.economy.wealthCents += transfer
-    deficit += transfer
     ctx.metrics.increment('economy.welfare_paid_cents', transfer)
     ctx.events.emit({
       id: ctx.ids.next('event'),
@@ -341,14 +337,17 @@ export function monthlyWelfare(ctx: SimContext): void {
       payload: { amountCents: transfer }
     })
   }
-  // deficit accounting: paid total vs what the taxation pool actually funded
-  // (red team RT4-03 resolution) — transparent rather than hidden creation
-  const paidThisRun = ctx.metrics.counterValue('economy.welfare_paid_cents') - paidAtStart
-  if (deficit > 0) {
+  // pool-first funding (red team RT5-01): the taxation pool covers welfare
+  // payments; only the shortfall beyond the pool is deficit-created and
+  // audited via the gauge (transparent rather than hidden creation)
+  const paidTotal = ctx.metrics.counterValue('economy.welfare_paid_cents')
+  const fundedFromPool = Math.min(getTaxPool(ctx), paidTotal)
+  setTaxPool(ctx, getTaxPool(ctx) - fundedFromPool)
+  const deficitCreated = paidTotal - fundedFromPool
+  if (deficitCreated > 0) {
     const name = 'economy.welfare_deficit_cents'
-    ctx.metrics.gauge(name, ctx.metrics.gaugeValue(name) + deficit)
+    ctx.metrics.gauge(name, ctx.metrics.gaugeValue(name) + deficitCreated)
   }
-  void paidThisRun
   const recipients = ctx.world.persons.filter(
     (p) => p.alive && p.economy.employerId === null && p.economy.monthlyIncomeCents === transfer &&
       ageYears(p.birthTick, tick) >= WORKING_AGE_MIN && ageYears(p.birthTick, tick) < RETIREMENT_AGE
