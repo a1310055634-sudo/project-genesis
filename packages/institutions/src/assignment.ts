@@ -70,6 +70,22 @@ export function monthlySchoolAssignment(ctx: SimContext): void {
   ctx.metrics.gauge('institutions_overflow_pupils', overflow)
 }
 
+/**
+ * Pupil → school quality map (red team RT4-05): lets the composition root
+ * couple school quality into education's skill-rate modifier without a
+ * domain→domain import. Pupils without an assignment are absent from the map.
+ */
+export function buildQualityByPupil(ctx: SimContext): Map<string, number> {
+  const schools = ensureSchools(ctx)
+  const assignments = ensureAssignments(ctx)
+  const out = new Map<string, number>()
+  for (const [pupilId, assignment] of assignments) {
+    const school = schools.get(assignment.schoolId)
+    if (school !== undefined) out.set(pupilId, school.quality)
+  }
+  return out
+}
+
 export const institutionsSystem = (): GenesisSystem => ({
   id: 'institutions',
   priority: 14,

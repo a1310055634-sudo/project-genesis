@@ -41,7 +41,9 @@ export function financialStrainOf(person: Person): number {
     // of transfer income removes 0.1 of strain, floored at 0.45
     const welfare = Math.max(0, economy.monthlyIncomeCents)
     const relief = 0.1 * Math.floor(welfare / 125_000)
-    return Math.min(1, Math.max(0, STRAIN_UNEMPLOYED - relief))
+    // policy floor (red team RT4-07): transfers soften the unemployed floor
+    // but can never push it below 0.45
+    return Math.min(1, Math.max(0.45, STRAIN_UNEMPLOYED - relief))
   }
   const incomeBurn = scaleMoney(economy.monthlyIncomeCents, STRAIN_INCOME_BURN_SHARE, 'floor')
   const monthlyBurn = Math.max(STRAIN_MIN_MONTHLY_BURN_CENTS, economy.lastMonthConsumptionCents, incomeBurn)

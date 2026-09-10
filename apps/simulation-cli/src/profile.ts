@@ -1,8 +1,8 @@
 import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
 import { educationSystem, skillOf } from '@genesis/education'
-import { institutionsSystem } from '@genesis/institutions'
-import { housingBurdenOf, housingSystem } from '@genesis/housing'
+import { buildQualityByPupil, institutionsSystem } from '@genesis/institutions'
+import { buildHousingBurdenByPerson, housingSystem } from '@genesis/housing'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
@@ -43,13 +43,16 @@ export function buildYoungChildCounts(world: { persons: Person[] }, tick: number
 }
 
 export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person, ctx: SimContext) => PsychEnvironment {
-  // young-child counts cached per tick: rebuilt at most once per simulated day
+  // per-tick caches (red team RT4-02): young-child counts AND housing burdens
+  // are computed once per simulated day, never per person
   let cachedTick = -1
   let cachedCounts: Map<string, number> | null = null
+  let cachedBurdens: Map<string, number> | null = null
   return (person: Person, ctx: SimContext): PsychEnvironment => {
     const tick = ctx.tick()
-    if (tick !== cachedTick || cachedCounts === null) {
+    if (tick !== cachedTick || cachedCounts === null || cachedBurdens === null) {
       cachedCounts = buildYoungChildCounts(ctx.world, tick)
+      cachedBurdens = buildHousingBurdenByPerson(ctx)
       cachedTick = tick
     }
     const child = person.lifeStage === 'child'
@@ -59,7 +62,7 @@ export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person
     const socialSupport = Math.min(1, Math.max(0, baseSupport + ctx.config.communitySupportBias))
     // EXP-004 pathway: housing burden folds into financial strain (both are
     // budget-pressure channels; documented mixture 60/40)
-    const housing = child ? 0.1 : housingBurdenOf(ctx, person)
+    const housing = child ? 0.1 : (cachedBurdens.get(person.id) ?? 0.2)
     const financialStrain = child
       ? 0.1
       : Math.min(1, Math.max(0, 0.6 * financialStrainOf(person) + 0.4 * housing))
@@ -93,7 +96,12 @@ export function fullStackSystems(): FullStackProfile {
       affinity: (_ctx, aId, bId) => graph.edge(aId, bId)?.liking ?? 0.3,
       conflict: (_ctx, aId, bId) => graph.edge(aId, bId)?.conflict ?? 0.1
     }), // priority 12, monthly
-    educationSystem(), // priority 14, monthly (school enrolment, attainment, skill)
+    educationSystem({
+      // red team RT4-05: school quality actually drives skill growth now
+      // (quality [0.35, 0.85] maps to rate multiplier ~[1.03, 1.78], clamped
+      // [0.5, 2] education-side; unassigned pupils default to 1)
+      skillRateModifier: (ctx, personId) => 0.5 + 1.5 * (buildQualityByPupil(ctx).get(personId) ?? 0.5)
+    }), // priority 14, monthly (school enrolment, attainment, skill)
     institutionsSystem(), // priority 14, monthly (school entities + pupil assignment; registered after education)
     housingSystem(), // priority 13, monthly (units + burden; reads config knob)
     socialSystem(graph), // priority 15, weekly

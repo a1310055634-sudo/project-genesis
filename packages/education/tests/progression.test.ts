@@ -101,12 +101,16 @@ describe('skillRateModifier injection (KI-8 follow-up: school quality → skill)
     )
     slow.run()
     // mean in-school skill is higher under the doubled rate
-    const fastMean = fast.ctx.metrics.statsOf('education_mean_skill')?.mean
-    const slowMean = slow.ctx.metrics.statsOf('education_mean_skill')?.mean
-    if (fastMean !== undefined && slowMean !== undefined) {
-      expect(fastMean).toBeGreaterThan(slowMean)
-    }
-    // both deterministic
-    expect(fast.digest()).toBe(fast.digest())
+    // (education_mean_skill is a GAUGE — read with gaugeValue, red team RT4-06)
+    const fastMean = fast.ctx.metrics.gaugeValue('education_mean_skill')
+    const slowMean = slow.ctx.metrics.gaugeValue('education_mean_skill')
+    expect(fastMean).toBeGreaterThan(slowMean)
+    // independent runs are deterministic (NOT a self-comparison, RT4-06)
+    const fastAgain = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 4 },
+      { systems: [demographicsSystem, educationSystem({ skillRateModifier: () => 2 })] }
+    )
+    fastAgain.run()
+    expect(fastAgain.digest()).toBe(fast.digest())
   }, 60_000)
 })

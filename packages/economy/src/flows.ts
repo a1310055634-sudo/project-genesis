@@ -259,9 +259,19 @@ export function monthlyWelfare(ctx: SimContext): void {
     if (!person.alive) continue
     if (person.economy.employerId !== null) continue
     const age = ageYears(person.birthTick, tick)
+    // red team RT4-08: a recipient who aged out of the window keeps the stale
+    // transfer income forever unless it is explicitly cleared
+    if ((age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) && person.economy.monthlyIncomeCents === transfer) {
+      person.economy.monthlyIncomeCents = 0
+      continue
+    }
     if (age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) continue
     if (person.economy.monthlyIncomeCents === transfer) continue // already receiving
+    // REAL transfer (red team RT4-03): the money actually lands in wealth —
+    // created by the government abstraction, audited via the counter below.
     person.economy.monthlyIncomeCents = transfer
+    person.economy.wealthCents += transfer
+    ctx.metrics.increment('economy.welfare_paid_cents', transfer)
     ctx.events.emit({
       id: ctx.ids.next('event'),
       type: 'welfare.paid',

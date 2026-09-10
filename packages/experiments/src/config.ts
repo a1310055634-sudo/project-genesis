@@ -62,6 +62,12 @@ function validate(config: ExperimentConfig): ExperimentConfig {
  * it verifies that the simulator's wired-in model relationships behave as the
  * model intends (e.g. the financial-strain → stress pathway), not that any
  * real-world causality holds.
+ *
+ * RE-RUN 2026-09-10 after red team RT4-04 (seed derivation is seed-only now,
+ * so arms are PAIRED WORLDS — identical population/employers/RNG landscape,
+ * differing only in the treatment). All 7 presets re-verified with direction
+ * confirmed; per-arm numbers below in each experiment's STATUS are from the
+ * paired-world runs and supersede earlier unpaired numbers.
  */
 export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   /**

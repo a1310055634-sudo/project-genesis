@@ -25,8 +25,12 @@ export class Simulation {
 
   private constructor(readonly config: SimulationConfig, options: SimulationOptions) {
     const world: WorldState = { seed: 0, persons: [], households: [], employers: [] }
-    // numeric seed derived from config so string seeds are reproducible
-    const numericSeed = fnv1a(`${config.seed}`) ^ fnv1a(configHash(config))
+    // numeric seed derived from the SEED ONLY (red team RT4-04): scenario
+    // knobs (economicShock, biases, multipliers...) must NOT re-roll the
+    // world, otherwise experiment arms are not paired worlds and treatment
+    // effects are confounded with inter-world variance. configHash remains
+    // in the run manifest for change detection.
+    const numericSeed = fnv1a(`${config.seed}`)
     world.seed = numericSeed
     const rng: Rng = createRng(numericSeed)
     this.ctx = createContext(config, world, rng)

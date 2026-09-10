@@ -48,8 +48,10 @@ export function assignUnit(
   const units = ensureUnits(ctx)
   const rng = ctx.rng.fork(`housing:${householdId}`)
   const quality = 0.3 + rng.next() * 0.6
+  // NO clamp on costMultiplier (red team RT4-01): domain [0.1, 5] enforced by
+  // normalizeConfig; clamping here silently voided the EXP-004 treatment arm
   const rent = Math.round(
-    (HOUSING_BASE_RENT_CENTS + HOUSING_MEMBER_RENT_CENTS * Math.max(0, memberCount - 1)) * clamp01(costMultiplier)
+    (HOUSING_BASE_RENT_CENTS + HOUSING_MEMBER_RENT_CENTS * Math.max(0, memberCount - 1)) * costMultiplier
   )
   const unit: HousingUnit = { householdId, quality, monthlyRentCents: rent }
   units.set(householdId, unit)

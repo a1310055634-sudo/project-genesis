@@ -18,8 +18,11 @@ export const housingSystem = (): GenesisSystem => ({
   nextFireTick: nextMonthStart,
   run(ctx: SimContext) {
     const units = ensureUnits(ctx)
-    // EXP-004 scenario knob lives in config so experiment arms can override it
-    const multiplier = clamp01(ctx.config.housingCostMultiplier)
+    // EXP-004 scenario knob lives in config so experiment arms can override it.
+    // NO clamp here (red team RT4-01): the [0.1, 5] domain is enforced by
+    // normalizeConfig; clamp01 silently collapsed every multiplier >1 to 1,
+    // turning the EXP-004 treatment arm into a no-op.
+    const multiplier = ctx.config.housingCostMultiplier
 
     // 1) assign units to not-yet-housed non-empty households
     for (const household of ctx.world.households) {
