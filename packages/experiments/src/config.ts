@@ -32,8 +32,10 @@ export interface ExperimentConfig {
 }
 
 function validate(config: ExperimentConfig): ExperimentConfig {
-  if (config.arms.length < 2) {
-    throw new Error(`experiment ${config.id}: needs at least 2 arms (baseline control + treatment), got ${config.arms.length}`)
+  // single-arm presets are allowed for persistence/monitoring checks (EXP-022);
+  // anything making a treatment CLAIM needs >= 2 arms — enforced here
+  if (config.arms.length < 1) {
+    throw new Error(`experiment ${config.id}: needs at least 1 arm, got ${config.arms.length}`)
   }
   // red team RT2-03: seed/years are experiment-level contracts — an arm
   // silently overriding them would poison cross-arm comparisons
@@ -269,6 +271,49 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
     arms: [
       { name: 'control', overrides: { wageSpreadMultiplier: 1 } },
       { name: 'high-spread', overrides: { wageSpreadMultiplier: 1.4 } }
+    ]
+  }),
+
+  /**
+   * EXP-021: information diffusion speed (guide HT-16, media domain).
+   * Mechanism under test: denser social networks (extraversionBias → more
+   * ties → higher hearing probability per person) spread newspaper pieces
+   * faster. Expected direction inside the model: the extraverted arm's
+   * media_last_piece_heard > control.
+   */
+  'EXP-021': validate({
+    id: 'EXP-021',
+    question:
+      'Model-internal mechanism check: does a denser social network (extraversion bias +0.4) ' +
+      'spread newspaper pieces to more listeners by end of run? Verifies the ' +
+      'network→media-exposure pathway inside the simulator; no real-world causal claim.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: { extraversionBias: 0 } },
+      { name: 'extraverted', overrides: { extraversionBias: 0.4 } }
+    ]
+  }),
+
+  /**
+   * EXP-022: rumor persistence (guide HT-16, media domain).
+   * Mechanism under test: the SAME piece keeps accumulating hearings while
+   * the network stays alive — information never "dies" in v1 (no belief
+   * decay; recorded simplification). Expected direction inside the model:
+   * total hearings in year 2 > year 1 (monotone growth).
+   */
+  'EXP-022': validate({
+    id: 'EXP-022',
+    question:
+      'Model-internal persistence check: does cumulative information hearing count keep ' +
+      'growing monotonically across the run (no unmodeled decay)? Guards against accidental ' +
+      'event-loss or counter resets in the media pipeline; no real-world causal claim.',
+    seeds: [42],
+    population: 150,
+    years: 2,
+    arms: [
+      { name: 'baseline', overrides: {} }
     ]
   }),
 

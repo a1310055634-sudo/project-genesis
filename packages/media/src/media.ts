@@ -79,6 +79,7 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
       const degree = tieCounts?.get(person.id) ?? 0
       if (rng.bool(hearingProbability(degree))) {
         newest.heardCount++
+        ctx.metrics.increment('media_hearings_total')
         ctx.events.emit({
           id: ctx.ids.next('event'),
           type: 'information.heard',

@@ -43,3 +43,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-11 01:02 TAKEOVER (idle 42min, build/test GREEN 241/241) — task: income tax funding for welfare (closes money-creation exception)
 - 2026-09-11 01:xx TAKEOVER COMPLETE — income taxation + pool-funded welfare (RT4-03 positive resolution: tax→pool→transfer, deficit audited; EXP-030 welfare 0.460 vs control 0.498); 242/242 green, committed
 - 2026-09-11 02:02 TAKEOVER (idle 50min, build/test GREEN 242/242) — task: media diffusion domain starter (EXP-021/022 prerequisites)
+- 2026-09-11 03:02 TAKEOVER (idle 52min, build/test GREEN 245/245) — task: EXP-021/022 information diffusion experiments
+- 2026-09-11 03:xx TAKEOVER COMPLETE — EXP-021 confirmed (extraverted 20.4 vs 17.9 listeners/piece, denser network spreads faster) + EXP-022 persistence guard (media_hearings_total counter added); 245/245 green, committed
