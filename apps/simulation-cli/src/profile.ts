@@ -2,6 +2,7 @@ import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
 import { educationSystem, skillOf } from '@genesis/education'
 import { buildQualityByPupil, institutionsSystem } from '@genesis/institutions'
+import { mediaSystem } from '@genesis/media'
 import { buildHousingBurdenByPerson, housingSystem } from '@genesis/housing'
 import { financialStrainOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
@@ -103,6 +104,17 @@ export function fullStackSystems(): FullStackProfile {
       skillRateModifier: (ctx, personId) => 0.5 + 1.5 * (buildQualityByPupil(ctx).get(personId) ?? 0.5)
     }), // priority 14, monthly (school enrolment, attainment, skill)
     institutionsSystem(), // priority 14, monthly (school entities + pupil assignment; registered after education)
+    mediaSystem({
+      // tie count per person from the social graph (degree drives exposure)
+      tieCounts: (_ctx) => {
+        const map = new Map<string, number>()
+        for (const edge of graph.allEdges()) {
+          map.set(edge.personA, (map.get(edge.personA) ?? 0) + 1)
+          map.set(edge.personB, (map.get(edge.personB) ?? 0) + 1)
+        }
+        return map
+      }
+    }), // priority 16, weekly (publication + spread)
     housingSystem(), // priority 13, monthly (units + burden; reads config knob)
     socialSystem(graph), // priority 15, weekly
     // HT-12 final link: skill→wage coupling. Hires price once at
