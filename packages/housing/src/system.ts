@@ -1,5 +1,10 @@
 import { clamp01 } from './util'
-import { assignUnit, ensureUnits } from './housing'
+import { assignUnit, ensureUnits, HOUSING_BASE_RENT_CENTS, HOUSING_MEMBER_RENT_CENTS } from './housing'
+
+/** Income at which a household fully maintains its unit's quality (cents/month). */
+export const HOUSING_MAINTENANCE_INCOME_CENTS = 600_000
+/** Max quality drift per month toward the maintenance steady-state. */
+export const HOUSING_QUALITY_DRIFT_PER_MONTH = 0.02
 import { GenesisSystem, nextMonthStart, SimContext } from '@genesis/simulation'
 
 /**
@@ -36,6 +41,37 @@ export const housingSystem = (): GenesisSystem => ({
     const alive = new Set(ctx.world.households.map((h) => h.id))
     for (const householdId of [...units.keys()]) {
       if (!alive.has(householdId)) units.delete(householdId)
+    }
+
+    // 2b) monthly repricing (red team RT4-12): household composition changes
+    //     (births/deaths/moves) re-derive the rent from the CURRENT member
+    //     count, so burden tracks reality instead of the assignment-time
+    //     snapshot. Unit objects are mutated in place (stable references).
+    const householdByIdNow = new Map(ctx.world.households.map((h) => [h.id, h]))
+    const personsById = new Map(ctx.world.persons.map((p) => [p.id, p]))
+    for (const [householdId, unit] of units) {
+      const household = householdByIdNow.get(householdId)
+      if (household === undefined) continue
+      // all-dead shells (possible without the family GC) are frozen, not drifted
+      const aliveMembersNow = household.memberIds
+        .map((id) => personsById.get(id))
+        .filter((p): p is NonNullable<typeof p> => p !== undefined && p.alive)
+      if (aliveMembersNow.length === 0) continue
+      const recomputed = Math.round(
+        (HOUSING_BASE_RENT_CENTS + HOUSING_MEMBER_RENT_CENTS * Math.max(0, household.memberIds.length - 1)) * multiplier
+      )
+      unit.monthlyRentCents = recomputed
+
+      // quality/maintenance loop (HT-12 depth): quality drifts toward a
+      // maintenance steady-state set by the household's income — affluent
+      // households maintain/improve, poor ones let it decay. Deterministic.
+      const primaryIncome = aliveMembersNow.reduce(
+        (max, p) => Math.max(max, p.economy.monthlyIncomeCents),
+        0
+      )
+      const steadyQuality = clamp01(primaryIncome / HOUSING_MAINTENANCE_INCOME_CENTS)
+      const drift = HOUSING_QUALITY_DRIFT_PER_MONTH * (steadyQuality - unit.quality)
+      unit.quality = clamp01(unit.quality + drift)
     }
 
     // 3) metrics: mean rent burden across alive households
