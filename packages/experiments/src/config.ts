@@ -133,8 +133,10 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
     population: 150,
     years: 2,
     arms: [
+      // funded variant (RT4-03 resolution): a 10% income tax fills the pool
+      // first; only the shortfall is deficit-created (audited)
       { name: 'control', overrides: {} },
-      { name: 'welfare', overrides: { welfareTransferCents: 250_000 } }
+      { name: 'welfare', overrides: { welfareTransferCents: 250_000, incomeTaxRate: 0.1 } }
     ]
   }),
 

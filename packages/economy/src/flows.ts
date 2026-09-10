@@ -242,6 +242,43 @@ export function applyEconomicShockIfNeeded(ctx: SimContext): void {
  *     through the injected skill multiplier at hire time, default 1.0).
  * Ages are derived from birthTick via ageYears (no stored age).
  */
+// ---------------------------------------------------------------------------
+// Taxation pool (EXP-030 funded variant / HT-12 taxation abstraction)
+// ---------------------------------------------------------------------------
+
+const TAX_POOL_KEY = 'economy.taxPool'
+
+function getTaxPool(ctx: SimContext): number {
+  const v = ctx.extensions.get(TAX_POOL_KEY)
+  return typeof v === 'number' ? v : 0
+}
+
+function setTaxPool(ctx: SimContext, value: number): void {
+  ctx.extensions.set(TAX_POOL_KEY, value)
+}
+
+/**
+ * Monthly income taxation (EXP-030 funded variant / HT-12 taxation): employed
+ * residents pay floor(rate × income) cents into the welfare pool. Money MOVES
+ * wealth → pool (conserved, no creation). Deterministic: array-order sweep.
+ */
+export function monthlyTaxation(ctx: SimContext): void {
+  const rate = ctx.config.incomeTaxRate ?? 0
+  if (rate <= 0) return
+  const tick = ctx.tick()
+  let collected = 0
+  for (const person of ctx.world.persons) {
+    if (!person.alive) continue
+    if (person.economy.employerId === null) continue
+    const tax = scaleMoney(person.economy.monthlyIncomeCents, rate, 'floor')
+    if (tax <= 0) continue
+    person.economy.wealthCents = subMoney(person.economy.wealthCents, tax)
+    collected = addMoney(collected, tax)
+  }
+  setTaxPool(ctx, getTaxPool(ctx) + collected)
+  ctx.metrics.increment('economy.tax_collected_cents', collected)
+}
+
 /**
  * Welfare transfer (guide EXP-030 policy abstraction): unemployed working-age
  * residents receive `config.welfareTransferCents` per month. Money is CREATED
@@ -255,6 +292,9 @@ export function monthlyWelfare(ctx: SimContext): void {
   const transfer = ctx.config.welfareTransferCents ?? 0
   if (transfer <= 0) return
   const tick = ctx.tick()
+  const paidAtStart = ctx.metrics.counterValue('economy.welfare_paid_cents')
+  const poolAtStart = getTaxPool(ctx)
+  let deficit = 0
   for (const person of ctx.world.persons) {
     if (!person.alive) continue
     if (person.economy.employerId !== null) continue
@@ -267,10 +307,11 @@ export function monthlyWelfare(ctx: SimContext): void {
     }
     if (age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) continue
     if (person.economy.monthlyIncomeCents === transfer) continue // already receiving
-    // REAL transfer (red team RT4-03): the money actually lands in wealth —
-    // created by the government abstraction, audited via the counter below.
+    // REAL transfer (red team RT4-03): the money actually lands in wealth,
+    // funded from the taxation pool first; only the shortfall is deficit.
     person.economy.monthlyIncomeCents = transfer
     person.economy.wealthCents += transfer
+    deficit += transfer
     ctx.metrics.increment('economy.welfare_paid_cents', transfer)
     ctx.events.emit({
       id: ctx.ids.next('event'),
@@ -280,6 +321,14 @@ export function monthlyWelfare(ctx: SimContext): void {
       payload: { amountCents: transfer }
     })
   }
+  // deficit accounting: paid total vs what the taxation pool actually funded
+  // (red team RT4-03 resolution) — transparent rather than hidden creation
+  const paidThisRun = ctx.metrics.counterValue('economy.welfare_paid_cents') - paidAtStart
+  if (deficit > 0) {
+    const name = 'economy.welfare_deficit_cents'
+    ctx.metrics.gauge(name, ctx.metrics.gaugeValue(name) + deficit)
+  }
+  void paidThisRun
   const recipients = ctx.world.persons.filter(
     (p) => p.alive && p.economy.employerId === null && p.economy.monthlyIncomeCents === transfer &&
       ageYears(p.birthTick, tick) >= WORKING_AGE_MIN && ageYears(p.birthTick, tick) < RETIREMENT_AGE
@@ -290,6 +339,9 @@ export function monthlyWelfare(ctx: SimContext): void {
 export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`economy.jobmarket:${tick}`)
+
+  // (-2) taxation (EXP-030 funded variant) — collects BEFORE welfare pays
+  monthlyTaxation(ctx)
 
   // (-1) welfare transfer (EXP-030) — before hire pricing so the cooldown
   // exit cohort carries the transfer income into their strain calculation

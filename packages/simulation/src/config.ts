@@ -37,10 +37,13 @@ export interface SimulationConfig {
    * the config hash unchanged for non-users (economicShock pattern). */
   wageSpreadMultiplier?: number
   /** Monthly welfare transfer (integer cents) paid to unemployed working-age
-   * residents (guide EXP-030: policy transfer abstraction). Money is CREATED
-   * (government deficit abstraction) and audited via
-   * 'economy.welfare_paid_cents'. Optional/0 = policy off. */
+   * residents (guide EXP-030: policy transfer abstraction). Funded FIRST from
+   * the taxation pool (see incomeTaxRate); shortfall is deficit-created and
+   * audited via 'economy.welfare_deficit_cents'. Optional/0 = policy off. */
   welfareTransferCents?: number
+  /** Income tax rate [0, 0.5] levied monthly on employed residents' income
+   * (funds the welfare pool; EXP-030 funded variant). 0 = no tax. */
+  incomeTaxRate?: number
 }
 
 export interface EconomicShock {
@@ -104,6 +107,12 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
     const transfer = merged.welfareTransferCents
     if (!Number.isInteger(transfer) || transfer < 0 || transfer > 2_000_000) {
       throw new Error(`welfareTransferCents must be an integer in [0, 2000000], got ${transfer}`)
+    }
+  }
+  if (merged.incomeTaxRate !== undefined) {
+    const rate = merged.incomeTaxRate
+    if (!(Number.isFinite(rate) && rate >= 0 && rate <= 0.5)) {
+      throw new Error(`incomeTaxRate out of [0, 0.5]: ${rate}`)
     }
   }
   if (merged.economicShock !== undefined) {

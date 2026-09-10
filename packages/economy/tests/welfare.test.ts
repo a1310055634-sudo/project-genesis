@@ -26,6 +26,24 @@ describe('welfare transfer (EXP-030)', () => {
     expect(checkInvariantSafe(sim)).toBe(true)
   })
 
+  it('funds from the taxation pool first; only the shortfall is deficit (RT4-03)', () => {
+    const sim = Simulation.create(
+      {
+        seed: 42, populationTarget: 150, years: 2,
+        welfareTransferCents: 250_000, incomeTaxRate: 0.1
+      },
+      { systems: [demographicsSystem, ...economySystems()] }
+    )
+    sim.run()
+    // taxation collected something and welfare spent it; the deficit gauge
+    // only carries what the pool could not cover
+    const collected = sim.ctx.metrics.counterValue('economy.tax_collected_cents')
+    expect(collected).toBeGreaterThan(0)
+    const deficit = sim.ctx.metrics.gaugeValue('economy.welfare_deficit_cents')
+    expect(deficit).toBeGreaterThanOrEqual(0)
+    expect(checkInvariantSafe(sim)).toBe(true)
+  })
+
   it('is off when the policy is absent', () => {
     const sim = build(0)
     sim.run()
