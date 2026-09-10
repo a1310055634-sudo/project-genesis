@@ -95,6 +95,7 @@ describe('skill wage pricing at hire (HT-12)', () => {
         sim.ctx.events.onAny((event) => {
           const payload = event.payload as { amountCents?: number } | undefined
           if (event.type === 'income.received' && payload?.amountCents !== undefined) incomeSum += payload.amountCents
+          else if (event.type === 'pension.paid' && payload?.amountCents !== undefined) incomeSum += payload.amountCents
           else if (event.type === 'consumption.paid' && payload?.amountCents !== undefined) consumptionSum += payload.amountCents
         })
         const before = sim.ctx.world.persons.reduce((sum, p) => sum + p.economy.wealthCents, 0)

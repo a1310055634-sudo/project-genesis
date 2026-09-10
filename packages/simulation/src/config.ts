@@ -41,6 +41,10 @@ export interface SimulationConfig {
    * the taxation pool (see incomeTaxRate); shortfall is deficit-created and
    * audited via 'economy.welfare_deficit_cents'. Optional/0 = policy off. */
   welfareTransferCents?: number
+  /** Pension replacement rate [0, 1]: pension = rate × final income, paid
+   * monthly to retirees from the taxation pool first (shortfall =
+   * deficit-created, audited). Optional; absent = 0.6 legacy default. */
+  pensionReplacementRate?: number
   /** Income tax rate [0, 0.5] levied monthly on employed residents' income
    * (funds the welfare pool; EXP-030 funded variant). 0 = no tax. */
   incomeTaxRate?: number
@@ -70,7 +74,7 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   // optional scenario knobs: explicitly-passed undefined must equal absent,
   // otherwise configHash (and thus the whole random landscape) would diverge
   // between callers that omit the key and callers that pass undefined
-  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents'] as const) {
+  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents', 'pensionReplacementRate'] as const) {
     if (merged[key] === undefined) delete merged[key]
   }
   if (!Number.isInteger(merged.populationTarget) || merged.populationTarget <= 0) {
@@ -107,6 +111,12 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
     const transfer = merged.welfareTransferCents
     if (!Number.isInteger(transfer) || transfer < 0 || transfer > 2_000_000) {
       throw new Error(`welfareTransferCents must be an integer in [0, 2000000], got ${transfer}`)
+    }
+  }
+  if (merged.pensionReplacementRate !== undefined) {
+    const rate = merged.pensionReplacementRate
+    if (!(Number.isFinite(rate) && rate >= 0 && rate <= 1)) {
+      throw new Error(`pensionReplacementRate out of [0, 1]: ${rate}`)
     }
   }
   if (merged.incomeTaxRate !== undefined) {

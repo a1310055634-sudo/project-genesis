@@ -34,9 +34,18 @@ export const STRAIN_INCOME_BURN_SHARE = 0.6
  *   strain = STRAIN_UNEMPLOYED * (1 - min(runway, HORIZON) / HORIZON),
  *   clamped to [0, 1]. Zero runway (no savings) → 0.85; runway ≥ 12 months → 0.
  */
-export function financialStrainOf(person: Person): number {
+export function financialStrainOf(person: Person, pensionCents?: number): number {
   const economy = person.economy
   if (economy.employerId === null) {
+    // retirees (economic depth): a pension counts as income for the runway
+    // calculation instead of the flat unemployed floor
+    const pension = pensionCents ?? 0
+    if (pension > 0) {
+      const incomeBurn = Math.max(STRAIN_MIN_MONTHLY_BURN_CENTS, scaleMoney(pension, STRAIN_INCOME_BURN_SHARE, 'floor'))
+      const runwayMonths = Math.max(0, economy.wealthCents) / incomeBurn
+      const strain = STRAIN_UNEMPLOYED * (1 - Math.min(runwayMonths, STRAIN_RUNWAY_HORIZON_MONTHS) / STRAIN_RUNWAY_HORIZON_MONTHS)
+      return Math.min(1, Math.max(0, strain))
+    }
     // welfare softens the unemployed floor (EXP-030): each 125k cents/month
     // of transfer income removes 0.1 of strain, floored at 0.45
     const welfare = Math.max(0, economy.monthlyIncomeCents)

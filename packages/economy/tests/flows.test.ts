@@ -80,6 +80,8 @@ describe('income/consumption accounting (2 years, 50 residents)', () => {
       if (event.type === 'income.received' && payload?.amountCents !== undefined) {
         expect(Number.isInteger(payload.amountCents)).toBe(true)
         incomeSum += payload.amountCents
+      } else if (event.type === 'pension.paid' && payload?.amountCents !== undefined) {
+        incomeSum += payload.amountCents
       } else if (event.type === 'consumption.paid' && payload?.amountCents !== undefined) {
         expect(Number.isInteger(payload.amountCents)).toBe(true)
         consumptionSum += payload.amountCents

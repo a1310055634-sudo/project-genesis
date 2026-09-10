@@ -46,3 +46,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-11 03:02 TAKEOVER (idle 52min, build/test GREEN 245/245) — task: EXP-021/022 information diffusion experiments
 - 2026-09-11 03:xx TAKEOVER COMPLETE — EXP-021 confirmed (extraverted 20.4 vs 17.9 listeners/piece, denser network spreads faster) + EXP-022 persistence guard (media_hearings_total counter added); 245/245 green, committed
 - 2026-09-11 04:01 TAKEOVER (idle 54min, build/test GREEN 245/245) — task: media per-person exposure memory (v1 count-only upgrade)
+- 2026-09-11 05:02 TAKEOVER (idle 57min, build/test GREEN 239/239) — task: pension abstraction (retiree income + strain pathway)
+- 2026-09-11 05:xx TAKEOVER COMPLETE — pension abstraction landed (accrual at retirement + monthly pool-funded payout + strain retiree branch + pension.paid events; ledgers updated); 246/246 green, committed

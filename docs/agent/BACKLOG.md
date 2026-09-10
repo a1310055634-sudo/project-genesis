@@ -71,6 +71,9 @@ Acceptance: records runtime, peak RSS, events/sec.
 ## Institutions ✅ (batch 15, 2026-09-09)
 - packages/institutions: school entities (capacity/quality, side-table), deterministic capacity assignment with overflow + age-out revocation; wired into full stack; education quality coupling — DONE (EducationDeps.skillRateModifier, 2026-09-10 session)
 
+## Pensions ✅ (batch 16, 2026-09-11)
+- retirement accrues pension = pensionReplacementRate (default 0.6) × final income (side-table); monthly payout pool-funded, deficit audited; strain retiree branch (pension-as-income runway); pension.paid events in ledgers
+
 ## EXP-030 ✅ (batch 14, 2026-09-10)
 - welfareTransferCents policy knob + monthlyWelfare flow (money-created abstraction, audited) + strain softening; welfare arm 0.457 vs control 0.493 — direction confirmed
 

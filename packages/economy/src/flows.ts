@@ -58,6 +58,26 @@ function searchEligible(ctx: SimContext, personId: string, tick: number): boolea
 }
 
 // ---------------------------------------------------------------------------
+// Pensions (economic depth): retirement accrues a pension from the final
+// income; the pension is paid monthly from the taxation pool first
+// (intergenerational transfer), shortfall deficit-created and audited.
+// ---------------------------------------------------------------------------
+
+const PENSIONS_KEY = 'economy.pensions'
+
+function pensionsMap(ctx: SimContext): Map<string, number> {
+  const existing = ctx.extensions.get(PENSIONS_KEY)
+  if (existing instanceof Map) return existing as Map<string, number>
+  const created = new Map<string, number>()
+  ctx.extensions.set(PENSIONS_KEY, created)
+  return created
+}
+
+export function pensionOf(ctx: SimContext, personId: string): number {
+  return pensionsMap(ctx).get(personId) ?? 0
+}
+
+// ---------------------------------------------------------------------------
 // Tunables (named constants with rationale; v1 values are illustrative, not
 // calibrated against real data — recorded simplification).
 // ---------------------------------------------------------------------------
@@ -336,6 +356,47 @@ export function monthlyWelfare(ctx: SimContext): void {
   ctx.metrics.gauge('economy.welfare_recipients', recipients)
 }
 
+/**
+ * Monthly pension payout (economic depth): retirees (65+, no employer, with a
+ * pension record) receive their pension monthly, paid from the taxation pool
+ * first; the shortfall is deficit-created and audited. The pension lands in
+ * monthlyIncomeCents (income semantics — feeds runway/strain). Deterministic.
+ */
+export function monthlyPension(ctx: SimContext): void {
+  const tick = ctx.tick()
+  const pensions = pensionsMap(ctx)
+  const poolAtStart = getTaxPool(ctx)
+  const personsById = new Map(ctx.world.persons.map((p) => [p.id, p]))
+  let pensionTotal = 0
+  for (const person of ctx.world.persons) {
+    if (!person.alive) continue
+    if (ageYears(person.birthTick, tick) < RETIREMENT_AGE) continue
+    if (person.economy.employerId !== null) continue
+    const pension = pensions.get(person.id) ?? 0
+    if (pension <= 0) continue
+    person.economy.monthlyIncomeCents = pension
+    person.economy.wealthCents += pension
+    pensionTotal += pension
+    ctx.metrics.increment('economy.pension_paid_cents', pension)
+    ctx.events.emit({
+      id: ctx.ids.next('event'),
+      type: 'pension.paid',
+      tick,
+      actorIds: [person.id],
+      payload: { amountCents: pension }
+    })
+  }
+  // pool funding: pension total is transferred from the taxation pool; the
+  // shortfall beyond the pool is deficit-created (audited gauge)
+  const funded = Math.min(poolAtStart, pensionTotal)
+  setTaxPool(ctx, poolAtStart - funded)
+  const deficitCreated = pensionTotal - funded
+  if (deficitCreated > 0) {
+    const name = 'economy.pension_deficit_cents'
+    ctx.metrics.gauge(name, ctx.metrics.gaugeValue(name) + deficitCreated)
+  }
+}
+
 export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
   const tick = ctx.tick()
   const rng = ctx.rng.fork(`economy.jobmarket:${tick}`)
@@ -346,6 +407,7 @@ export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
   // (-1) welfare transfer (EXP-030) — before hire pricing so the cooldown
   // exit cohort carries the transfer income into their strain calculation
   monthlyWelfare(ctx)
+  monthlyPension(ctx)
 
   // (0) economic shock (EXP-001)
   applyEconomicShockIfNeeded(ctx)
@@ -356,6 +418,12 @@ export function monthlyJobMarket(ctx: SimContext, deps?: EconomyDeps): void {
     if (person.economy.employerId === null) continue
     if (ageYears(person.birthTick, tick) < RETIREMENT_AGE) continue
     if (!rng.bool(RETIREMENT_PROBABILITY_PER_MONTH)) continue
+    // pension accrual (economic depth): the pension is a share of the final
+    // income, recorded in the side-table for the monthly pension payout
+    pensionsMap(ctx).set(
+      person.id,
+      scaleMoney(person.economy.monthlyIncomeCents, ctx.config.pensionReplacementRate ?? 0.6, 'floor')
+    )
     const employer = ctx.world.employers.find((e) => e.id === person.economy.employerId)
     if (employer !== undefined) employer.filledSlots = Math.max(0, employer.filledSlots - 1)
     person.economy.employerId = null

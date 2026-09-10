@@ -4,7 +4,7 @@ import { educationSystem, skillOf } from '@genesis/education'
 import { buildQualityByPupil, institutionsSystem } from '@genesis/institutions'
 import { mediaSystem } from '@genesis/media'
 import { buildHousingBurdenByPerson, housingSystem } from '@genesis/housing'
-import { financialStrainOf, economySystems } from '@genesis/economy'
+import { financialStrainOf, pensionOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
 import { familySystem } from '@genesis/family'
@@ -64,9 +64,10 @@ export function psychEnvBridge(graph: RelationshipGraph | null): (person: Person
     // EXP-004 pathway: housing burden folds into financial strain (both are
     // budget-pressure channels; documented mixture 60/40)
     const housing = child ? 0.1 : (cachedBurdens.get(person.id) ?? 0.2)
+    const pension = pensionOf(ctx, person.id)
     const financialStrain = child
       ? 0.1
-      : Math.min(1, Math.max(0, 0.6 * financialStrainOf(person) + 0.4 * housing))
+      : Math.min(1, Math.max(0, 0.6 * financialStrainOf(person, pension) + 0.4 * housing))
     return {
       financialStrain,
       occupationalStrain: child ? 0 : person.economy.employerId !== null ? 0.2 : 0.5,
