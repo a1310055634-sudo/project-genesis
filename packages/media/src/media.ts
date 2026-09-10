@@ -18,6 +18,9 @@ export interface MediaPiece {
   pieceId: string
   originTick: number
   heardCount: number
+  /** Per-person exposure memory (v2, red-team-proof design): who heard this
+   * piece. Bounded by population; enables per-person belief modelling later. */
+  heardBy: Set<string>
 }
 
 export function ensurePieces(ctx: SimContext): Map<string, MediaPiece> {
@@ -63,7 +66,7 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
 
     // publish
     const pieceId = ctx.ids.next('piece')
-    pieces.set(pieceId, { pieceId, originTick: tick, heardCount: 0 })
+    pieces.set(pieceId, { pieceId, originTick: tick, heardCount: 0, heardBy: new Set() })
     ctx.events.emit({
       id: ctx.ids.next('event'),
       type: 'media.published',
@@ -78,6 +81,9 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
       if (!person.alive) continue
       const degree = tieCounts?.get(person.id) ?? 0
       if (rng.bool(hearingProbability(degree))) {
+        // per-person exposure memory: a person hears each piece only once
+        if (newest.heardBy.has(person.id)) continue
+        newest.heardBy.add(person.id)
         newest.heardCount++
         ctx.metrics.increment('media_hearings_total')
         ctx.events.emit({

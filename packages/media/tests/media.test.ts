@@ -36,6 +36,29 @@ describe('media domain (HT-12)', () => {
     expect(checkInvariants(sim.ctx.world, sim.ctx.clock.tick, sim.ctx.world.seed).violations).toBe(0)
   })
 
+  it('per-person exposure memory: nobody hears the same piece twice', () => {
+    const graph = new RelationshipGraph()
+    const sim = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 2 },
+      { systems: [demographicsSystem, mediaSystem()] }
+    )
+    // attach the graph AFTER creation via extension-style wiring: rebuild the
+    // sim with tie counts from a graph populated by the social system instead —
+    // simpler: count ties from a graph we populate by hand per tick is
+    // overkill; for the tie-exposure correlation we just use edge counts from
+    // a graph instance shared with a social system.
+    void graph
+    sim.run()
+    const pieces = sim.ctx.extensions.get(MEDIA_PIECES) as Map<string, { heardBy: Set<string>; heardCount: number }>
+    const byId = new Map(sim.ctx.world.persons.map((p) => [p.id, p]))
+    for (const piece of pieces.values()) {
+      expect(piece.heardCount).toBe(piece.heardBy.size)
+      for (const personId of piece.heardBy) {
+        expect(byId.has(personId)).toBe(true)
+      }
+    }
+  })
+
   it('is deterministic under a fixed seed', () => {
     const run = () => {
       const { sim } = build()
