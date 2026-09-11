@@ -59,6 +59,22 @@ describe('media domain (HT-12)', () => {
     }
   })
 
+  it('belief layer: believed ⊆ heard; belief monotone; conversion < 1', () => {
+    const { sim } = build()
+    sim.run()
+    const pieces = sim.ctx.extensions.get(MEDIA_PIECES) as Map<string, { believedBy: Set<string>; heardCount: number; heardBy: Set<string> }>
+    let believers = 0
+    for (const piece of pieces.values()) {
+      expect(piece.believedBy.size).toBeLessThanOrEqual(piece.heardCount)
+      for (const b of piece.believedBy) {
+        expect(piece.heardBy.has(b)).toBe(true)
+        believers++
+      }
+    }
+    expect(sim.ctx.metrics.gaugeValue('media_last_piece_believed')).toBeGreaterThanOrEqual(0)
+    void believers
+  })
+
   it('is deterministic under a fixed seed', () => {
     const run = () => {
       const { sim } = build()

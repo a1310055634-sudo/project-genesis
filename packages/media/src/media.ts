@@ -21,6 +21,10 @@ export interface MediaPiece {
   /** Per-person exposure memory (v2, red-team-proof design): who heard this
    * piece. Bounded by population; enables per-person belief modelling later. */
   heardBy: Set<string>
+  /** v2 belief layer: who BELIEVES the piece (subset of heardBy). Hearing
+   * converts to belief with flat probability; belief never decays in v1
+   * (belief-decay is the EXP-022 v3 follow-up). */
+  believedBy: Set<string>
 }
 
 export function ensurePieces(ctx: SimContext): Map<string, MediaPiece> {
@@ -39,6 +43,9 @@ export function hearingProbability(tieCount: number): number {
   // more connections → more exposure; saturates at 0.5 for 20+ ties
   return clamp01(0.05 + 0.02 * Math.min(20, tieCount))
 }
+
+/** Probability that hearing converts to belief (v1: flat, no source trust). */
+export const BELIEF_CONVERSION_PROB = 0.6
 
 function clamp01(v: number): number {
   return Math.min(1, Math.max(0, v))
@@ -66,7 +73,7 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
 
     // publish
     const pieceId = ctx.ids.next('piece')
-    pieces.set(pieceId, { pieceId, originTick: tick, heardCount: 0, heardBy: new Set() })
+    pieces.set(pieceId, { pieceId, originTick: tick, heardCount: 0, heardBy: new Set(), believedBy: new Set() })
     ctx.events.emit({
       id: ctx.ids.next('event'),
       type: 'media.published',
@@ -86,6 +93,12 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
         newest.heardBy.add(person.id)
         newest.heardCount++
         ctx.metrics.increment('media_hearings_total')
+        // belief conversion (v2): hearing converts at BELIEF_CONVERSION_PROB;
+        // believed subset ⊆ heard subset, belief never decays in v1
+        if (rng.bool(BELIEF_CONVERSION_PROB)) {
+          newest.believedBy.add(person.id)
+          ctx.metrics.increment('media_beliefs_total')
+        }
         ctx.events.emit({
           id: ctx.ids.next('event'),
           type: 'information.heard',
@@ -98,5 +111,6 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
 
     ctx.metrics.gauge('media_pieces', pieces.size)
     ctx.metrics.gauge('media_last_piece_heard', newest.heardCount)
+    ctx.metrics.gauge('media_last_piece_believed', newest.believedBy.size)
   }
 })
