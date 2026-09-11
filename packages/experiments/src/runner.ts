@@ -101,6 +101,10 @@ function samplerSystem(sampleMetrics: string[]): GenesisSystem {
           const deltaCount = stats.count - prev.count
           if (deltaCount <= 0) continue // nothing recorded this month
           values[key] = (stats.sum - prev.sum) / deltaCount
+        } else if (ctx.metrics.hasCounter(key)) {
+          // counters are sampled as cumulative totals (monotone guards like
+          // media_hearings_total compare across runs, not across months)
+          values[key] = ctx.metrics.counterValue(key)
         } else if (ctx.metrics.hasGauge(key)) {
           values[key] = ctx.metrics.gaugeValue(key)
         }

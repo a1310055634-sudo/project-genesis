@@ -49,3 +49,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-11 05:02 TAKEOVER (idle 57min, build/test GREEN 239/239) — task: pension abstraction (retiree income + strain pathway)
 - 2026-09-11 05:xx TAKEOVER COMPLETE — pension abstraction landed (accrual at retirement + monthly pool-funded payout + strain retiree branch + pension.paid events; ledgers updated); 246/246 green, committed
 - 2026-09-11 06:01 TAKEOVER (idle 51min, build/test GREEN 246/246) — task: red team round 5 (read-only audit)
+- 2026-09-11 07:01 RUNNING
+- 2026-09-11 08:01 TAKEOVER (idle 80min, build/test GREEN 246/246) — task: RT5-02 monthly welfare semantics + RT5-06 sampler counter support
+- 2026-09-11 08:xx TAKEOVER COMPLETE — RT5-02 monthly welfare semantics (paid every unemployed month) + RT5-06 sampler counter support (hasCounter + cumulative counter rows) + EXP-021/022 defs; 247/247 green, committed

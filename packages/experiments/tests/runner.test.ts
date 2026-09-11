@@ -44,6 +44,20 @@ function singleCell(config: ExperimentConfig, arm: ExperimentArm, seed: number):
   return { ...config, seeds: [seed], arms: [arm] }
 }
 
+describe('sampler counter support (red team RT5-06)', () => {
+  it('samples counter keys into monthly rows (not just gauges/stats)', () => {
+    // 'demographics.months_processed' is a counter incremented monthly by the
+    // demographics system — the canonical counter-sampling case (RT5-06)
+    const result = runExperiment(EXP002, testSystemsFactory, { sampleMetrics: ['demographics.months_processed'] })
+    const outcome = result.outcomes[0]
+    if (outcome === undefined) throw new Error('missing outcome')
+    expect(outcome.monthly?.length ?? 0).toBeGreaterThan(0)
+    const withCounter = (outcome.monthly ?? []).filter((r) => 'demographics.months_processed' in r.values)
+    // the counter increments monthly — sampled rows must exist
+    expect(withCounter.length).toBeGreaterThan(0)
+  })
+})
+
 describe('runExperiment (EXP-002 full run: 2 arms × 3 seeds × 150 persons × 2y)', () => {
   it('runs every arm×seed cell with merged metrics and reproducible digests', () => {
     const result = EXP002_RESULT

@@ -323,9 +323,9 @@ export function monthlyWelfare(ctx: SimContext): void {
       continue
     }
     if (age < WORKING_AGE_MIN || age >= RETIREMENT_AGE) continue
-    if (person.economy.monthlyIncomeCents === transfer) continue // already receiving
-    // REAL transfer (red team RT4-03): the money actually lands in wealth,
-    // funded from the taxation pool first; only the shortfall is deficit.
+    // monthly transfer (red team RT5-02 semantics fix): paid EVERY month
+    // while unemployed. monthlyIncomeCents keeps the transfer amount so the
+    // consumption share and strain relief track it across months.
     person.economy.monthlyIncomeCents = transfer
     person.economy.wealthCents += transfer
     ctx.metrics.increment('economy.welfare_paid_cents', transfer)

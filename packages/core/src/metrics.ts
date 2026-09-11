@@ -42,6 +42,11 @@ export class MetricsRegistry {
     return this.counters.get(name) ?? 0
   }
 
+  /** Whether the counter was ever incremented this run (RT5-06 sampler support). */
+  hasCounter(name: string): boolean {
+    return this.counters.has(name)
+  }
+
   gaugeValue(name: string): number {
     return this.gauges.get(name) ?? 0
   }
