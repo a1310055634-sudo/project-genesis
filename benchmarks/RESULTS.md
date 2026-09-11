@@ -19,6 +19,23 @@ CLI end-to-end (manifest + digest included):
 Reference point (demography-only, before Wave 2 systems): 10k × 10y = 1.9s.
 The social graph dominates cost (weekly interaction + unbounded edge growth — see KNOWN_ISSUES #1).
 
+## 2026-09-10 — post 11-package stack refresh (RT4-02 burden cache verified)
+
+| population | years | runtime | peak RSS | alive | events | events/sec | digest |
+|---|---|---|---|---|---|---|---|
+| 1,000 | 1 | 1,251 ms | 317.3 MB | 981 | 151,806 | 121,348 | abfb95eb |
+| 10,000 | 1 | 18,723 ms | 423.8 MB | 9,920 | 1,487,568 | 79,451 | bd08417f |
+
+CLI end-to-end (10 domains live: + education + housing + institutions + media + taxation/pensions):
+
+| population | years | runtime | notes |
+|---|---|---|---|
+| 10,000 | 10 | 333,867 ms (~5.6 min) | 9,085 alive; 15.55M events; 65k relationships; digest 67f710f2 |
+
+Verdict: the six domains added since 2026-09-08 (education, housing, institutions,
+media, taxation, pensions) cost ~8% runtime at 10k×1y versus the 09-08 stack — the
+RT4-02 burden cache held the line. No performance regression to triage.
+
 ## Scaling notes
 - 1k→10k (10× pop, same 1y): runtime 12.2× — near-linear with a slight superlinear factor from the social graph.
 - Guide §26 targets: P1 (10k×1y) achieved at ~21s. P2 (10k×10y) baseline achieved at ~15 min. P3 (10k×100y) not attempted (est. ~2.5h at current scaling; edge growth makes extrapolation unreliable — profile first, HT-24.6).

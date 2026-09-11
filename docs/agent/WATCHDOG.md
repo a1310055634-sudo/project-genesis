@@ -52,3 +52,4 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-11 07:01 RUNNING
 - 2026-09-11 08:01 TAKEOVER (idle 80min, build/test GREEN 246/246) — task: RT5-02 monthly welfare semantics + RT5-06 sampler counter support
 - 2026-09-11 08:xx TAKEOVER COMPLETE — RT5-02 monthly welfare semantics (paid every unemployed month) + RT5-06 sampler counter support (hasCounter + cumulative counter rows) + EXP-021/022 defs; 247/247 green, committed
+- 2026-09-12 00:01 TAKEOVER (idle 16h, build/test GREEN 246/246) — task: benchmark refresh post 6-domain expansion
