@@ -319,6 +319,34 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   }),
 
   /**
+   * EXP-025: retirement transition (guide HT-16, economic depth).
+   * Mechanism under test: the pension system (pensionReplacementRate) gives
+   * retirees income → runway → lower strain, while no-pension retirees fall
+   * to the unemployed floor. Expected direction inside the model: with the
+   * default 0.6 replacement rate, retiree cohorts show lower stress than
+   * zero-pension retirees.
+   */
+  'EXP-025': validate({
+    id: 'EXP-025',
+    question:
+      'Model-internal policy check: do retirees covered by a 0.6-replacement pension show ' +
+      'lower mean stress than retirees without any pension over 2 years? Verifies the ' +
+      'pension→runway→strain pathway inside the simulator; no real-world policy claim.',
+    // STATUS 2026-09-13: direction technically "lower" but WEAK — pension
+    // coverage is a cohort artifact: only residents EMPLOYED at their
+    // retirement moment accrue a pension (6 retirement events / 2y / 300p);
+    // generation-time seniors never accrue. Needs founder pension bootstrap
+    // (BACKLOG) before this experiment can discriminate cleanly.
+    seeds: [42, 43, 44],
+    population: 300,
+    years: 2,
+    arms: [
+      { name: 'control', overrides: { pensionReplacementRate: 0 } },
+      { name: 'pension', overrides: { pensionReplacementRate: 0.6 } }
+    ]
+  }),
+
+  /**
    * EXP-SANITY: scale sanity sweep.
    * Mechanism under test: core aggregates stay well-formed as the population
    * scale changes 60 → 200 (no NaN in metrics, shares within [0, 1], digests

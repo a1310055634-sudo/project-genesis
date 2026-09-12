@@ -58,3 +58,4 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 00:01 TAKEOVER (idle 22.9h, build/test GREEN 248/248) — task: media belief decay v3 (EXP-022 follow-up)
 - 2026-09-13 00:xx TAKEOVER COMPLETE — media belief decay v3 (BELIEF_DECAY_PROB_PER_WEEK=0.02 weekly lapse pass, dead-believer freeze, media_beliefs_lapsed counter, plateau regression test); 249/249 green, committed
 - 2026-09-13 01:01 TAKEOVER (idle 52min, build/test GREEN 249/249) — task: EXP-022 v3 re-run with belief decay
+- 2026-09-13 02:01 TAKEOVER (idle 57min, build/test GREEN 249/249) — task: EXP-025 retirement transition experiment
