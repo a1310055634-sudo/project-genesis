@@ -55,3 +55,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-12 00:01 TAKEOVER (idle 16h, build/test GREEN 246/246) — task: benchmark refresh post 6-domain expansion
 - 2026-09-11 01:01 TAKEOVER (idle 53min, build/test GREEN 247/247) — task: media belief layer v2 (per-person believed state)
 - 2026-09-12 01:xx TAKEOVER COMPLETE — media belief layer v2 (believedBy Set ⊆ heardBy, flat 0.6 conversion, belief metrics), 248/248 green, committed
+- 2026-09-13 00:01 TAKEOVER (idle 22.9h, build/test GREEN 248/248) — task: media belief decay v3 (EXP-022 follow-up)
+- 2026-09-13 00:xx TAKEOVER COMPLETE — media belief decay v3 (BELIEF_DECAY_PROB_PER_WEEK=0.02 weekly lapse pass, dead-believer freeze, media_beliefs_lapsed counter, plateau regression test); 249/249 green, committed

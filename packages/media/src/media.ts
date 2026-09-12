@@ -46,6 +46,10 @@ export function hearingProbability(tieCount: number): number {
 
 /** Probability that hearing converts to belief (v1: flat, no source trust). */
 export const BELIEF_CONVERSION_PROB = 0.6
+/** Per-week probability that an unreinforced belief decays (EXP-022 v3:
+ * belief is no longer permanent — decay enables rumor persistence/decay
+ * dynamics). Low rate: ~2% of believers lapse per week. */
+export const BELIEF_DECAY_PROB_PER_WEEK = 0.02
 
 function clamp01(v: number): number {
   return Math.min(1, Math.max(0, v))
@@ -94,7 +98,7 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
         newest.heardCount++
         ctx.metrics.increment('media_hearings_total')
         // belief conversion (v2): hearing converts at BELIEF_CONVERSION_PROB;
-        // believed subset ⊆ heard subset, belief never decays in v1
+        // believed subset ⊆ heard subset; decay handled in the weekly pass
         if (rng.bool(BELIEF_CONVERSION_PROB)) {
           newest.believedBy.add(person.id)
           ctx.metrics.increment('media_beliefs_total')
@@ -106,6 +110,22 @@ export const mediaSystem = (deps?: { tieCounts?: (ctx: SimContext) => Map<string
           actorIds: [person.id],
           payload: { pieceId }
         })
+      }
+    }
+
+    // weekly belief-decay pass (EXP-022 v3): unreinforced beliefs lapse at
+    // BELIEF_DECAY_PROB_PER_WEEK — removed from believedBy (heardBy keeps the
+    // exposure memory). Reinforcement happens via re-exposure on new pieces.
+    const decayRng = ctx.rng.fork(`media.decay:${tick}`)
+    const byId = new Map(ctx.world.persons.map((p) => [p.id, p]))
+    for (const piece of pieces.values()) {
+      for (const believer of [...piece.believedBy]) {
+        const person = byId.get(believer)
+        if (person === undefined || !person.alive) continue // dead believers frozen
+        if (decayRng.bool(BELIEF_DECAY_PROB_PER_WEEK)) {
+          piece.believedBy.delete(believer)
+          ctx.metrics.increment('media_beliefs_lapsed')
+        }
       }
     }
 

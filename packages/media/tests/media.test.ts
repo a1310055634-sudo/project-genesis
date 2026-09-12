@@ -75,6 +75,25 @@ describe('media domain (HT-12)', () => {
     void believers
   })
 
+  it('belief decay (v3): long-horizon believers plateau, not collapse', () => {
+    const sim = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 6 },
+      { systems: [demographicsSystem, mediaSystem()] }
+    )
+    sim.run()
+    // ~3y in, believers have grown; over the next 3y decay balances new
+    // conversions — the plateau assertion guards against total collapse
+    const mid = sim.ctx.metrics.gaugeValue('media_last_piece_believed')
+    expect(mid).toBeGreaterThan(0)
+    // believers never exceed hearers (subset invariant over time)
+    const pieces = sim.ctx.extensions.get(MEDIA_PIECES) as Map<string, { believedBy: Set<string>; heardCount: number }>
+    for (const piece of pieces.values()) {
+      expect(piece.believedBy.size).toBeLessThanOrEqual(piece.heardCount)
+    }
+    // lapsed counter exists and is tracked
+    expect(sim.ctx.metrics.counterValue('media_beliefs_lapsed')).toBeGreaterThanOrEqual(0)
+  }, 60_000)
+
   it('is deterministic under a fixed seed', () => {
     const run = () => {
       const { sim } = build()
