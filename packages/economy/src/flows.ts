@@ -1,6 +1,6 @@
 import { TICKS_PER_MONTH, TICKS_PER_YEAR, ageYears } from '@genesis/core'
 import { addMoney, cents, scaleMoney, subMoney } from '@genesis/shared'
-import { SimContext } from '@genesis/simulation'
+import { Person, SimContext } from '@genesis/simulation'
 import type { EconomyDeps } from './deps'
 
 /**
@@ -356,6 +356,36 @@ export function monthlyWelfare(ctx: SimContext): void {
 }
 
 /**
+ * Founder pension bootstrap (EXP-025 coverage fix): generation-time seniors
+ * never had an employment spell, so they would never accrue a pension. On the
+ * FIRST monthly pension run, every alive 65+ resident without a pension entry
+ * (and without a job) is granted a founder pension = replacementRate × mean
+ * employer wage. One-shot guard lives in ctx.extensions.
+ */
+function bootstrapFounderPensions(
+  ctx: SimContext,
+  pensions: Map<string, number>,
+  personsById: Map<string, Person>
+): void {
+  const guardKey = 'economy.pension_bootstrapped'
+  if (ctx.extensions.get(guardKey) === true) return
+  ctx.extensions.set(guardKey, true)
+  const rate = ctx.config.pensionReplacementRate ?? 0.6
+  const employerWages = ctx.world.employers.map((e) => e.monthlyWageCents)
+  const meanWage =
+    employerWages.length === 0
+      ? 0
+      : employerWages.reduce((sum, w) => sum + w, 0) / employerWages.length
+  for (const person of ctx.world.persons) {
+    if (!person.alive) continue
+    if (ageYears(person.birthTick, ctx.tick()) < RETIREMENT_AGE) continue
+    if (person.economy.employerId !== null) continue
+    if (pensions.has(person.id)) continue
+    pensions.set(person.id, scaleMoney(meanWage, rate, 'floor'))
+  }
+}
+
+/**
  * Monthly pension payout (economic depth): retirees (65+, no employer, with a
  * pension record) receive their pension monthly, paid from the taxation pool
  * first; the shortfall is deficit-created and audited. The pension lands in
@@ -367,6 +397,7 @@ export function monthlyPension(ctx: SimContext): void {
   const poolAtStart = getTaxPool(ctx)
   const personsById = new Map(ctx.world.persons.map((p) => [p.id, p]))
   let pensionTotal = 0
+  bootstrapFounderPensions(ctx, pensions, personsById)
   for (const person of ctx.world.persons) {
     if (!person.alive) continue
     if (ageYears(person.birthTick, tick) < RETIREMENT_AGE) continue

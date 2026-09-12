@@ -72,7 +72,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 - packages/institutions: school entities (capacity/quality, side-table), deterministic capacity assignment with overflow + age-out revocation; wired into full stack; education quality coupling — DONE (EducationDeps.skillRateModifier, 2026-09-10 session)
 
 ## Pensions ✅ (batch 16, 2026-09-11)
-- FOLLOWUP (EXP-025 finding): founder pension bootstrap — generation-time seniors never accrue pensions (no employment spell), so coverage is limited to employed-at-retirement cohort; add generation-time accrual or minimum pension floor before EXP-025 can discriminate
+- FOLLOWUP (EXP-025 finding): founder pension bootstrap — DONE (2026-09-11 session; coverage now complete, EXP-025 direction confirmed 0.470 vs 0.495)
 
 - retirement accrues pension = pensionReplacementRate (default 0.6) × final income (side-table); monthly payout pool-funded, deficit audited; strain retiree branch (pension-as-income runway); pension.paid events in ledgers
 

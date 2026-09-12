@@ -59,3 +59,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 00:xx TAKEOVER COMPLETE — media belief decay v3 (BELIEF_DECAY_PROB_PER_WEEK=0.02 weekly lapse pass, dead-believer freeze, media_beliefs_lapsed counter, plateau regression test); 249/249 green, committed
 - 2026-09-13 01:01 TAKEOVER (idle 52min, build/test GREEN 249/249) — task: EXP-022 v3 re-run with belief decay
 - 2026-09-13 02:01 TAKEOVER (idle 57min, build/test GREEN 249/249) — task: EXP-025 retirement transition experiment
+- 2026-09-13 03:01 TAKEOVER (idle 57min, build/test GREEN 249/249) — task: founder pension bootstrap (EXP-025 coverage fix)
+- 2026-09-13 03:xx TAKEOVER COMPLETE — founder pension bootstrap landed; EXP-025 re-run: pension 0.470 vs control 0.495 early-window (CI95 disjoint, direction now discriminates cleanly); 249/249 green, committed

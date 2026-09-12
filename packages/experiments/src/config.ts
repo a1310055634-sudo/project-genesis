@@ -332,11 +332,11 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
       'Model-internal policy check: do retirees covered by a 0.6-replacement pension show ' +
       'lower mean stress than retirees without any pension over 2 years? Verifies the ' +
       'pension→runway→strain pathway inside the simulator; no real-world policy claim.',
-    // STATUS 2026-09-13: direction technically "lower" but WEAK — pension
-    // coverage is a cohort artifact: only residents EMPLOYED at their
-    // retirement moment accrue a pension (6 retirement events / 2y / 300p);
-    // generation-time seniors never accrue. Needs founder pension bootstrap
-    // (BACKLOG) before this experiment can discriminate cleanly.
+    // STATUS 2026-09-13 (after founder bootstrap): direction CONFIRMED with
+    // clean coverage — founder seniors now accrue a founder pension
+    // (replacementRate × mean wage), so the retiree cohort is fully covered.
+    // Early-window: pension 0.470 vs control 0.495 (CI95 disjoint, paired
+    // worlds). Supersedes the earlier weak/coverage-artifact result.
     seeds: [42, 43, 44],
     population: 300,
     years: 2,
