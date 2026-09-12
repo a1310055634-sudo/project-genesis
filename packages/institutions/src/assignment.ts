@@ -59,6 +59,25 @@ export function monthlySchoolAssignment(ctx: SimContext): void {
     }
   }
 
+  // overflow re-placement (red team RT5-03): pupils stuck in the virtual
+  // overflow school migrate into real schools as capacity frees up — id order
+  for (const person of ctx.world.persons) {
+    if (!person.alive) continue
+    const age = (tick - person.birthTick) / 8640
+    if (age < 6 || age >= 18) continue
+    const assignment = assignments.get(person.id)
+    if (assignment === undefined || !assignment.isOverflow) continue
+    for (const school of [...schools.values()].sort((x, y) => (x.schoolId < y.schoolId ? -1 : 1))) {
+      const used = filled.get(school.schoolId) ?? 0
+      if (used < school.capacity) {
+        assignments.set(person.id, { schoolId: school.schoolId, isOverflow: false })
+        filled.set(school.schoolId, used + 1)
+        ctx.metrics.gauge('institutions_overflow_pupils', [...assignments.values()].filter((a) => a.isOverflow).length)
+        break
+      }
+    }
+  }
+
   // metrics
   let assigned = 0
   let overflow = 0
