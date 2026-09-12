@@ -49,18 +49,36 @@ export function ensureAssignments(ctx: SimContext): Map<string, Assignment> {
 export const SCHOOLS_TARGET = 3
 export const SCHOOL_CAPACITY = 40
 export const SCHOOL_QUALITY_RANGE: [number, number] = [0.35, 0.85]
+/** Red team RT5-03 artifact fix: school count and capacity now SCALE with the
+ * school-age population instead of the hard 3×40=120-seat cap that left
+ * ~1,380 of ~1,500 pupils in permanent overflow at 10k scale. */
+export const PUPILS_PER_SCHOOL = 150
 
-/** Build SCHO_TARGET schools with deterministic capacity/quality. */
+/** Count alive residents aged 6..17 (inclusive). */
+export function countSchoolAge(world: { persons: { alive: boolean; birthTick: number }[] }, tick: number): number {
+  let n = 0
+  for (const person of world.persons) {
+    if (!person.alive) continue
+    const age = (tick - person.birthTick) / 8640
+    if (age >= 6 && age < 18) n++
+  }
+  return n
+}
+
+/** Build schools scaled to the school-age population (deterministic). */
 export function buildSchools(ctx: SimContext): void {
   const schools = ensureSchools(ctx)
   if (schools.size > 0) return
   const rng = ctx.rng.fork('institutions:schools')
-  for (let i = 0; i < SCHOOLS_TARGET; i++) {
+  const pupils = countSchoolAge(ctx.world, ctx.tick())
+  const schoolCount = Math.max(SCHOOLS_TARGET, Math.ceil(pupils / PUPILS_PER_SCHOOL))
+  const capacity = Math.max(SCHOOL_CAPACITY, Math.ceil(pupils / schoolCount))
+  for (let i = 0; i < schoolCount; i++) {
     const schoolId = ctx.ids.next('school')
     schools.set(schoolId, {
       schoolId,
       name: `School-${i + 1}`,
-      capacity: SCHOOL_CAPACITY,
+      capacity,
       quality: SCHOOL_QUALITY_RANGE[0] + rng.next() * (SCHOOL_QUALITY_RANGE[1] - SCHOOL_QUALITY_RANGE[0])
     })
   }

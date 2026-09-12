@@ -63,6 +63,22 @@ describe('institutions — school assignment', () => {
     }
   })
 
+  it('capacity scales with the school-age population (RT5-03 artifact fix)', () => {
+    // 10k residents → ~1,500-2,500 school-age pupils; scaled schools must
+    // cover them without mass overflow
+    const sim = Simulation.create(
+      { seed: 42, populationTarget: 10000, years: 1 },
+      { systems: [demographicsSystem, institutionsSystem()] }
+    )
+    sim.run()
+    const assignments = sim.ctx.extensions.get(ASSIGNMENTS) as Map<string, { schoolId: string; isOverflow: boolean }>
+    const overflow = [...assignments.values()].filter((a) => a.isOverflow).length
+    const schools = sim.ctx.extensions.get(SCHOOLS) as Map<string, { capacity: number }>
+    expect(schools.size).toBeGreaterThanOrEqual(Math.ceil(1500 / 150))
+    // overflow bounded by a small minority even at 10k scale
+    expect(overflow).toBeLessThanOrEqual(assignments.size * 0.05)
+  }, 120_000)
+
   it('is deterministic under a fixed seed', () => {
     const run = () => {
       const sim = build(2)
