@@ -297,18 +297,19 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   }),
 
   /**
-   * EXP-022: rumor persistence (guide HT-16, media domain).
-   * Mechanism under test: the SAME piece keeps accumulating hearings while
-   * the network stays alive — information never "dies" in v1 (no belief
-   * decay; recorded simplification). Expected direction inside the model:
-   * total hearings in year 2 > year 1 (monotone growth).
+   * EXP-022: rumor/information persistence (guide HT-16, media domain).
+   * Mechanism under test (v3): hearings keep accumulating monotonically
+   * (exposure memory), while BELIEFS reach a plateau — conversions balance
+   * decay (BELIEF_DECAY_PROB_PER_WEEK). Expected: hearings monotone; beliefs
+   * grow then plateau without collapsing to zero.
    */
   'EXP-022': validate({
     id: 'EXP-022',
     question:
-      'Model-internal persistence check: does cumulative information hearing count keep ' +
-      'growing monotonically across the run (no unmodeled decay)? Guards against accidental ' +
-      'event-loss or counter resets in the media pipeline; no real-world causal claim.',
+      'Model-internal persistence check: do cumulative hearings grow monotonically (no ' +
+      'event loss) while believers plateau — conversions balanced by the weekly belief ' +
+      'decay — rather than collapsing to zero? Guards the media pipeline and validates ' +
+      'the v3 belief-decay loop; no real-world causal claim.',
     seeds: [42],
     population: 150,
     years: 2,
