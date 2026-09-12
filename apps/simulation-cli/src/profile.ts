@@ -91,6 +91,19 @@ export interface FullStackProfile {
  * `housingCostMultiplier` defaults to 1 (baseline rent). */
 export function fullStackSystems(): FullStackProfile {
   const graph = new RelationshipGraph()
+  // red team RT5-05: the education quality map is rebuilt at most once per
+  // simulated day (same cachedTick pattern as the bridge caches) instead of
+  // per person per month
+  let cachedQualityTick = -1
+  let cachedQuality: Map<string, number> | null = null
+  const qualityFor = (ctx: SimContext, personId: string): number => {
+    const tick = ctx.tick()
+    if (tick !== cachedQualityTick || cachedQuality === null) {
+      cachedQuality = buildQualityByPupil(ctx)
+      cachedQualityTick = tick
+    }
+    return cachedQuality.get(personId) ?? 0.5
+  }
   const systems: GenesisSystem[] = [
     demographicsSystem, // priority 10, monthly
     familySystem({
@@ -102,7 +115,7 @@ export function fullStackSystems(): FullStackProfile {
       // red team RT4-05: school quality actually drives skill growth now
       // (quality [0.35, 0.85] maps to rate multiplier ~[1.03, 1.78], clamped
       // [0.5, 2] education-side; unassigned pupils default to 1)
-      skillRateModifier: (ctx, personId) => 0.5 + 1.5 * (buildQualityByPupil(ctx).get(personId) ?? 0.5)
+      skillRateModifier: (ctx, personId) => 0.5 + 1.5 * qualityFor(ctx, personId)
     }), // priority 14, monthly (school enrolment, attainment, skill)
     institutionsSystem(), // priority 14, monthly (school entities + pupil assignment; registered after education)
     mediaSystem({

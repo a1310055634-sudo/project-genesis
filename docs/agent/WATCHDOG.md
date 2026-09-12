@@ -63,3 +63,4 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 03:xx TAKEOVER COMPLETE — founder pension bootstrap landed; EXP-025 re-run: pension 0.470 vs control 0.495 early-window (CI95 disjoint, direction now discriminates cleanly); 249/249 green, committed
 - 2026-09-13 04:01 TAKEOVER (idle 56min, build/test GREEN 249/249) — task: RT5-03 institutions overflow re-placement
 - 2026-09-13 04:xx TAKEOVER COMPLETE — RT5-03 overflow re-placement landed (overflow pupils migrate into freed real-school capacity; dedicated migration test), 250/250 green, committed (80a5efd)
+- 2026-09-13 05:01 TAKEOVER (idle 55min, build/test GREEN 250/250) — task: RT5-05 performance memoize (education quality map + institutions index)

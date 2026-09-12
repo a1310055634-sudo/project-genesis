@@ -13,19 +13,19 @@ export function monthlySchoolAssignment(ctx: SimContext): void {
   buildSchools(ctx)
   const schools = ensureSchools(ctx)
   const assignments = ensureAssignments(ctx)
+  // red team RT5-05: build the person index and the sorted school list ONCE
+  // per run instead of per assignment/per pupil
+  const personsById = new Map(ctx.world.persons.map((p) => [p.id, p]))
+  const sortedSchools = [...schools.values()].sort((x, y) => (x.schoolId < y.schoolId ? -1 : 1))
 
   const filled = new Map<string, number>()
   for (const school of schools.values()) filled.set(school.schoolId, 0)
 
   // age-out / death revocation
   for (const [pupilId, assignment] of [...assignments.entries()]) {
-    const person = ctx.world.persons.find((p) => p.id === pupilId)
+    const person = personsById.get(pupilId)
     if (person === undefined || !person.alive || (tick - person.birthTick) / 8640 >= 18) {
       assignments.delete(pupilId)
-      if (assignment.schoolId !== OVERFLOW_SCHOOL_ID) {
-        const school = schools.get(assignment.schoolId)
-        if (school !== undefined) filled.set(assignment.schoolId, Math.max(0, (filled.get(assignment.schoolId) ?? 0) - 1))
-      }
     }
   }
 
@@ -45,7 +45,7 @@ export function monthlySchoolAssignment(ctx: SimContext): void {
     if (assignments.has(person.id)) continue
 
     let placed = false
-    for (const school of [...schools.values()].sort((x, y) => (x.schoolId < y.schoolId ? -1 : 1))) {
+    for (const school of sortedSchools) {
       const used = filled.get(school.schoolId) ?? 0
       if (used < school.capacity) {
         assignments.set(person.id, { schoolId: school.schoolId, isOverflow: false })
@@ -67,12 +67,11 @@ export function monthlySchoolAssignment(ctx: SimContext): void {
     if (age < 6 || age >= 18) continue
     const assignment = assignments.get(person.id)
     if (assignment === undefined || !assignment.isOverflow) continue
-    for (const school of [...schools.values()].sort((x, y) => (x.schoolId < y.schoolId ? -1 : 1))) {
+    for (const school of sortedSchools) {
       const used = filled.get(school.schoolId) ?? 0
       if (used < school.capacity) {
         assignments.set(person.id, { schoolId: school.schoolId, isOverflow: false })
         filled.set(school.schoolId, used + 1)
-        ctx.metrics.gauge('institutions_overflow_pupils', [...assignments.values()].filter((a) => a.isOverflow).length)
         break
       }
     }
