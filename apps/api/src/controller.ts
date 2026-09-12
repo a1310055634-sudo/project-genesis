@@ -1,5 +1,8 @@
 import { ageYears } from '@genesis/core'
 import { buildIndex, populationStats, Simulation, WorldIndex } from '@genesis/simulation'
+import { attainmentOf, skillOf } from '@genesis/education'
+import { housingBurdenOf } from '@genesis/housing'
+import { relationshipConflictOf, socialSupportOf, RelationshipGraph } from '@genesis/social'
 import { fullStackSystems } from '../../simulation-cli/src/profile'
 
 /**
@@ -200,6 +203,19 @@ export class SimulationController {
     }
   }
 
+  /** Media pieces (v2 exposure memory) this person has heard. */
+  private heardPieces(personId: string): string[] {
+    const ctx = this.sim !== null ? this.sim.ctx : null
+    if (ctx === null) return []
+    const pieces = ctx.extensions.get('media.pieces') as Map<string, { pieceId: string; heardBy: Set<string> }> | undefined
+    if (pieces === undefined) return []
+    const out: string[] = []
+    for (const piece of pieces.values()) {
+      if (piece.heardBy.has(personId)) out.push(piece.pieceId)
+    }
+    return out
+  }
+
   person(personId: string): unknown {
     if (this.sim === null) throw new Error('no active simulation')
     // red team RT2-08 + RT3-04: index cached per run but REBUILT when new
@@ -235,6 +251,17 @@ export class SimulationController {
         lastMonthConsumptionCents: person.economy.lastMonthConsumptionCents
       },
       social: { relationshipIds: person.social.relationshipIds },
+      education: {
+        attainment: attainmentOf(this.sim.ctx, person.id),
+        skill: skillOf(this.sim.ctx, person.id)
+      },
+      housing: {
+        burden: housingBurdenOf(this.sim.ctx, person)
+      },
+      mediaExposure: {
+        // pieces this person has heard (v2 exposure memory across all pieces)
+        piecesHeard: this.heardPieces(person.id)
+      },
       recentEvents: events
     }
   }

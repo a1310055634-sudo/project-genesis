@@ -65,3 +65,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 04:xx TAKEOVER COMPLETE — RT5-03 overflow re-placement landed (overflow pupils migrate into freed real-school capacity; dedicated migration test), 250/250 green, committed (80a5efd)
 - 2026-09-13 05:01 TAKEOVER (idle 55min, build/test GREEN 250/250) — task: RT5-05 performance memoize (education quality map + institutions index)
 - 2026-09-13 05:xx TAKEOVER COMPLETE — RT5-05 performance memoize landed (education quality map cached per tick via qualityFor closure; institutions personsById index + sortedSchools built once per run; overflow gauge moved out of the per-migration loop — the earlier probe-fix had already removed the in-loop gauge), 250/250 green, committed (b0d6f1a)
+- 2026-09-13 06:01 TAKEOVER (idle 55min, build/test GREEN 250/250) — task: API dossier depth (education + housing side-tables)
+- 2026-09-13 06:xx TAKEOVER COMPLETE — API dossier depth (education attainment/skill + housing burden + media piecesHeard in /api/persons/:id; regression-tested), 251/251 green, committed

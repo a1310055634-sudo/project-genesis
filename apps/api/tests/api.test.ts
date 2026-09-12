@@ -131,3 +131,48 @@ describe('genesis API (GEN-110/111/112)', () => {
     expect((status.json as Record<string, unknown>)['state']).toBe('idle')
   }, 60_000)
 })
+
+describe('person dossier depth (education + housing + media side-tables)', () => {
+  // self-contained: own server on an ephemeral port, no order dependence on
+  // the shared module-level server (the shared one gets closed by afterAll)
+  it('dossier exposes education attainment/skill and housing burden', async () => {
+    const { createApiServer } = await import('../src/server')
+    const srv = createApiServer()
+    const addr = srv.listen(0)
+    await new Promise((resolve) => srv.once('listening', resolve))
+    const address = srv.address() as AddressInfo
+    const base = `http://127.0.0.1:${address.port}`
+
+    try {
+      const startRes = await fetch(base + '/api/sim/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seed: 42, population: 120, years: 2 })
+      })
+      expect(startRes.status).toBe(200)
+
+      // poll to completion (bounded)
+      const deadline = Date.now() + 60_000
+      let done = false
+      while (Date.now() < deadline) {
+        const status = (await (await fetch(base + '/api/status')).json()) as Record<string, unknown>
+        if (status['state'] === 'done' || status['state'] === 'idle') { done = true; break }
+        await new Promise((r) => setTimeout(r, 150))
+      }
+      expect(done).toBe(true)
+
+      const personRes = await fetch(base + '/api/persons/person-000001')
+      expect(personRes.status).toBe(200)
+      const dossier = (await personRes.json()) as Record<string, Record<string, unknown>>
+      expect(dossier['education']).toBeDefined()
+      const education = dossier['education'] as Record<string, unknown>
+      expect(typeof education['attainment']).toBe('string')
+      expect(typeof education['skill']).toBe('number')
+      expect(dossier['housing']).toBeDefined()
+      const housing = dossier['housing'] as Record<string, unknown>
+      expect(typeof housing['burden']).toBe('number')
+    } finally {
+      srv.close()
+    }
+  }, 90_000)
+})
