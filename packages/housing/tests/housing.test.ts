@@ -62,7 +62,7 @@ describe('housing domain (HT-12)', () => {
   it('reprices units when household composition changes (RT4-12)', () => {
     const sim = build(1)
     sim.run()
-    const units = sim.ctx.extensions.get('housing.units') as Map<string, { monthlyRentCents: number }>
+    const units = sim.ctx.extensions.get('housing.units') as Map<string, { monthlyRentCents: number; quality: number }>
     const target = sim.ctx.world.households.find((h) => h.memberIds.length > 0)
     if (target === undefined) throw new Error('fixture household missing')
     const unit = units.get(target.id)
