@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TICKS_PER_MONTH } from '@genesis/core'
 import { checkInvariants, demographicsSystem, Simulation } from '@genesis/simulation'
-import { housingBurdenOf, housingSystem, HOUSING_BASE_RENT_CENTS, HOUSING_MEMBER_RENT_CENTS } from '@genesis/housing'
+import { computeRent, housingBurdenOf, housingSystem, HOUSING_BASE_RENT_CENTS, HOUSING_MEMBER_RENT_CENTS } from '@genesis/housing'
 
 /**
  * Housing domain (HT-12): side-table units, burden indicator, EXP-004 knob.
@@ -78,8 +78,15 @@ describe('housing domain (HT-12)', () => {
     target.memberIds.push(outsider.id)
 
     const before = unit.monthlyRentCents
+    // capture quality BEFORE the step: the monthly reprice uses the quality
+    // as of the reprice moment (drift runs after reprice in the same pass)
+    const qualityBefore = unit.quality
     sim.stepTo(sim.ctx.clock.tick + TICKS_PER_MONTH)
-    const expected = HOUSING_BASE_RENT_CENTS + HOUSING_MEMBER_RENT_CENTS * (target.memberIds.length - 1)
+    const expected = computeRent(
+      target.memberIds.length,
+      1,
+      qualityBefore
+    )
     expect(unit.monthlyRentCents).toBe(expected)
     expect(unit.monthlyRentCents).toBeGreaterThan(before)
   })

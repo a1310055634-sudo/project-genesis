@@ -1,5 +1,5 @@
 import { clamp01 } from './util'
-import { assignUnit, ensureUnits, HOUSING_BASE_RENT_CENTS, HOUSING_MEMBER_RENT_CENTS } from './housing'
+import { assignUnit, computeRent, ensureUnits } from './housing'
 
 /** Income at which a household fully maintains its unit's quality (cents/month). */
 export const HOUSING_MAINTENANCE_INCOME_CENTS = 600_000
@@ -57,10 +57,8 @@ export const housingSystem = (): GenesisSystem => ({
         .map((id) => personsById.get(id))
         .filter((p): p is NonNullable<typeof p> => p !== undefined && p.alive)
       if (aliveMembersNow.length === 0) continue
-      const recomputed = Math.round(
-        (HOUSING_BASE_RENT_CENTS + HOUSING_MEMBER_RENT_CENTS * Math.max(0, household.memberIds.length - 1)) * multiplier
-      )
-      unit.monthlyRentCents = recomputed
+      // repricing keeps the ORIGINAL quality (renovations not modelled in v1)
+      unit.monthlyRentCents = computeRent(household.memberIds.length, multiplier, unit.quality)
 
       // quality/maintenance loop (HT-12 depth): quality drifts toward a
       // maintenance steady-state set by the household's income — affluent

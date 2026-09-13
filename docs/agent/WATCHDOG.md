@@ -69,3 +69,4 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 06:xx TAKEOVER COMPLETE — API dossier depth (education attainment/skill + housing burden + media piecesHeard in /api/persons/:id; regression-tested), 251/251 green, committed
 - 2026-09-13 07:01 TAKEOVER (idle 55min, build/test GREEN 250/250) — task: institutions school capacity scales with school-age population
 - 2026-09-13 07:xx TAKEOVER COMPLETE — institutions capacity scaling (school count/capacity derive from school-age population; 10k scaling test: overflow ≤5%, school count ≥ ceil(pupils/150)); 252/252 green, committed
+- 2026-09-13 08:01 TAKEOVER (idle 56min, build/test GREEN 252/252) — task: housing quality→rent→burden pathway
