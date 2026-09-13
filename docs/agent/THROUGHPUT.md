@@ -65,3 +65,8 @@
 - NIGHTLY_REPORT: batch addenda reordered 6→7→8→9 (was 7,8,9,6), out-of-order caveat removed; FINAL STATE refreshed (59 commits, 255/255, overnight watchdog session summarized)
 - HANDOFF: §0 status + §6 backlog statuses synced (#2 half done w/ source-trust fork noted, #4/#5/#7 DONE, footer totals)
 - Tests: 255/255 green, typecheck 0 errors (no code changes)
+
+## 2026-09-14 05:02 (watchdog takeover)
+- Task: perf guard — bench re-run after media v3 social reinforcement (feature pool empty; keep-alive verification batch)
+- 10k×1y 14.7s vs 18.6s baseline: no regression, reinforcement lookup within noise; RESULTS.md appended
+- Tests: 255/255 green, typecheck 0 errors (no code changes)

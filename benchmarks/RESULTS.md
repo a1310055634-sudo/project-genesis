@@ -71,3 +71,17 @@ tests (green).
 Note: the 10k×10y baseline row above was measured CLI end-to-end while the new
 row is the bench harness — not perfectly like-for-like, but the 2.8× gap is
 dominated by the social graph fix, not harness overhead.
+
+## 2026-09-14 05:02 — post social-reinforcement check (watchdog)
+After media belief v3 social reinforcement (believing-neighbor share per
+hearing, O(degree) lookup from a pre-sweep snapshot):
+
+| population | years | runtime | peak RSS | alive | events | events/sec | digest |
+|---|---|---|---|---|---|---|---|
+| 1,000 | 1 | 1,166 ms | 317.9 MB | 981 | 203,497 | 174,526 | ddb04dd3 |
+| 10,000 | 1 | 14,724 ms | 435.1 MB | 9,920 | 1,986,891 | 134,942 | 9ef2f266 |
+
+10k×1y 14.7s vs 18.6s previous entry — no regression from the reinforcement
+lookup (within run-to-run noise, machine quieter overnight). Digest changed by
+design (belief dynamics now reinforcement-shaped); same-code replay
+determinism stays covered by the media/social determinism tests.
