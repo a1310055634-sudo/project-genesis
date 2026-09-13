@@ -53,3 +53,9 @@
 - Wired: profile injects graph.neighborsOf; BELIEF_SOCIAL_REINFORCEMENT=0.25; new counter media_reinforced_hearings
 - Tests: conversionProbability unit (formula/clamp/sign mutation-kill), paired-world direction (reinforced > flat, ring graph), believed ⊆ heard invariant under reinforcement; 255/255 green, typecheck 0 errors
 - Remaining (next window): source trust (rumor vs official) — needs rumor source model
+
+## 2026-09-14 03:03 (watchdog takeover)
+- Task: BACKLOG #5 — dashboard institutions/media side-table UI
+- API: person dossier gains `institutions` block {schoolId, overflow, quality} (null for non-pupils) from ASSIGNMENTS/SCHOOLS side-tables
+- UI: person inspector renders structured sections (identity/marital/economy/education/housing/school/media) with raw JSON collapsed; overview cards + KEY_METRICS rows for institutions_pupils_assigned/overflow and media_pieces/believers
+- Tests: dossier institutions-key + dashboard marker assertions; 255/255 green, typecheck 0 errors

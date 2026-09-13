@@ -70,7 +70,7 @@ export function dashboardHtml(): string {
   <input id="personId" class="wide" placeholder="person-000001">
   <button onclick="loadPerson()">inspect</button>
 </div>
-<pre id="person">—</pre>
+<div id="person">—</div>
 
 <div class="cols">
   <div><h2>Key metrics</h2><table id="metrics"><tbody></tbody></table></div>
@@ -78,7 +78,7 @@ export function dashboardHtml(): string {
 </div>
 
 <script>
-const KEY_METRICS = ['stress.mean','wellbeing.mean','employment_rate','mean_wealth','mean_income','social_edges','social_mean_degree','family.avg_household_size','family.marriages','family.divorces'];
+const KEY_METRICS = ['stress.mean','wellbeing.mean','employment_rate','mean_wealth','mean_income','social_edges','social_mean_degree','family.avg_household_size','family.marriages','family.divorces','institutions_pupils_assigned','institutions_overflow_pupils','media_pieces','media_hearings_total','media_beliefs_total','media_beliefs_lapsed','media_last_piece_believed'];
 const fmt = v => v === undefined || v === null ? '—' : (Math.round(v * 1000) / 1000).toLocaleString();
 
 async function api(path, body) {
@@ -125,6 +125,8 @@ function render(s) {
     ['mean stress', m['stress.mean']], ['mean wellbeing', m['wellbeing.mean']],
     ['relationships', m['social_edges']], ['employment rate', m['employment_rate']],
     ['mean wealth', m['mean_wealth'] === undefined ? null : '$' + fmt(m['mean_wealth']/100)],
+    ['school pupils', m['institutions_pupils_assigned']], ['school overflow', m['institutions_overflow_pupils']],
+    ['media pieces', m['media_pieces']], ['media believers (last piece)', m['media_last_piece_believed']],
     ['tick', s.tick], ['progress', (s.progress*100).toFixed(1) + '%']
   ];
   document.getElementById('overview').innerHTML = cards.map(([k, v]) =>
@@ -136,11 +138,39 @@ function render(s) {
   sparkline('svg-wellbeing', hist.map(h => h.wellbeing), '#3fb950');
   sparkline('svg-population', hist.map(h => h.population), '#58a6ff');
 }
+function esc(v) { return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function section(title, rows) {
+  if (!rows.length) return '';
+  return '<h2>' + esc(title) + '</h2><table>' + rows.map(([k, v]) =>
+    '<tr><td>' + esc(k) + '</td><td>' + esc(v) + '</td></tr>').join('') + '</table>';
+}
 async function loadPerson() {
   const id = document.getElementById('personId').value.trim();
   try {
-    const person = await api('/api/persons/' + id);
-    document.getElementById('person').textContent = JSON.stringify(person, null, 2);
+    const p = await api('/api/persons/' + id);
+    const idn = p.identity || {}, mar = p.marital || {}, eco = p.economy || {}, ed = p.education || {}, hou = p.housing || {}, inst = p.institutions, med = p.mediaExposure || {};
+    const money = c => c === undefined || c === null ? '—' : '$' + fmt(c/100);
+    let html = section('Identity', [
+      ['id', idn.id], ['sex', idn.sex], ['age', idn.ageYears], ['life stage', idn.lifeStage], ['alive', idn.alive]
+    ]) + section('Marital / family', [
+      ['status', mar.status], ['partner', mar.partnerId], ['mother', mar.motherId], ['father', mar.fatherId]
+    ]) + section('Economy', [
+      ['employer', eco.employerId], ['monthly income', money(eco.monthlyIncomeCents)],
+      ['wealth', money(eco.wealthCents)], ['last month consumption', money(eco.lastMonthConsumptionCents)]
+    ]) + section('Education', [
+      ['attainment', ed.attainment], ['skill', ed.skill]
+    ]) + section('Housing', [
+      ['rent burden', hou.burden === undefined || hou.burden === null ? '—' : (hou.burden*100).toFixed(1) + '%']
+    ]) + section('School', inst ? [
+      ['school', inst.schoolId], ['overflow', inst.overflow], ['quality', inst.quality]
+    ] : [['school', 'not a pupil']]);
+    const heard = med.piecesHeard || [];
+    html += section('Media exposure', [
+      ['pieces heard', heard.length], ['recent', heard.slice(-5).join(', ')]
+    ]);
+    html += '<details><summary style="cursor:pointer;color:#8b949e;">raw JSON</summary><pre>' +
+      esc(JSON.stringify(p, null, 2)) + '</pre></details>';
+    document.getElementById('person').innerHTML = html;
   } catch (e) { document.getElementById('person').textContent = 'error: ' + e.message; }
 }
 let eventsTick = -1;

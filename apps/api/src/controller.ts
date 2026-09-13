@@ -2,6 +2,7 @@ import { ageYears } from '@genesis/core'
 import { buildIndex, populationStats, Simulation, WorldIndex } from '@genesis/simulation'
 import { attainmentOf, skillOf } from '@genesis/education'
 import { housingBurdenOf } from '@genesis/housing'
+import { ASSIGNMENTS, SCHOOLS } from '@genesis/institutions'
 import { relationshipConflictOf, socialSupportOf, RelationshipGraph } from '@genesis/social'
 import { fullStackSystems } from '../../simulation-cli/src/profile'
 
@@ -216,6 +217,22 @@ export class SimulationController {
     return out
   }
 
+  /** Institutions side-table state for this person: school assignment,
+   * overflow flag and the assigned school's quality (null = not a pupil). */
+  private schoolAssignment(personId: string): { schoolId: string; overflow: boolean; quality: number } | null {
+    const ctx = this.sim !== null ? this.sim.ctx : null
+    if (ctx === null) return null
+    const assignments = ctx.extensions.get(ASSIGNMENTS) as Map<string, { schoolId: string; isOverflow: boolean }> | undefined
+    const assignment = assignments?.get(personId)
+    if (assignment === undefined) return null
+    const schools = ctx.extensions.get(SCHOOLS) as Map<string, { quality: number }> | undefined
+    return {
+      schoolId: assignment.schoolId,
+      overflow: assignment.isOverflow,
+      quality: schools?.get(assignment.schoolId)?.quality ?? 0
+    }
+  }
+
   person(personId: string): unknown {
     if (this.sim === null) throw new Error('no active simulation')
     // red team RT2-08 + RT3-04: index cached per run but REBUILT when new
@@ -258,6 +275,7 @@ export class SimulationController {
       housing: {
         burden: housingBurdenOf(this.sim.ctx, person)
       },
+      institutions: this.schoolAssignment(person.id),
       mediaExposure: {
         // pieces this person has heard (v2 exposure memory across all pieces)
         piecesHeard: this.heardPieces(person.id)

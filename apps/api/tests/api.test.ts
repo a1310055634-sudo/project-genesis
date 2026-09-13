@@ -62,6 +62,10 @@ describe('genesis API (GEN-110/111/112)', () => {
     expect(res.headers.get('content-type')).toContain('text/html')
     expect(html).toContain('Project Genesis')
     expect(html).toContain('Person inspector')
+    // institutions/media side-tables surfaced in the UI (BACKLOG #5)
+    expect(html).toContain('School')
+    expect(html).toContain('Media exposure')
+    expect(html).toContain('school pupils')
   })
 
   it('runs a simulation end-to-end and exposes real state', async () => {
@@ -175,6 +179,8 @@ describe('person dossier depth (education + housing + media side-tables)', () =>
       expect(dossier['housing']).toBeDefined()
       const housing = dossier['housing'] as Record<string, unknown>
       expect(typeof housing['burden']).toBe('number')
+      // institutions side-table block present (null for non-pupils, object for pupils)
+      expect('institutions' in dossier).toBe(true)
     } finally {
       srv.close()
     }

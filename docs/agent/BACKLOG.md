@@ -91,6 +91,7 @@ Acceptance: records runtime, peak RSS, events/sec.
 
 ## Platform (P3–P4)
 - GEN-110 API + GEN-112 Dashboard reading real run state (manifest JSON already exists)
+- Dashboard institutions/media UI — DONE (watchdog takeover 2026-09-14: dossier `institutions` block {schoolId, overflow, quality}, structured person inspector sections with collapsible raw JSON, overview cards + KEY_METRICS rows for institutions/media gauges)
 - GEN-135 Observability: run compare tool (diff two manifests by digest)
 
 ## Quality / later (P3–P5)
