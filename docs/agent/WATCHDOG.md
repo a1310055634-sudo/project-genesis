@@ -70,3 +70,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 07:01 TAKEOVER (idle 55min, build/test GREEN 250/250) — task: institutions school capacity scales with school-age population
 - 2026-09-13 07:xx TAKEOVER COMPLETE — institutions capacity scaling (school count/capacity derive from school-age population; 10k scaling test: overflow ≤5%, school count ≥ ceil(pupils/150)); 252/252 green, committed
 - 2026-09-13 08:01 TAKEOVER (idle 56min, build/test GREEN 252/252) — task: housing quality→rent→burden pathway
+- 2026-09-13 16:01 RUNNING
+- 2026-09-14 01:00 TAKEOVER (idle 10h+, typecheck 0 err, build/test GREEN 252/252) — task: RT5-08/09 residue sweep + api.test unhandled-rejection fix
+- 2026-09-14 01:07 TAKEOVER COMPLETE — RT5-08/09 fully cleaned (institutions tautology, media dead graph, believers>0 real assertion, media.ts v2/v3 header) + api.test afterAll drain fix; 252/252 green ×2, committed

@@ -46,9 +46,13 @@ async function waitForDone(timeoutMs = 60_000): Promise<Record<string, unknown>>
 }
 
 describe('genesis API (GEN-110/111/112)', () => {
-  afterAll(() => {
-    void post('/api/sim/stop')
-    server?.close()
+  afterAll(async () => {
+    // drain the stop request before closing: killing an in-flight keep-alive
+    // fetch surfaces as an unhandled ECONNRESET rejection (vitest "1 error")
+    await post('/api/sim/stop').catch(() => {})
+    if (server !== null) {
+      await new Promise<void>((resolve) => server!.close(() => resolve()))
+    }
   })
 
   it('serves the dashboard HTML at /', async () => {

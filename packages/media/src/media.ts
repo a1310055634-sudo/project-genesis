@@ -1,13 +1,14 @@
 /**
- * Media domain (HT-12 Media, EXP-021/022 prerequisites): a city newspaper
- * publishes pieces on a schedule; information spreads through the social
- * network — hearing probability scales with each person's tie count.
+ * Media domain (HT-12 Media, EXP-021/022): a city newspaper publishes pieces
+ * on a schedule; information spreads through the social network — hearing
+ * probability scales with each person's tie count.
  *
  * Side-table design (education/housing pattern): 'media.pieces' lives in
- * ctx.extensions. v1 simplifications (recorded):
- * - pieces are topics with a spread COUNT only; per-person hearing memory
- *   (who heard what) is not tracked (needed for rumor belief modelling later);
- * - the newspaper is a single exogenous source (no competing outlets).
+ * ctx.extensions. Each piece carries two per-person sets (v2): heardBy
+ * (exposure memory, bounds hearing dedup) and believedBy (belief layer,
+ * subset of heardBy; conversion at hearing, weekly lapse since EXP-022 v3).
+ * The newspaper remains a single exogenous source — multi-source trust is
+ * future work (belief v3 extension).
  */
 
 import { GenesisSystem, SimContext } from '@genesis/simulation'

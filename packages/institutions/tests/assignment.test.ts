@@ -35,9 +35,8 @@ describe('institutions — school assignment', () => {
       }
     }
     // every real school respects capacity
-    for (const [schoolId, used] of occupancy) {
+    for (const [, used] of occupancy) {
       expect(used).toBeLessThanOrEqual(40)
-      void schoolId
     }
     // with ~60 pupils across 3 schools × 40 capacity, overflow should be rare/zero
     const overflow = [...assignments.values()].filter((a) => a.isOverflow).length
@@ -50,16 +49,13 @@ describe('institutions — school assignment', () => {
     const assignments = sim.ctx.extensions.get(ASSIGNMENTS) as Map<string, { schoolId: string }>
     const byId = new Map(sim.ctx.world.persons.map((p) => [p.id, p]))
     // every live assignment belongs to an alive pupil aged 6..17
-    for (const [pupilId, assignment] of assignments) {
+    for (const [pupilId] of assignments) {
       const person = byId.get(pupilId)
       if (person === undefined) continue
       if (!person.alive) continue // dead pupils' assignments are dropped lazily
       const age = (sim.ctx.clock.tick - person.birthTick) / TICKS_PER_YEAR
-      if (person.householdId !== null || true) {
-        expect(age).toBeLessThan(18)
-        expect(age).toBeGreaterThanOrEqual(6)
-        void assignment
-      }
+      expect(age).toBeLessThan(18)
+      expect(age).toBeGreaterThanOrEqual(6)
     }
   })
 

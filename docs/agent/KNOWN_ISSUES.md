@@ -57,7 +57,8 @@ The caregiverLoad computation only needs per-person young-child counts, but rebu
 - RT5-05 education quality map / institutions index rebuild — FIXED (cachedTick memoize + personsById + sortedSchools once per run)
 - RT5-06 sampler counter support — FIXED (hasCounter + cumulative counter rows; EXP-022 wired)
 - RT5-07 deadSpouseOf multi-spouse — FIXED (Map<string,string[]>; guard inversion also fixed — the reverse map had been silently empty)
-- RT5-08 LOW dead code/residue (poolAtStart in pension, paidThisRun void, heardBy dead check, stale comments) — PARTIALLY cleaned, remainder LOW/backlog
-- RT5-09 LOW tautological assertions — PARTIALLY fixed (welfare.test now real; institutions ||true and media constructed-true remain LOW)
+- RT5-08 LOW dead code/residue — FULLY cleaned 2026-09-14 (watchdog takeover: media.ts stale v1 header rewritten to reflect v2 heardBy/believedBy + v3 decay; media.test dead RelationshipGraph block removed)
+- RT5-09 LOW tautological assertions — FULLY fixed 2026-09-14 (watchdog takeover: institutions assignment.test `|| true` guard + void silencers removed behavior-identically; media belief test `void believers` → real `believers > 0` assertion)
+- WATCHDOG 2026-09-14: api.test.ts afterAll drains the in-flight /api/sim/stop fetch before server.close() — recurring unhandled ECONNRESET (vitest "Errors: 1 error") verified gone over 2 consecutive full runs
 - RT5-10 INFO (rent/quality frozen at assignment for NEW units; monthly reprice covers composition changes) — superseded by RT4-12 monthly repricing
 - Carryover: RT1-08 bench RSS sampling (cosmetic) — still open

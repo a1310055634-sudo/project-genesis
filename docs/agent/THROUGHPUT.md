@@ -40,3 +40,9 @@
 ## Saturation decision
 - Hold at Tier 1–2. Next dispatch pool (BACKLOG): Wave 3.3 deep kinship + affinal edges, EXP-001/003/004/005 (needs scenario injection knobs), education↔economy skill→wage coupling, empty-household GC (RT1-14), attention budget decision (KI-8).
 - Watchdog automation armed (hourly): continuation = BACKLOG top items, per AGENTS.md + PROJECT_GENESIS_GUIDE.md V2.2 (HT layer authoritative).
+
+## 2026-09-14 01:07 (watchdog takeover)
+- Task: BACKLOG #4 — RT5-08/09 LOW residue sweep (final batch)
+- Fixed: institutions assignment.test tautology (`|| true`) + void silencers removed behavior-identically; media.test dead RelationshipGraph block dropped; media belief test `void believers` → real `believers > 0`; media.ts stale v1 header rewritten to v2/v3 reality
+- Test infra: api.test.ts afterAll drains in-flight /api/sim/stop before server.close() — recurring unhandled ECONNRESET ("Errors: 1 error") gone
+- Tests: 252/252 green ×2 consecutive runs, typecheck 0 errors
