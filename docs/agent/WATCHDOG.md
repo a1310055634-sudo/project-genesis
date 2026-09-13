@@ -73,3 +73,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-13 16:01 RUNNING
 - 2026-09-14 01:00 TAKEOVER (idle 10h+, typecheck 0 err, build/test GREEN 252/252) — task: RT5-08/09 residue sweep + api.test unhandled-rejection fix
 - 2026-09-14 01:07 TAKEOVER COMPLETE — RT5-08/09 fully cleaned (institutions tautology, media dead graph, believers>0 real assertion, media.ts v2/v3 header) + api.test afterAll drain fix; 252/252 green ×2, committed
+- 2026-09-14 02:01 TAKEOVER (idle 53min, typecheck 0 err, tests GREEN) — task: media belief v3 social reinforcement
+- 2026-09-14 02:06 TAKEOVER COMPLETE — conversion lift by believing-neighbor share (snapshot, order-free), wired in profile 0.25, 3 new tests incl. paired-world direction; 255/255 green, committed

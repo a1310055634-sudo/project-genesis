@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { checkInvariants, demographicsSystem, Simulation } from '@genesis/simulation'
-import { MEDIA_PIECES, mediaSystem } from '@genesis/media'
+import { BELIEF_CONVERSION_PROB, MEDIA_PIECES, conversionProbability, mediaSystem } from '@genesis/media'
 import { RelationshipGraph } from '@genesis/social'
 
 /**
@@ -91,6 +91,70 @@ describe('media domain (HT-12)', () => {
       return sim.digest()
     }
     expect(run()).toBe(run())
+  })
+})
+
+describe('belief social reinforcement (v3)', () => {
+  it('conversionProbability: formula, clamp, no-op at zero reinforcement', () => {
+    expect(conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 0)).toBe(BELIEF_CONVERSION_PROB)
+    expect(conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 1)).toBe(0.85)
+    expect(conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 0.5)).toBeCloseTo(0.725)
+    expect(conversionProbability(0.9, 0.5, 1)).toBe(1) // clamped to [0,1]
+    // sign: reinforcement must never LOWER conversion (mutation-kill: swapped args)
+    expect(conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 0.8)).toBeGreaterThanOrEqual(
+      conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 0.2)
+    )
+  })
+
+  // ring adjacency: deterministic synthetic neighborhood (2 ties per person),
+  // independent of the social system — isolates the reinforcement mechanism
+  const ringArm = (reinforcement: number) => {
+    let ring: Map<string, string[]> | null = null
+    const sim = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 2 },
+      {
+        systems: [
+          demographicsSystem,
+          mediaSystem({
+            reinforcement,
+            neighbors: (ctx, personId) => {
+              if (ring === null) {
+                ring = new Map()
+                const ids = ctx.world.persons.map((p) => p.id)
+                ids.forEach((id, i) =>
+                  ring!.set(id, [ids[(i + 1) % ids.length], ids[(i + ids.length - 1) % ids.length]])
+                )
+              }
+              return ring.get(personId) ?? []
+            }
+          })
+        ]
+      }
+    )
+    sim.run()
+    return sim
+  }
+
+  it('reinforced arm converts more hearers than flat arm (paired worlds)', () => {
+    const flat = ringArm(0)
+    const reinforced = ringArm(0.4)
+    // mechanism must actually fire in the reinforced arm
+    expect(reinforced.ctx.metrics.counterValue('media_reinforced_hearings')).toBeGreaterThan(0)
+    expect(flat.ctx.metrics.hasCounter('media_reinforced_hearings')).toBe(false)
+    // paired worlds (same numericSeed): the only difference is the treatment
+    expect(reinforced.ctx.metrics.counterValue('media_beliefs_total')).toBeGreaterThan(
+      flat.ctx.metrics.counterValue('media_beliefs_total')
+    )
+  })
+
+  it('reinforcement does not break the believed ⊆ heard invariant', () => {
+    const sim = ringArm(0.4)
+    const pieces = sim.ctx.extensions.get(MEDIA_PIECES) as Map<string, { believedBy: Set<string>; heardBy: Set<string> }>
+    for (const piece of pieces.values()) {
+      for (const b of piece.believedBy) {
+        expect(piece.heardBy.has(b)).toBe(true)
+      }
+    }
   })
 })
 

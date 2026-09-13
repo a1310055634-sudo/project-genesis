@@ -119,7 +119,9 @@ export function fullStackSystems(): FullStackProfile {
     }), // priority 14, monthly (school enrolment, attainment, skill)
     institutionsSystem(), // priority 14, monthly (school entities + pupil assignment; registered after education)
     mediaSystem({
-      // tie count per person from the social graph (degree drives exposure)
+      // tie count per person from the social graph (degree drives exposure);
+      // v3 social reinforcement: conversion lifts with the share of neighbors
+      // that already hold beliefs (neighborsOf identity, not just degree)
       tieCounts: (_ctx) => {
         const map = new Map<string, number>()
         for (const edge of graph.allEdges()) {
@@ -127,7 +129,9 @@ export function fullStackSystems(): FullStackProfile {
           map.set(edge.personB, (map.get(edge.personB) ?? 0) + 1)
         }
         return map
-      }
+      },
+      neighbors: (_ctx, personId) => graph.neighborsOf(personId),
+      reinforcement: 0.25
     }), // priority 16, weekly (publication + spread)
     housingSystem(), // priority 13, monthly (units + burden; reads config knob)
     socialSystem(graph), // priority 15, weekly

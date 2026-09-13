@@ -46,3 +46,10 @@
 - Fixed: institutions assignment.test tautology (`|| true`) + void silencers removed behavior-identically; media.test dead RelationshipGraph block dropped; media belief test `void believers` → real `believers > 0`; media.ts stale v1 header rewritten to v2/v3 reality
 - Test infra: api.test.ts afterAll drains in-flight /api/sim/stop before server.close() — recurring unhandled ECONNRESET ("Errors: 1 error") gone
 - Tests: 252/252 green ×2 consecutive runs, typecheck 0 errors
+
+## 2026-09-14 02:06 (watchdog takeover)
+- Task: BACKLOG #2 (half) — media belief v3 social reinforcement
+- Mechanism: mediaSystem deps {neighbors, reinforcement}; conversion = base 0.6 + 0.25 × believing-neighbor share (any-piece snapshot before sweep → no order effects); flat v2 behavior when deps absent
+- Wired: profile injects graph.neighborsOf; BELIEF_SOCIAL_REINFORCEMENT=0.25; new counter media_reinforced_hearings
+- Tests: conversionProbability unit (formula/clamp/sign mutation-kill), paired-world direction (reinforced > flat, ring graph), believed ⊆ heard invariant under reinforcement; 255/255 green, typecheck 0 errors
+- Remaining (next window): source trust (rumor vs official) — needs rumor source model
