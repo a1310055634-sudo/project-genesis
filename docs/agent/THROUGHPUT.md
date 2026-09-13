@@ -59,3 +59,9 @@
 - API: person dossier gains `institutions` block {schoolId, overflow, quality} (null for non-pupils) from ASSIGNMENTS/SCHOOLS side-tables
 - UI: person inspector renders structured sections (identity/marital/economy/education/housing/school/media) with raw JSON collapsed; overview cards + KEY_METRICS rows for institutions_pupils_assigned/overflow and media_pieces/believers
 - Tests: dossier institutions-key + dashboard marker assertions; 255/255 green, typecheck 0 errors
+
+## 2026-09-14 04:01 (watchdog takeover)
+- Task: BACKLOG #7 — doc hygiene (final watchdog-appropriate item)
+- NIGHTLY_REPORT: batch addenda reordered 6→7→8→9 (was 7,8,9,6), out-of-order caveat removed; FINAL STATE refreshed (59 commits, 255/255, overnight watchdog session summarized)
+- HANDOFF: §0 status + §6 backlog statuses synced (#2 half done w/ source-trust fork noted, #4/#5/#7 DONE, footer totals)
+- Tests: 255/255 green, typecheck 0 errors (no code changes)

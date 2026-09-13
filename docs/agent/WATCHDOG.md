@@ -77,3 +77,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-14 02:06 TAKEOVER COMPLETE — conversion lift by believing-neighbor share (snapshot, order-free), wired in profile 0.25, 3 new tests incl. paired-world direction; 255/255 green, committed
 - 2026-09-14 03:00 TAKEOVER (idle 54min, typecheck 0 err, tests GREEN) — task: dashboard institutions/media UI
 - 2026-09-14 03:03 TAKEOVER COMPLETE — dossier institutions block + structured inspector + overview/metrics rows; 255/255 green, committed
+- 2026-09-14 04:00 TAKEOVER (idle 57min, typecheck 0 err, tests GREEN) — task: doc hygiene (NIGHTLY_REPORT reorder + HANDOFF refresh)
+- 2026-09-14 04:01 TAKEOVER COMPLETE — appendix order fixed, FINAL STATE + HANDOFF synced to 59c/255t; no code changes; BACKLOG watchdog-appropriate pool now empty (KI-2/housing-funding/audit-6/source-trust need main session)

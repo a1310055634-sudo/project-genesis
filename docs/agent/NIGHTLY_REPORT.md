@@ -1,10 +1,12 @@
 # Nightly Report — Night 1 (2026-09-08)
 
-> **FINAL STATE (2026-09-13, session end):** 55 commits, 252/252 tests green, typecheck 0 errors,
+> **FINAL STATE (2026-09-14, after overnight watchdog session):** 59 commits, 255/255 tests green, typecheck 0 errors,
 > 11 packages. Red team FIVE rounds complete (RT5 PASS WITH ISSUES; all MEDIUMs fixed — see
-> KNOWN_ISSUES.md dispositions). 10 experiment presets, all paired-world verified. Watchdog cron
-> executed 10+ takeovers autonomously. NOTE: the batch addenda below were appended out of order
-> (7 before 6) — read them as a set, not a sequence. Authoritative current state: HANDOFF.md.
+> KNOWN_ISSUES.md dispositions; RT5-08/09 LOW residue fully cleaned 2026-09-14). 10 experiment presets,
+> all paired-world verified. Watchdog cron executed 10+ main-session takeovers plus an overnight
+> autonomous session (2026-09-14 01:00–04:00: RT5 residue sweep, media belief v3 social reinforcement,
+> dashboard institutions/media UI). Overnight reference run: `out/run-42-*.json`. Authoritative
+> current state: HANDOFF.md.
 
 > **Addendum (batches 4–5, later that night):** Wave 3 started ahead of schedule.
 > - Schema v2/v3: `partnerId`, `maritalStatus` ('single'|'married'|'widowed'|'divorced') and parenthood chain (`motherId`/`fatherId`) are now canonical with dedicated invariants.
@@ -15,10 +17,10 @@
 > - Remaining HIGH findings: none. Next: Wave 3.2 (kinship-aware marriage, parenthood effects), Wave 5 experiment framework — see docs/agent/BACKLOG.md.
 > - A final full-stack 10k×10y manifest was written to `out/` as the overnight reference run.
 
+> - **Batch 6:** Wave 3.2 + Wave 5 both landed. Family: kinship-aware marriage (no parent/child/sibling/grandparent unions), divorce child-custody (children follow the custodial parent), avg household size metric. Social: KI-3 death cleanup + KI-6 friendship drift (residual → KI-8 attention budget). New `@genesis/experiments` package: multi-seed × multi-arm runner, byte-reproducible CSV, CI95 stats, 3 preset experiments; `npm run exp -- --id EXP-002` end-to-end; **EXP-002 confirmed directionally (unemployment arm stress 0.561 vs control 0.457, non-overlapping CI95)**. One integration bug found & fixed (heterogeneous metrics → empty CSV cells). Tests: 137 → **161**.
 > - **Batch 7:** `apps/api` + Dashboard live (`npm run api`, port 3001): start/pause/resume/step/speed/export over HTTP, person inspector, real-state trend charts — guide §2.1 minimum checklist now fully covered. GEN-072 caregiverLoad wired through the kinship chain.
 > - **Batch 8:** fuzz/scenario pack (single-resident world, 30-year collapse, max-births+full-employment, unicode seeds — all deterministic, invariants green) + property tests (RNG uniformity, scheduler cadence fuzz, money conservation — caught a real -0 money bug). `extraversionBias` config knob.
 > - **Batch 9:** Red team ROUND 2 (verdict FAIL — exactly what it should catch): RT2-01 BLOCKER (RT1-02 fix had made spouse inheritance unreachable in the composed stack; inheritance fixtures replicated the old death flow) FIXED via death-time spouse snapshot (`spouseAtDeathId`) + faithful fixtures + composed regression test. RT2-02 (dashboard trends read wrong metrics namespace) FIXED. RT2-03/04/05/06/09 + carryovers RT1-07/09/13 also fixed; RT2-07/10 documented. GEN-053b landed: interaction-frequency pathway flipped EXP-006 to POSITIVE (+30% edges, CI95 disjoint) — full experiment→gap→fix→confirm round trip. New `@genesis/education` domain (enrolment/attainment/skill, side-table design). Tests: 161 → **195**.
-> - **Batch 6:** Wave 3.2 + Wave 5 both landed. Family: kinship-aware marriage (no parent/child/sibling/grandparent unions), divorce child-custody (children follow the custodial parent), avg household size metric. Social: KI-3 death cleanup + KI-6 friendship drift (residual → KI-8 attention budget). New `@genesis/experiments` package: multi-seed × multi-arm runner, byte-reproducible CSV, CI95 stats, 3 preset experiments; `npm run exp -- --id EXP-002` end-to-end; **EXP-002 confirmed directionally (unemployment arm stress 0.561 vs control 0.457, non-overlapping CI95)**. One integration bug found & fixed (heterogeneous metrics → empty CSV cells). Tests: 137 → **161**.
 
 ## Summary
 - Start commit: (empty repo) · End commit: see `git log` (batch 0..3)

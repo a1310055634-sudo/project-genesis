@@ -9,7 +9,9 @@
 
 **Project Genesis 是一个 1 万人规模、TypeScript 严格模式的虚拟社会模拟平台，位于
 `C:\Users\13100\.zcode\workspace\project-genesis`（真实存储 D 盘）。
-当前 54 个 commit、252/252 测试绿、typecheck 0 错误、11 个包。
+当前 59 个 commit、255/255 测试绿、typecheck 0 错误、11 个包。
+2026-09-14 01:00–04:00 看门狗自主会话完成三批次（RT5 残渣清零 / 媒体信念 v3 社交强化 /
+Dashboard institutions+media UI），详见 WATCHDOG.md 与 THROUGHPUT.md。
 运营手册 V2.2 = `PROJECT_GENESIS_GUIDE.md`（权威章节 HT-2/HT-5/HT-22/HT-28/HT-30/HT-31；
 标 SUPERSEDED 的 V1 章节一律不用）。项目根 `AGENTS.md` 已有精简规则。**
 
@@ -80,22 +82,22 @@ RT4-04 根修）——同 seed 两臂只有处理不同，没有世界间方差�
 ## 5. 质量体系现状
 
 - **红队五轮审计**（read-only subagent）：约 60 项发现，**全部处置完毕**（逐项 disposition 见 KNOWN_ISSUES.md 尾部——RT5 段是 2026-09-13 补录的）。第五轮 PASS WITH ISSUES；全部 MEDIUM（RT5-01/02/03/04/05/06）已修，RT5-07（deadSpouseOf 多配偶 + 守卫反转）已修，仅剩 RT5-08/09 的 LOW 残渣记录在案。
-- **看门狗自动化**：ZCode Cron 每小时整点，ID `automation-337f368b-7d51-4718-b6ab-e832db2c9460`（标题"Genesis 夜间看门狗"）——读 THROUGHPUT.md/git 时间戳，停滞 ≥40 分钟则 typecheck+test 判色，绿色即从 BACKLOG 串行接管一个任务（已执行 10+ 次接管，全部闭环）。
+- **看门狗自动化**：ZCode Cron 每小时整点，ID 见 CronList（标题"Genesis 夜间看门狗（每小时）"；旧任务绑定失效后会话会删除并原样重建——症状：到点不触发、UI 标"已失败"、nextRunAt 空跳。2026-09-13/14 已两次重建）——读 THROUGHPUT.md/git 时间戳，停滞 ≥40 分钟则 typecheck+test 判色，绿色即从 BACKLOG 串行接管一个任务（已执行 10+ 次接管，全部闭环）。
   - **新会话主动工作时**：你自己的会话就是"活动"，看门狗只会记心跳不会干扰；但若你派发长 Subagent 任务超过 40 分钟无 git/THROUGHPUT 变动，它可能并发接管——把大任务拆成有中间提交的阶段即可。
   - **要暂停/删除**：用 CronList 找到 ID 后 CronDelete；或 CronUpdate 改为低频。
 - **变异测试文化**：每个新机制都配"实现破坏则测试必红"的回归测试。
 
 ## 6. 当前 BACKLOG（新会话从这里继续）
 
-按价值排序（完整列表见 docs/agent/BACKLOG.md）：
+按价值排序（完整列表见 docs/agent/BACKLOG.md；2026-09-14 看门狗夜班后更新）：
 
 1. **KI-2 调度重构**（大工程，建议主会话决策）：日度系统仍全量扫描人口；10k×100y（P3 目标）需要事件驱动 per-person 调度或分区批处理。先跑 profile 再动手（HT-24.6）。
-2. **媒体信念 v3 扩展**：信念转化目前是平坦 0.6——接入来源信任（传闻 vs 官方报纸）、社交强化（邻居相信→更容易信）。
-3. **住房/机构深度**：质量维护已通，renovations/资金循环未做；学校质量→技能已接，师生比/资金未做。
-4. **RT5 LOW 残渣**：RT5-08（pension personsById 死变量、paidThisRun void、heardBy 不可达判重、media.ts v1 陈旧头注释）、RT5-09（institutions `||true` 恒真、media 构造恒真、fullstack `person.died>=0`）——半小时级清扫批次。
-5. **Dashboard 增强**：institutions/media 侧表状态尚未入 UI（API 档案已暴露，UI 未跟）。
-6. **HT-32 审计第 6 轮**：距红队五轮已 7+ 批次。
-7. **文档卫生**：NIGHTLY_REPORT 的批次附录顺序错乱（7 在 6 前）已加说明但未重排；BACKLOG 的 Wave-1 条目已补 DONE 标记（2026-09-13）。
+2. **媒体信念 v3 之来源信任**（剩余一半）：传闻 vs 官方报纸——需先在模型中引入传闻源（邻居起源的 piece），涉及模型设计分叉，建议主会话定语义。社交强化已完成（2026-09-14，conversion = 0.6 + 0.25×邻居信念份额）。
+3. **住房/机构深度**：质量维护已通，renovations/资金循环未做；学校质量→技能已接，师生比/资金未做（资金循环涉及 pool-first 货币流，建议主会话主导）。
+4. ~~RT5 LOW 残渣~~ — **DONE**（2026-09-14 ebb2a09：institutions 恒真断言、media 死代码与陈旧头注释、api.test 未处理 ECONNRESET 全部清零）。
+5. ~~Dashboard 增强~~ — **DONE**（2026-09-14 2d93fd6：dossier institutions 块、结构化 person inspector、institutions/media 概览卡与指标行）。
+6. **HT-32 审计第 6 轮**：距红队五轮已 7+ 批次（今夜又 +3）。
+7. ~~文档卫生~~ — **DONE**（2026-09-14：NIGHTLY_REPORT 附录已按 6→7→8→9 重排，FINAL STATE 刷新；本文件状态同步）。
 
 ## 7. 已知坑（新会话直接避开）
 
@@ -121,4 +123,4 @@ RT4-04 根修）——同 seed 两臂只有处理不同，没有世界间方差�
 ```
 
 ---
-*交接完成。总计：53 commit（至 fd0057a）、252/252 测试、11 包、10 实验预设、五轮红队、~40 小时连续工程。*
+*交接完成。总计：59 commit（至 2d93fd6）、255/255 测试、11 包、10 实验预设、五轮红队、~44 小时连续工程（含 2026-09-14 夜间看门狗自主会话）。*
