@@ -12,32 +12,32 @@ Format per guide §19. Ready Queue target: 40–120 well-defined tasks (HT-11). 
 ### GEN-012 Metrics registry — DONE (2026-09-08)
 ### GEN-005 Event-driven scheduler — DONE (2026-09-08)
 
-### GEN-009 World state + Person schema
+### GEN-009 World state + Person schema — DONE (2026-09-08/09)
 Priority: P1 · Domain: simulation · Parallel-safe: no (canonical schema)
 Goal: WorldState container, Person/Household/Employer types with component blocks, registries.
 Acceptance: typecheck strict; factory + generator tests; ids unique; references resolve.
 
-### GEN-024 Population generator
+### GEN-024 Population generator — DONE (2026-09-08/09)
 Priority: P1 · Domain: simulation · Depends on: GEN-009
 Goal: 10,000 residents with age/sex distribution, households (single/couple/parent-child), employers, job assignment.
 Acceptance: deterministic under seed; household integrity invariants pass; 10k in < 5s.
 
-### GEN-010 Simulation CLI
+### GEN-010 Simulation CLI — DONE (2026-09-08/09)
 Priority: P1 · Domain: platform · Depends on: GEN-009
 Goal: `npm run sim -- --seed --population --years [--out]`; run manifest per guide §28.
 Acceptance: 10k × 1y runs; manifest includes seed/configHash/runtime/population/eventCount/metrics.
 
-### GEN-011 Deterministic replay test
+### GEN-011 Deterministic replay test — DONE (2026-09-08/09)
 Priority: P1 · Domain: quality · Depends on: GEN-009
 Goal: same seed+config → identical metrics digest; different seed → different digest.
 Acceptance: property holds for seeds 42/7/2026; digest stable across two runs in-process.
 
-### GEN-132 Invariant suite
+### GEN-132 Invariant suite — DONE (2026-09-08/09)
 Priority: P1 · Domain: quality · Depends on: GEN-009
 Goal: guide §27 invariants checked monthly in-sim + in tests.
 Acceptance: violations throw with run/seed/tick/entity context (§28).
 
-### GEN-134 Benchmark harness
+### GEN-134 Benchmark harness — DONE (2026-09-08/09)
 Priority: P2 · Domain: quality
 Goal: `npm run bench` measuring 1k×1y and 10k×1y runtime/memory; append results to benchmarks/RESULTS.md.
 Acceptance: records runtime, peak RSS, events/sec.

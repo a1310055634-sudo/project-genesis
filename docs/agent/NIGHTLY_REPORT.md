@@ -1,5 +1,11 @@
 # Nightly Report — Night 1 (2026-09-08)
 
+> **FINAL STATE (2026-09-13, session end):** 55 commits, 252/252 tests green, typecheck 0 errors,
+> 11 packages. Red team FIVE rounds complete (RT5 PASS WITH ISSUES; all MEDIUMs fixed — see
+> KNOWN_ISSUES.md dispositions). 10 experiment presets, all paired-world verified. Watchdog cron
+> executed 10+ takeovers autonomously. NOTE: the batch addenda below were appended out of order
+> (7 before 6) — read them as a set, not a sequence. Authoritative current state: HANDOFF.md.
+
 > **Addendum (batches 4–5, later that night):** Wave 3 started ahead of schedule.
 > - Schema v2/v3: `partnerId`, `maritalStatus` ('single'|'married'|'widowed'|'divorced') and parenthood chain (`motherId`/`fatherId`) are now canonical with dedicated invariants.
 > - New package `@genesis/family`: marriage (friendship-driven, affinity from social graph), divorce (conflict-driven), widowhood, inheritance (spouse 50% + children split remainder, unclaimed estates audited by gauge).

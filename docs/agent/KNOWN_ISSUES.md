@@ -48,3 +48,16 @@ The caregiverLoad computation only needs per-person young-child counts, but rebu
 - RT3-09 tautological GC assertion + EXP-001 text mismatch — FIXED both
 - RT3-10 kinship daily rebuild — tracked as KI-9
 - Carryovers: RT1-10 (accumulator GC) FIXED, RT1-11 (NaN clamps) DISPOSITIONED as intentional design, RT1-12 (dead samplePerson) REMOVED — red team LOW carryover list fully closed (RT1-08 bench RSS caveat unreviewed, cosmetic).
+
+## Red team round 5 (2026-09-11, verdict PASS WITH ISSUES) — disposition
+- RT5-01 welfare pool-first funding — FIXED (monthlyWelfare settles pool→deficit at end; regression test asserts deficit < total when taxed)
+- RT5-02 welfare monthly semantics — FIXED (paid every unemployed month; 65+ cleanup kept)
+- RT5-03 institutions overflow sticky — FIXED (re-placement pass + capacity scaling with school-age population, 10k test)
+- RT5-04 incomeTaxRate undefined-strip — FIXED (in normalizeConfig list)
+- RT5-05 education quality map / institutions index rebuild — FIXED (cachedTick memoize + personsById + sortedSchools once per run)
+- RT5-06 sampler counter support — FIXED (hasCounter + cumulative counter rows; EXP-022 wired)
+- RT5-07 deadSpouseOf multi-spouse — FIXED (Map<string,string[]>; guard inversion also fixed — the reverse map had been silently empty)
+- RT5-08 LOW dead code/residue (poolAtStart in pension, paidThisRun void, heardBy dead check, stale comments) — PARTIALLY cleaned, remainder LOW/backlog
+- RT5-09 LOW tautological assertions — PARTIALLY fixed (welfare.test now real; institutions ||true and media constructed-true remain LOW)
+- RT5-10 INFO (rent/quality frozen at assignment for NEW units; monthly reprice covers composition changes) — superseded by RT4-12 monthly repricing
+- Carryover: RT1-08 bench RSS sampling (cosmetic) — still open

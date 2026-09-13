@@ -40,7 +40,12 @@ npm run sim -- --seed 42 --population 10000 --years 10   # 10k×10y ≈ 5.6 分�
 npm run exp -- --id EXP-002                              # 跑任意预设实验
 npm run api          # Dashboard + HTTP API（端口 3001）
 npm run bench        # 基准（1k×1y 与 10k×1y）
+npx vitest run packages/economy   # 单包测试（把 economy 换成任意包名）
 ```
+
+### 端口与后台
+- `npm run api` 占 3001 端口；旧会话的后台进程随会话结束已停，重跑即可。
+- 长跑（10k×10y ≈ 5.6 分钟）建议 `--out out` 留 manifest。
 
 ## 3. 架构速览（依赖方向：上→下）
 
@@ -74,8 +79,10 @@ RT4-04 根修）——同 seed 两臂只有处理不同，没有世界间方差�
 
 ## 5. 质量体系现状
 
-- **红队五轮审计**（read-only subagent）：45+ 项发现全部处置（见 KNOWN_ISSUES.md 尾部 disposition）。第五轮 PASS WITH ISSUES，遗留 RT5-02/03 已修，RT5-05/07/08/09 部分修/记录。
-- **看门狗自动化**：ZCode Cron 每小时整点（`Genesis 夜间看门狗`）——读 THROUGHPUT.md/git 时间戳，停滞 ≥40 分钟则 typecheck+test 判色，绿色即从 BACKLOG 串行接管一个任务。**已执行 8+ 次接管，全部闭环**。本文件所在会话结束时建议保留该 cron。
+- **红队五轮审计**（read-only subagent）：约 60 项发现，**全部处置完毕**（逐项 disposition 见 KNOWN_ISSUES.md 尾部——RT5 段是 2026-09-13 补录的）。第五轮 PASS WITH ISSUES；全部 MEDIUM（RT5-01/02/03/04/05/06）已修，RT5-07（deadSpouseOf 多配偶 + 守卫反转）已修，仅剩 RT5-08/09 的 LOW 残渣记录在案。
+- **看门狗自动化**：ZCode Cron 每小时整点，ID `automation-337f368b-7d51-4718-b6ab-e832db2c9460`（标题"Genesis 夜间看门狗"）——读 THROUGHPUT.md/git 时间戳，停滞 ≥40 分钟则 typecheck+test 判色，绿色即从 BACKLOG 串行接管一个任务（已执行 10+ 次接管，全部闭环）。
+  - **新会话主动工作时**：你自己的会话就是"活动"，看门狗只会记心跳不会干扰；但若你派发长 Subagent 任务超过 40 分钟无 git/THROUGHPUT 变动，它可能并发接管——把大任务拆成有中间提交的阶段即可。
+  - **要暂停/删除**：用 CronList 找到 ID 后 CronDelete；或 CronUpdate 改为低频。
 - **变异测试文化**：每个新机制都配"实现破坏则测试必红"的回归测试。
 
 ## 6. 当前 BACKLOG（新会话从这里继续）
@@ -84,9 +91,11 @@ RT4-04 根修）——同 seed 两臂只有处理不同，没有世界间方差�
 
 1. **KI-2 调度重构**（大工程，建议主会话决策）：日度系统仍全量扫描人口；10k×100y（P3 目标）需要事件驱动 per-person 调度或分区批处理。先跑 profile 再动手（HT-24.6）。
 2. **媒体信念 v3 扩展**：信念转化目前是平坦 0.6——接入来源信任（传闻 vs 官方报纸）、社交强化（邻居相信→更容易信）。
-3. **住房/机构深度**：质量维护已通， renovations/资金循环未做；学校质量→技能已接，师生比/资金未做。
-4. **Dashboard 增强**：institutions/media 侧表状态尚未入 UI。
-5. **HT-32 晨间审计第 6 轮**：距上轮已 6+ 批次。
+3. **住房/机构深度**：质量维护已通，renovations/资金循环未做；学校质量→技能已接，师生比/资金未做。
+4. **RT5 LOW 残渣**：RT5-08（pension personsById 死变量、paidThisRun void、heardBy 不可达判重、media.ts v1 陈旧头注释）、RT5-09（institutions `||true` 恒真、media 构造恒真、fullstack `person.died>=0`）——半小时级清扫批次。
+5. **Dashboard 增强**：institutions/media 侧表状态尚未入 UI（API 档案已暴露，UI 未跟）。
+6. **HT-32 审计第 6 轮**：距红队五轮已 7+ 批次。
+7. **文档卫生**：NIGHTLY_REPORT 的批次附录顺序错乱（7 在 6 前）已加说明但未重排；BACKLOG 的 Wave-1 条目已补 DONE 标记（2026-09-13）。
 
 ## 7. 已知坑（新会话直接避开）
 
@@ -97,6 +106,9 @@ RT4-04 根修）——同 seed 两臂只有处理不同，没有世界间方差�
 - **实验方向测试**：先实测效应量再定断言；微小效应（<0.01）用 bounded non-inverse 而非强方向（EXP-001 教训）。
 - **测试新 fixture**：手造 Person 必须带全部 schema 字段（partnerId/maritalStatus/spouseAtDeathId/motherId/fatherId），否则 invariant 会抓。
 - **教育 mean_skill 是 gauge**（statsOf 读不到）——用 gaugeValue（RT4-06 教训）。
+- **手造 Person 字面量**：每次 schema 加字段，全仓测试 helper 的 Person 字面量都要同步（TS 会抓，但别用 require 动态导入绕过类型检查——会漏）。
+- **kinship deadSpouseOf 类守卫**：写"跳过活人"的过滤时小心别把"只存在于死者身上的数据"一起跳掉（RT5-07 守卫反转教训：反向表空转了一夜才被审计发现）。
+- **新可选 config 旋钮**：三处同步——config 接口+校验、normalizeConfig 剥离名单、（如适用）experiment PRIMARY_METRIC。
 
 ## 8. 给新会话的第一条消息建议
 
