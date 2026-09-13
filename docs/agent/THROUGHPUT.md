@@ -70,3 +70,10 @@
 - Task: perf guard — bench re-run after media v3 social reinforcement (feature pool empty; keep-alive verification batch)
 - 10k×1y 14.7s vs 18.6s baseline: no regression, reinforcement lookup within noise; RESULTS.md appended
 - Tests: 255/255 green, typecheck 0 errors (no code changes)
+
+## 2026-09-14 06:07 (watchdog takeover)
+- Task: overnight reference run refresh — 10k×10y on current code (media v3 reinforcement included)
+- out/run-42-49a14ea4.json (digest d51e548f, seed 42, final config {10000, 10y}): 18,863,684 events, ~5.5 min wall
+- End state: 9,920 alive-ish structure sane (households 5,597; unemployment 38.1%; stress 0.456; wellbeing 0.546; relationships 65,489)
+- Belief dynamics at 10y: 382,686 hearings / 321,304 conversions / 197,519 lapses / last-piece believers 2,417 (~24% of alive) — plateau-not-collapse holds; reinforced hearings 98.9% post warm-up; institutions overflow 0
+- Tests: 255/255 green, typecheck 0 errors (no code changes; out/ gitignored by design)
