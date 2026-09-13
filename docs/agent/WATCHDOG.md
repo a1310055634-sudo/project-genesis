@@ -83,3 +83,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-14 05:02 TAKEOVER COMPLETE — 10k×1y 14.7s (baseline 18.6s), no perf regression; RESULTS.md + THROUGHPUT updated, no source changes
 - 2026-09-14 06:00 TAKEOVER (idle 58min, typecheck 0 err, tests GREEN) — task: 10k×10y overnight reference run on current code
 - 2026-09-14 06:07 TAKEOVER COMPLETE — run-42-49a14ea4.json digest d51e548f, 18.9M events, stable end state, belief plateau ~24%; docs-only commit
+- 2026-09-14 07:00 TAKEOVER (idle 55min, typecheck 0 err, tests GREEN) — task: EXP-021/022 re-run under reinforcement (scientific regression check)
+- 2026-09-14 07:04 TAKEOVER COMPLETE — EXP-021 direction holds (+15% vs +14%), EXP-022 clean; pre-reinforcement reports backed up; docs-only commit

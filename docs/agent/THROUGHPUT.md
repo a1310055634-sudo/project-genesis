@@ -77,3 +77,10 @@
 - End state: 9,920 alive-ish structure sane (households 5,597; unemployment 38.1%; stress 0.456; wellbeing 0.546; relationships 65,489)
 - Belief dynamics at 10y: 382,686 hearings / 321,304 conversions / 197,519 lapses / last-piece believers 2,417 (~24% of alive) — plateau-not-collapse holds; reinforced hearings 98.9% post warm-up; institutions overflow 0
 - Tests: 255/255 green, typecheck 0 errors (no code changes; out/ gitignored by design)
+
+## 2026-09-14 07:04 (watchdog takeover)
+- Task: scientific regression check — information-chain experiments re-run under media v3 reinforcement (now default in fullStackSystems)
+- EXP-021 direction HOLDS: extraverted 20.11 vs control 17.5 early-window listeners (n=3 seeds, +15%; was +14% pre-reinforcement) — network→media-exposure pathway intact
+- EXP-022 clean re-run (882 cumulative hearings, no loss); plateau covered by 06:00 10k×10y run (~24% believers) + package plateau regression test
+- Old reports preserved as out/experiments/EXP-021|022.pre-reinforcement.md (out/ gitignored — backups local only)
+- Tests: 255/255 green, typecheck 0 errors (no code changes)
