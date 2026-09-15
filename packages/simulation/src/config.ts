@@ -48,6 +48,12 @@ export interface SimulationConfig {
   /** Income tax rate [0, 0.5] levied monthly on employed residents' income
    * (funds the welfare pool; EXP-030 funded variant). 0 = no tax. */
   incomeTaxRate?: number
+  /** Monthly school funding per ASSIGNED pupil (integer cents), drawn from
+   * the taxation pool first (shortfall = deficit-created, audited via
+   * 'institutions.funding_deficit_cents'). The funded share drives monthly
+   * school-quality drift; crowding above PUPILS_PER_SCHOOL erodes quality.
+   * Optional; absent = 100_000 ($1,000/pupil/month). */
+  schoolFundingPerPupilCents?: number
 }
 
 export interface EconomicShock {
@@ -74,7 +80,7 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   // optional scenario knobs: explicitly-passed undefined must equal absent,
   // otherwise configHash (and thus the whole random landscape) would diverge
   // between callers that omit the key and callers that pass undefined
-  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents', 'pensionReplacementRate', 'incomeTaxRate'] as const) {
+  for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents', 'pensionReplacementRate', 'incomeTaxRate', 'schoolFundingPerPupilCents'] as const) {
     if (merged[key] === undefined) delete merged[key]
   }
   if (!Number.isInteger(merged.populationTarget) || merged.populationTarget <= 0) {
@@ -115,8 +121,14 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   }
   if (merged.pensionReplacementRate !== undefined) {
     const rate = merged.pensionReplacementRate
-    if (!(Number.isFinite(rate) && rate >= 0 && rate <= 1)) {
+    if (!(rate >= 0 && rate <= 1)) {
       throw new Error(`pensionReplacementRate out of [0, 1]: ${rate}`)
+    }
+  }
+  if (merged.schoolFundingPerPupilCents !== undefined) {
+    const funding = merged.schoolFundingPerPupilCents
+    if (!Number.isInteger(funding) || funding < 0 || funding > 2_000_000) {
+      throw new Error(`schoolFundingPerPupilCents must be an integer in [0, 2000000], got ${funding}`)
     }
   }
   if (merged.incomeTaxRate !== undefined) {

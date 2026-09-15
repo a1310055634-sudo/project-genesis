@@ -84,3 +84,9 @@
 - EXP-022 clean re-run (882 cumulative hearings, no loss); plateau covered by 06:00 10k×10y run (~24% believers) + package plateau regression test
 - Old reports preserved as out/experiments/EXP-021|022.pre-reinforcement.md (out/ gitignored — backups local only)
 - Tests: 255/255 green, typecheck 0 errors (no code changes)
+
+## 2026-09-15 24:00 (main session — school funding loop)
+- Mechanism: institutionsSystem(deps{getTaxPool,setTaxPool} injected by profile from @genesis/economy) — monthly bill = schoolFundingPerPupilCents(default $1,000) × assigned pupils, pool-first/deficit-audited (welfare/pension convention); funded ratio drives ±0.01/mo quality drift toward [0.35,0.85]; crowding above PUPILS_PER_SCHOOL erodes 0.02/mo·unit; capacity build headroom 1.15 absorbs RT6-D1-3
+- Config: schoolFundingPerPupilCents knob (3-point sync: interface + strip list + validation)
+- Tests: funding.test.ts (solvent/empty/pool-debit/deps-skip ×4) + 10k capacity headroom assertion; 263/263 green, typecheck 0 errors
+- Note: default world is pension-deficit-heavy → schools start underfunded (quality erodes slowly) — policy space: raise incomeTaxRate or cut the bill; documented in config doc

@@ -4,7 +4,7 @@ import { educationSystem, skillOf } from '@genesis/education'
 import { buildQualityByPupil, institutionsSystem } from '@genesis/institutions'
 import { BELIEF_SOCIAL_REINFORCEMENT, mediaSystem } from '@genesis/media'
 import { buildHousingBurdenByPerson, housingSystem } from '@genesis/housing'
-import { financialStrainOf, pensionOf, economySystems } from '@genesis/economy'
+import { economySystems, financialStrainOf, getTaxPool, pensionOf, setTaxPool } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
 import { caregiverLoadOf, psychologySystem, PsychEnvironment } from '@genesis/psychology'
 import { familySystem } from '@genesis/family'
@@ -122,7 +122,13 @@ export function fullStackSystems(): FullStackProfile {
       // [0.5, 2] education-side; unassigned pupils default to 1)
       skillRateModifier: (ctx, personId) => 0.5 + 1.5 * qualityFor(ctx, personId)
     }), // priority 14, monthly (school enrolment, attainment, skill)
-    institutionsSystem(), // priority 14, monthly (school entities + pupil assignment; registered after education)
+    institutionsSystem({
+      // 住房资金循环: schools draw their per-pupil funding bill from the
+      // taxation pool (pool-first, deficit audited); the funded ratio drives
+      // monthly school-quality drift (crowding above PUPILS_PER_SCHOOL erodes)
+      getTaxPool,
+      setTaxPool
+    }), // priority 14, monthly (school entities + assignment + funding; registered after education)
     mediaSystem({
       // tie count per person from the social graph (degree drives exposure);
       // v3 social reinforcement: conversion lifts with the share of neighbors

@@ -53,6 +53,18 @@ export const SCHOOL_QUALITY_RANGE: [number, number] = [0.35, 0.85]
  * school-age population instead of the hard 3×40=120-seat cap that left
  * ~1,380 of ~1,500 pupils in permanent overflow at 10k scale. */
 export const PUPILS_PER_SCHOOL = 150
+/** RT6-D1-3: build-time headroom so the capacity snapshot is not sized to the
+ * exact current cohort (build-time headroom had been as low as ~1 seat at
+ * 10k); absorbs the 0-5 cohort aging in over the following years. */
+export const SCHOOL_CAPACITY_HEADROOM = 1.15
+/** Monthly school-quality drift magnitude at full funding (+) / zero funding
+ * (−); funding ratio interpolates linearly (funded ratio 0.5 = flat). */
+export const SCHOOL_QUALITY_DRIFT_PER_MONTH = 0.01
+/** Monthly quality erosion per unit of crowding above PUPILS_PER_SCHOOL. */
+export const SCHOOL_CROWD_PENALTY_PER_MONTH = 0.02
+/** Default monthly funding per assigned pupil ($1,000) when the config knob
+ * is absent (config.schoolFundingPerPupilCents). */
+export const SCHOOL_FUNDING_PER_PUPIL_CENTS = 100_000
 
 /** Count alive residents aged 6..17 (inclusive). */
 export function countSchoolAge(world: { persons: { alive: boolean; birthTick: number }[] }, tick: number): number {
@@ -72,7 +84,10 @@ export function buildSchools(ctx: SimContext): void {
   const rng = ctx.rng.fork('institutions:schools')
   const pupils = countSchoolAge(ctx.world, ctx.tick())
   const schoolCount = Math.max(SCHOOLS_TARGET, Math.ceil(pupils / PUPILS_PER_SCHOOL))
-  const capacity = Math.max(SCHOOL_CAPACITY, Math.ceil(pupils / schoolCount))
+  const capacity = Math.max(
+    SCHOOL_CAPACITY,
+    Math.ceil((pupils * SCHOOL_CAPACITY_HEADROOM) / schoolCount)
+  )
   for (let i = 0; i < schoolCount; i++) {
     const schoolId = ctx.ids.next('school')
     schools.set(schoolId, {

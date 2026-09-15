@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '@genesis/core'
 import { demographicsSystem, Simulation } from '@genesis/simulation'
-import { ASSIGNMENTS, institutionsSystem, OVERFLOW_SCHOOL_ID, SCHOOLS, SCHOOLS_TARGET } from '@genesis/institutions'
+import { ASSIGNMENTS, institutionsSystem, OVERFLOW_SCHOOL_ID, PUPILS_PER_SCHOOL, SCHOOLS, SCHOOLS_TARGET } from '@genesis/institutions'
 
 /**
  * Institutions domain (HT-12 Institutions, schools first): deterministic
@@ -71,6 +71,11 @@ describe('institutions — school assignment', () => {
     const overflow = [...assignments.values()].filter((a) => a.isOverflow).length
     const schools = sim.ctx.extensions.get(SCHOOLS) as Map<string, { capacity: number }>
     expect(schools.size).toBeGreaterThanOrEqual(Math.ceil(1500 / 150))
+    // RT6-D1-3: build-time headroom keeps every school at/above the nominal
+    // PUPILS_PER_SCHOOL so the aging-in cohort does not instantly overflow
+    for (const school of schools.values()) {
+      expect(school.capacity).toBeGreaterThanOrEqual(PUPILS_PER_SCHOOL)
+    }
     // overflow bounded by a small minority even at 10k scale
     expect(overflow).toBeLessThanOrEqual(assignments.size * 0.05)
   }, 120_000)

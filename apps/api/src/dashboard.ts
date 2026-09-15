@@ -78,7 +78,7 @@ export function dashboardHtml(): string {
 </div>
 
 <script>
-const KEY_METRICS = ['stress.mean','wellbeing.mean','employment_rate','mean_wealth','mean_income','social_edges','social_mean_degree','family.avg_household_size','family.marriages','family.divorces','institutions_pupils_assigned','institutions_overflow_pupils','media_pieces','media_hearings_total','media_beliefs_total','media_beliefs_lapsed','media_last_piece_heard','media_last_piece_believed','media_reinforced_hearings'];
+const KEY_METRICS = ['stress.mean','wellbeing.mean','employment_rate','mean_wealth','mean_income','social_edges','social_mean_degree','family.avg_household_size','family.marriages','family.divorces','institutions_pupils_assigned','institutions_overflow_pupils','institutions_funding_ratio','media_pieces','media_hearings_total','media_beliefs_total','media_beliefs_lapsed','media_last_piece_heard','media_last_piece_believed','media_reinforced_hearings'];
 const fmt = v => v === undefined || v === null ? '—' : (Math.round(v * 1000) / 1000).toLocaleString();
 
 async function api(path, body) {

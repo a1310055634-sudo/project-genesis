@@ -268,12 +268,15 @@ export function applyEconomicShockIfNeeded(ctx: SimContext): void {
 
 const TAX_POOL_KEY = 'economy.taxPool'
 
-function getTaxPool(ctx: SimContext): number {
+/** Shared taxation-pool accessors. Exported for the composition root ONLY
+ * (domain→domain imports are forbidden — schools funding is wired by
+ * injecting these into institutionsSystem, same pattern as media's deps). */
+export function getTaxPool(ctx: SimContext): number {
   const v = ctx.extensions.get(TAX_POOL_KEY)
   return typeof v === 'number' ? v : 0
 }
 
-function setTaxPool(ctx: SimContext, value: number): void {
+export function setTaxPool(ctx: SimContext, value: number): void {
   ctx.extensions.set(TAX_POOL_KEY, value)
 }
 
