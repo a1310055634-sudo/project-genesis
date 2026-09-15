@@ -171,12 +171,13 @@ export function weeklySocialUpdate(ctx: SimContext, graph: RelationshipGraph): v
   // 0) death sweep (KI-3): death terminates relationships
   sweepDeadEdges(ctx, graph, personById, tick)
 
-  // 1) decay stale edges — single pass in canonical key order
-  for (const edge of graph.allEdges()) {
+  // 1) decay stale edges — single pass, per-edge independent (KI-2a: Map
+  // insertion order is seed-derived deterministic; no O(E log E) sort)
+  graph.forEachEdge((edge) => {
     if (tick - edge.lastInteractionTick > DECAY_AFTER_TICKS) {
       edge.familiarity = clamp01(edge.familiarity * DECAY_FACTOR)
     }
-  }
+  })
 
   // 2) at most one social attempt per alive person, in array creation order
   const alive = ctx.world.persons.filter((p) => p.alive)
@@ -325,11 +326,11 @@ function sweepDeadEdges(
   personById: Map<string, Person>,
   tick: number
 ): void {
-  for (const edge of graph.allEdges()) {
+  graph.forEachEdge((edge) => {
     const a = personById.get(edge.personA)
     const b = personById.get(edge.personB)
-    if (a === undefined || b === undefined) continue // defensive: unknown ids are not ours to sweep
-    if (a.alive && b.alive) continue
+    if (a === undefined || b === undefined) return // defensive: unknown ids are not ours to sweep
+    if (a.alive && b.alive) return
     graph.removeEdge(edge.personA, edge.personB)
     removeFromRelationships(a, b.id)
     removeFromRelationships(b, a.id)
@@ -341,7 +342,7 @@ function sweepDeadEdges(
       payload: { reason: 'death' }
     })
     ctx.metrics.increment('social.edges_cleared_death')
-  }
+  })
 }
 
 /**
@@ -361,7 +362,7 @@ function pruneEdges(ctx: SimContext, graph: RelationshipGraph, personById: Map<s
   }
   let pruned = 0
   let drifted = 0
-  for (const edge of graph.allEdges()) {
+  graph.forEachEdge((edge) => {
     const mutual =
       directed.has(`${edge.personA}|${edge.personB}`) && directed.has(`${edge.personB}|${edge.personA}`)
     if (mutual) {
@@ -382,7 +383,7 @@ function pruneEdges(ctx: SimContext, graph: RelationshipGraph, personById: Map<s
       graph.removeEdge(edge.personA, edge.personB)
       pruned++
     }
-  }
+  })
   if (pruned > 0) ctx.metrics.increment('social.edges_pruned', pruned)
   if (drifted > 0) ctx.metrics.increment('social.friendships_drifted', drifted)
 }

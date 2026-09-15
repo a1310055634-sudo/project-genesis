@@ -95,3 +95,9 @@
 - Mechanism: MediaPiece.origin 'official'|'rumor'; per-cycle genesis (RUMOR_GENESIS_PROB_PER_CYCLE=0.25) — one alive believer of the newest piece gossips into a NEIGHBORHOOD rumor at RUMOR_TRUST=0.5 × base conversion; requires neighbors dep (bare runs unchanged); media_rumors_spawned counter; media.published covers rumor genesis (auditability)
 - Tests: rumor spawn + believed⊆heard on rumors + trust-discount wiring + bare-run no-op (×3 net new); 266/266 green, typecheck 0 errors
 - Media belief v3 COMPLETE (social reinforcement + source trust); recorded open followup: competing outlets, multi-hop rumor spread
+
+## 2026-09-16 02:05 (roadmap A1 — social graph micro-optimization)
+- graph.ts: adjacency now carries the edge object per direction (edge(a,b) = two hash lookups, zero allocation); edgeKey without array+sort; new forEachEdge (Map insertion order — seed-derived deterministic)
+- formation.ts decay/sweep/prune passes + metrics.ts isolated stats + profile tieCounts switched to forEachEdge (per-edge-independent passes only); allEdges() kept for canonical serialization order
+- Verified behavior-preserving via stash A/B: identical digests (1k 28dd585c, 10k e579a966) and event counts with/without the patch; 10k×1y 15.7s → 12.1s (−23%), events/sec +29%
+- Tests: 266/266 green, typecheck 0 errors

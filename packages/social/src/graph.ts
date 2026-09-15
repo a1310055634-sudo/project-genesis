@@ -7,10 +7,11 @@
  * Edge values (familiarity/trust/liking/conflict) live in [0, 1]; writers must
  * clamp before storing (use clamp01).
  *
- * A derived adjacency index (person id -> neighbor ids) supports O(deg)
- * neighbor lookups for local partner sampling and friend-of-friend cascades
- * (KI-1). It is rebuilt-in-place on ensure/remove and never serialized; the
- * edges Map stays the single source of truth.
+ * A derived adjacency index (person id -> neighbor id -> edge, both
+ * directions) supports O(deg) neighbor/edge lookups for local partner
+ * sampling, friend-of-friend cascades (KI-1) and zero-allocation edge
+ * queries (KI-2a). It is rebuilt-in-place on ensure/remove and never
+ * serialized; the edges Map stays the single source of truth.
  */
 
 export interface RelationshipEdge {
@@ -24,9 +25,11 @@ export interface RelationshipEdge {
   lastInteractionTick: number
 }
 
-/** Canonical undirected edge key: the sorted pair joined with '|'. */
+/** Canonical undirected edge key: the sorted pair joined with '|'.
+ * KI-2a (A1): direct comparison instead of array+sort — this sat at ~10% of
+ * total CPU in the 10k×3y profile (KI2_PROFILE.md). */
 export function edgeKey(a: string, b: string): string {
-  return [a, b].sort().join('|')
+  return a < b ? `${a}|${b}` : `${b}|${a}`
 }
 
 /** Clamp to the bounded relationship domain [0, 1]. */
@@ -41,11 +44,15 @@ function byKey(a: RelationshipEdge, b: RelationshipEdge): number {
 
 export class RelationshipGraph {
   private readonly edges = new Map<string, RelationshipEdge>()
-  private readonly adjacency = new Map<string, Set<string>>()
+  /** KI-2a (A1): derived adjacency carries the EDGE OBJECT per direction —
+   * `edge(a, b)` becomes two hash lookups with zero allocation (the old path
+   * allocated a canonical key string per query, ~17% of total CPU). */
+  private readonly adjacency = new Map<string, Map<string, RelationshipEdge>>()
 
   /** Existing edge between a and b, if any. */
   edge(a: string, b: string): RelationshipEdge | undefined {
-    return this.edges.get(edgeKey(a, b))
+    if (a === b) return undefined
+    return this.adjacency.get(a)?.get(b)
   }
 
   /**
@@ -70,7 +77,7 @@ export class RelationshipGraph {
       lastInteractionTick: tick
     }
     this.edges.set(key, created)
-    this.link(personA, personB)
+    this.link(personA, personB, created)
     return created
   }
 
@@ -91,7 +98,7 @@ export class RelationshipGraph {
   neighborsOf(id: string): string[] {
     const neighbors = this.adjacency.get(id)
     if (neighbors === undefined) return []
-    return [...neighbors].sort()
+    return [...neighbors.keys()].sort()
   }
 
   /** All edges, ordered by key (canonical/deterministic serialization order). */
@@ -99,16 +106,22 @@ export class RelationshipGraph {
     return [...this.edges.values()].sort(byKey)
   }
 
+  /**
+   * Iterate all edges in MAP INSERTION order (= edge creation order, which is
+   * itself seed-derived and deterministic). KI-2a (A1): for per-edge
+   * independent passes (decay/sweep/prune/count) where outcome does not
+   * depend on visiting order — avoids the O(E log E) sort that allEdges()
+   * pays on every weekly pass. NOT for canonical serialization (use allEdges).
+   */
+  forEachEdge(visit: (edge: RelationshipEdge) => void): void {
+    for (const edge of this.edges.values()) visit(edge)
+  }
+
   /** Edges touching id, ordered by key (O(deg) via the adjacency index). */
   edgesOf(id: string): RelationshipEdge[] {
     const neighbors = this.adjacency.get(id)
     if (neighbors === undefined) return []
-    const out: RelationshipEdge[] = []
-    for (const other of neighbors) {
-      const edge = this.edges.get(edgeKey(id, other))
-      if (edge !== undefined) out.push(edge) // defensive: adjacency is derived
-    }
-    return out.sort(byKey)
+    return [...neighbors.values()].sort(byKey)
   }
 
   /** Number of distinct edges. */
@@ -116,19 +129,19 @@ export class RelationshipGraph {
     return this.edges.size
   }
 
-  private link(x: string, y: string): void {
+  private link(x: string, y: string, edge: RelationshipEdge): void {
     let xs = this.adjacency.get(x)
     if (xs === undefined) {
-      xs = new Set()
+      xs = new Map()
       this.adjacency.set(x, xs)
     }
-    xs.add(y)
+    xs.set(y, edge)
     let ys = this.adjacency.get(y)
     if (ys === undefined) {
-      ys = new Set()
+      ys = new Map()
       this.adjacency.set(y, ys)
     }
-    ys.add(x)
+    ys.set(x, edge)
   }
 
   private unlink(x: string, y: string): void {

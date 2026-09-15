@@ -134,11 +134,13 @@ export function fullStackSystems(): FullStackProfile {
       // v3 social reinforcement: conversion lifts with the share of neighbors
       // that already hold beliefs (neighborsOf identity, not just degree)
       tieCounts: (_ctx) => {
+        // KI-2a: insertion-order iteration — degree counts are order-independent,
+        // no need for the O(E log E) canonical sort allEdges() pays
         const map = new Map<string, number>()
-        for (const edge of graph.allEdges()) {
+        graph.forEachEdge((edge) => {
           map.set(edge.personA, (map.get(edge.personA) ?? 0) + 1)
           map.set(edge.personB, (map.get(edge.personB) ?? 0) + 1)
-        }
+        })
         return map
       },
       neighbors: (_ctx, personId) => graph.neighborsOf(personId),

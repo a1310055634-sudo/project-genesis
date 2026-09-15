@@ -18,10 +18,10 @@ export function recordGraphMetrics(ctx: SimContext, graph: RelationshipGraph): v
   ctx.metrics.gauge('social_mean_degree', aliveCount === 0 ? 0 : (edgeCount * 2) / aliveCount)
 
   const withEdge = new Set<string>()
-  for (const edge of graph.allEdges()) {
+  graph.forEachEdge((edge) => {
     withEdge.add(edge.personA)
     withEdge.add(edge.personB)
-  }
+  })
   let isolated = 0
   let friendshipEndpoints = 0
   for (const person of alive) {
