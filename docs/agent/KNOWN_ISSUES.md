@@ -62,3 +62,34 @@ The caregiverLoad computation only needs per-person young-child counts, but rebu
 - WATCHDOG 2026-09-14: api.test.ts afterAll drains the in-flight /api/sim/stop fetch before server.close() — recurring unhandled ECONNRESET (vitest "Errors: 1 error") verified gone over 2 consecutive full runs
 - RT5-10 INFO (rent/quality frozen at assignment for NEW units; monthly reprice covers composition changes) — superseded by RT4-12 monthly repricing
 - Carryover: RT1-08 bench RSS sampling (cosmetic) — still open
+
+## Round 6 (HT-32, 2026-09-15) — audit of 4422bf4..21ae4be (Sep 13-14 batches)
+
+Scope: media belief v3 social reinforcement, API/dashboard, Sep-13 watchdog economy/institutions/housing batches, cross-cutting pitfalls. 4 reviewer lenses (A media, B api/dashboard, C cross-cutting pitfalls, D economy/institutions/housing; lens C executed in-session as a mechanical checklist after the subagent hit a rate limit). Dispositions:
+
+- RT6-D1-1 HIGH welfare pool-first settled against the CUMULATIVE welfare_paid counter — pool double-deducted from month 2 on, deficit gauge inflated quadratically; every pre-2026-09-15 recorded welfare DEFICIT number (EXP-030 trail) is invalid — FIXED (per-month local accumulator, mirroring the correct pension template); pool-accounting regression identity test added (deficit sum == paid sum − collected + pool end); KNOWN_ISSUES' claimed "deficit < total" regression had never existed — now real. EXP-030 re-run: direction HOLDS (0.441 vs 0.469); authoritative deficit baseline refreshed.
+- RT6-D1-5 MEDIUM pension pool-first/deficit + founder bootstrap had ZERO test coverage — FIXED (pool-accounting.test.ts: cross-system identity + pension-paid smoke + empty-pool deficit equality).
+- RT6-B1 MEDIUM API person-index staleness tracked only persons.length; household create/move/GC left dossiers showing stale `household: null` — FIXED (index rebuild also compares householdById.size).
+- RT6-B2 MEDIUM dossier fabricated `quality: 0` for overflow pupils (virtual school not in SCHOOLS; domain semantics = no quality reading) — FIXED (quality: null for overflow; UI renders '—').
+- RT6-A1 MEDIUM BELIEF_DECAY_PROB_PER_WEEK applies once per 4-week media cycle, not weekly (effective weekly rate ≈0.5%, not 2%) — FIXED (documentation-only: constant + call-site comments state the cycle semantics and effective rate; behavior unchanged to keep EXP-022 continuity).
+- RT6-A2 MEDIUM paired-world direction test was pointwise-dominated (near-tautological) and the pre-sweep snapshot had no coverage — FIXED (share computation extracted to pure believingNeighborShare() with denominator/any-piece/empty/lapse unit tests; live-vs-snapshot order leak itself remains structural-only, noted).
+- RT6-D1-2 MEDIUM "retiree cohort fully covered" overstated — never-employed-at-65 residents (search hard-stops at 65) hold pension 0 in both arms — DOCUMENTED (EXP-025 STATUS corrected; direction survives with symmetric noise). Open semantic decision: minimum-pension floor for never-employed retirees → main session.
+- RT6-D1-3 MEDIUM school capacity is a build-time snapshot; build-time headroom can be ~1 seat at 10k, so net inflow re-creates overflow silently — DOCUMENTED, deferred into the school-funding batch (capacity policy belongs with funding semantics).
+- RT6-D1-4 MEDIUM EXP-004 never re-run after the quality→rent change (b7272c9's "baseline regression updates" unverifiable) — FIXED by re-run: direction HOLDS (0.493 vs 0.469, CI95 disjoint; gap narrowed 0.037→0.025 as quality lifts baseline rent); STATUS refreshed.
+- RT6-B3 MEDIUM institutions dossier assertion was a tautology; media block unasserted; controller used a 'media.pieces' string literal — FIXED (MEDIA_PIECES import; shape assertions for institutions + mediaExposure).
+- RT6-A3 LOW dead believers' frozen beliefs could enter the reinforcement share via an implicit social-cadence coupling — FIXED (snapshot gates on alive explicitly).
+- RT6-A4 LOW profile hardcoded 0.25 instead of the constant — FIXED (imports BELIEF_SOCIAL_REINFORCEMENT).
+- RT6-A5 LOW believedBy field comment claimed "belief never decays"; test title over-promised — FIXED (both rewritten).
+- RT6-A6 LOW header claimed "per-person rng fork"; implementation is one stream per fire tick — FIXED (doc).
+- RT6-A7 INFO unreachable heardBy dedup branch (pieces born fresh) — FIXED (removed). Manifest has no mechanism-version field — deferred (schema change; digest+commit message suffice for now).
+- RT6-B4 LOW dashboard HTML marker assertions only prove string presence in page source, not runtime rendering — ACCEPTED RISK (dependency-free dashboard; real UI smoke needs a DOM harness — deferred; human eyeballs the dashboard on next open).
+- RT6-B5 LOW self-contained dossier test's srv.close() unawaited (ebb2a09's ECONNRESET pattern in miniature) — FIXED (drain + awaited close + closeIdleConnections).
+- RT6-B6 LOW media_reinforced_hearings / media_last_piece_heard absent from KEY_METRICS — FIXED (rows added).
+- RT6-B7 LOW events table innerHTML interpolation unescaped (pre-existing) — FIXED (esc() applied; esc covers element-content positions only — keep it that way).
+- RT6-B8 INFO negative wealth rendered "$-1,234"; null rendered as "null" — FIXED (money sign handling; cell() renders null as '—').
+- RT6-D1-6 LOW monthlyPension built an unused personsById every month; bootstrap took it and ignored it — FIXED (removed).
+- RT6-D1-7 LOW qualityFor per-tick cache correctness leaned on implicit system registration order — DOCUMENTED (contract comment at the cache site).
+- RT6-D1-8 LOW housing integer test contained a tautology and never exercised computeRent — FIXED (real integer-cents assertions over computeRent across quality × members × multipliers).
+- RT6-D1-9 INFO two burden definitions coexist (gauge = primary earner; pathway = household income sum) — DOCUMENTED, no change (label the gauge at next UI pass).
+- RT6-D1-10 INFO school id sort is lexicographic — noted, no change.
+- Lens C checklist (in-session): no Date.now/Math.random added to core/simulation; no config.ts changes in range (media knobs went deps route, configHash clean); no hand-built Person fixtures added; new tests use counterValue/gaugeValue correctly; recentEvents untouched by new tests.

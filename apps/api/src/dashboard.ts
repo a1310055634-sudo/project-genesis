@@ -78,7 +78,7 @@ export function dashboardHtml(): string {
 </div>
 
 <script>
-const KEY_METRICS = ['stress.mean','wellbeing.mean','employment_rate','mean_wealth','mean_income','social_edges','social_mean_degree','family.avg_household_size','family.marriages','family.divorces','institutions_pupils_assigned','institutions_overflow_pupils','media_pieces','media_hearings_total','media_beliefs_total','media_beliefs_lapsed','media_last_piece_believed'];
+const KEY_METRICS = ['stress.mean','wellbeing.mean','employment_rate','mean_wealth','mean_income','social_edges','social_mean_degree','family.avg_household_size','family.marriages','family.divorces','institutions_pupils_assigned','institutions_overflow_pupils','media_pieces','media_hearings_total','media_beliefs_total','media_beliefs_lapsed','media_last_piece_heard','media_last_piece_believed','media_reinforced_hearings'];
 const fmt = v => v === undefined || v === null ? '—' : (Math.round(v * 1000) / 1000).toLocaleString();
 
 async function api(path, body) {
@@ -139,17 +139,18 @@ function render(s) {
   sparkline('svg-population', hist.map(h => h.population), '#58a6ff');
 }
 function esc(v) { return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function cell(v) { return esc(v === undefined || v === null ? '—' : v); }
 function section(title, rows) {
   if (!rows.length) return '';
   return '<h2>' + esc(title) + '</h2><table>' + rows.map(([k, v]) =>
-    '<tr><td>' + esc(k) + '</td><td>' + esc(v) + '</td></tr>').join('') + '</table>';
+    '<tr><td>' + esc(k) + '</td><td>' + cell(v) + '</td></tr>').join('') + '</table>';
 }
 async function loadPerson() {
   const id = document.getElementById('personId').value.trim();
   try {
     const p = await api('/api/persons/' + id);
     const idn = p.identity || {}, mar = p.marital || {}, eco = p.economy || {}, ed = p.education || {}, hou = p.housing || {}, inst = p.institutions, med = p.mediaExposure || {};
-    const money = c => c === undefined || c === null ? '—' : '$' + fmt(c/100);
+    const money = c => c === undefined || c === null ? '—' : (c < 0 ? '-$' + fmt(-c/100) : '$' + fmt(c/100));
     let html = section('Identity', [
       ['id', idn.id], ['sex', idn.sex], ['age', idn.ageYears], ['life stage', idn.lifeStage], ['alive', idn.alive]
     ]) + section('Marital / family', [
@@ -182,7 +183,7 @@ async function refresh() {
       eventsTick = s.tick;
       const events = await api('/api/events?limit=15');
       document.querySelector('#events tbody').innerHTML = events.map(e =>
-        '<tr><td>' + e.tick + '</td><td>' + e.type + '</td><td>' + (e.actorIds || []).join(', ') + '</td></tr>').join('');
+        '<tr><td>' + esc(e.tick) + '</td><td>' + esc(e.type) + '</td><td>' + esc((e.actorIds || []).join(', ')) + '</td></tr>').join('');
     }
   } catch (_) { /* server not up yet */ }
 }

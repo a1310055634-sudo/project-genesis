@@ -312,6 +312,7 @@ export function monthlyWelfare(ctx: SimContext): void {
   const transfer = ctx.config.welfareTransferCents ?? 0
   if (transfer <= 0) return
   const tick = ctx.tick()
+  let welfareTotal = 0
   for (const person of ctx.world.persons) {
     if (!person.alive) continue
     if (person.economy.employerId !== null) continue
@@ -328,6 +329,7 @@ export function monthlyWelfare(ctx: SimContext): void {
     // consumption share and strain relief track it across months.
     person.economy.monthlyIncomeCents = transfer
     person.economy.wealthCents += transfer
+    welfareTotal += transfer
     ctx.metrics.increment('economy.welfare_paid_cents', transfer)
     ctx.events.emit({
       id: ctx.ids.next('event'),
@@ -339,11 +341,13 @@ export function monthlyWelfare(ctx: SimContext): void {
   }
   // pool-first funding (red team RT5-01): the taxation pool covers welfare
   // payments; only the shortfall beyond the pool is deficit-created and
-  // audited via the gauge (transparent rather than hidden creation)
-  const paidTotal = ctx.metrics.counterValue('economy.welfare_paid_cents')
-  const fundedFromPool = Math.min(getTaxPool(ctx), paidTotal)
+  // audited via the gauge (transparent rather than hidden creation).
+  // RT6-D1-1: settle against THIS month's payment total — the cumulative
+  // 'economy.welfare_paid_cents' counter double-counted every prior month
+  // and drained the pool quadratically.
+  const fundedFromPool = Math.min(getTaxPool(ctx), welfareTotal)
   setTaxPool(ctx, getTaxPool(ctx) - fundedFromPool)
-  const deficitCreated = paidTotal - fundedFromPool
+  const deficitCreated = welfareTotal - fundedFromPool
   if (deficitCreated > 0) {
     const name = 'economy.welfare_deficit_cents'
     ctx.metrics.gauge(name, ctx.metrics.gaugeValue(name) + deficitCreated)
@@ -362,11 +366,7 @@ export function monthlyWelfare(ctx: SimContext): void {
  * (and without a job) is granted a founder pension = replacementRate × mean
  * employer wage. One-shot guard lives in ctx.extensions.
  */
-function bootstrapFounderPensions(
-  ctx: SimContext,
-  pensions: Map<string, number>,
-  personsById: Map<string, Person>
-): void {
+function bootstrapFounderPensions(ctx: SimContext, pensions: Map<string, number>): void {
   const guardKey = 'economy.pension_bootstrapped'
   if (ctx.extensions.get(guardKey) === true) return
   ctx.extensions.set(guardKey, true)
@@ -395,9 +395,8 @@ export function monthlyPension(ctx: SimContext): void {
   const tick = ctx.tick()
   const pensions = pensionsMap(ctx)
   const poolAtStart = getTaxPool(ctx)
-  const personsById = new Map(ctx.world.persons.map((p) => [p.id, p]))
   let pensionTotal = 0
-  bootstrapFounderPensions(ctx, pensions, personsById)
+  bootstrapFounderPensions(ctx, pensions)
   for (const person of ctx.world.persons) {
     if (!person.alive) continue
     if (ageYears(person.birthTick, tick) < RETIREMENT_AGE) continue

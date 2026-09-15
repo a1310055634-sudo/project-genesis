@@ -2,7 +2,7 @@ import { GenesisSystem, demographicsSystem } from '@genesis/simulation'
 import { ageYears } from '@genesis/core'
 import { educationSystem, skillOf } from '@genesis/education'
 import { buildQualityByPupil, institutionsSystem } from '@genesis/institutions'
-import { mediaSystem } from '@genesis/media'
+import { BELIEF_SOCIAL_REINFORCEMENT, mediaSystem } from '@genesis/media'
 import { buildHousingBurdenByPerson, housingSystem } from '@genesis/housing'
 import { financialStrainOf, pensionOf, economySystems } from '@genesis/economy'
 import { RelationshipGraph, socialSystem, socialSupportOf, relationshipConflictOf } from '@genesis/social'
@@ -98,6 +98,11 @@ export function fullStackSystems(): FullStackProfile {
   let cachedQuality: Map<string, number> | null = null
   const qualityFor = (ctx: SimContext, personId: string): number => {
     const tick = ctx.tick()
+    // RT6-D1-7: this per-tick cache reads assignments BEFORE institutions(14,
+    // later registration) rewrites them in the same tick — correctness relies
+    // on that registration order. Any future consumer placed AFTER the
+    // institutions system reads last month's mapping; invalidate on
+    // assignment changes if that ever becomes a real consumer path.
     if (tick !== cachedQualityTick || cachedQuality === null) {
       cachedQuality = buildQualityByPupil(ctx)
       cachedQualityTick = tick
@@ -131,8 +136,8 @@ export function fullStackSystems(): FullStackProfile {
         return map
       },
       neighbors: (_ctx, personId) => graph.neighborsOf(personId),
-      reinforcement: 0.25
-    }), // priority 16, weekly (publication + spread)
+      reinforcement: BELIEF_SOCIAL_REINFORCEMENT
+    }), // priority 16, every 4 weeks (publication + spread + belief decay)
     housingSystem(), // priority 13, monthly (units + burden; reads config knob)
     socialSystem(graph), // priority 15, weekly
     // HT-12 final link: skill→wage coupling. Hires price once at

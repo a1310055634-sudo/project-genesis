@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { checkInvariants, demographicsSystem, Simulation } from '@genesis/simulation'
-import { BELIEF_CONVERSION_PROB, MEDIA_PIECES, conversionProbability, mediaSystem } from '@genesis/media'
+import {
+  BELIEF_CONVERSION_PROB,
+  MEDIA_PIECES,
+  believingNeighborShare,
+  conversionProbability,
+  mediaSystem
+} from '@genesis/media'
 import { RelationshipGraph } from '@genesis/social'
 
 /**
@@ -49,7 +55,7 @@ describe('media domain (HT-12)', () => {
     }
   })
 
-  it('belief layer: believed ⊆ heard; belief monotone; conversion < 1', () => {
+  it('belief layer: believed ⊆ heard; conversions occur under the flat baseline', () => {
     const { sim } = build()
     sim.run()
     const pieces = sim.ctx.extensions.get(MEDIA_PIECES) as Map<string, { believedBy: Set<string>; heardCount: number; heardBy: Set<string> }>
@@ -95,6 +101,20 @@ describe('media domain (HT-12)', () => {
 })
 
 describe('belief social reinforcement (v3)', () => {
+  it('believingNeighborShare: denominator, any-piece semantics, empty safety (RT6-A2)', () => {
+    const count = new Map([['a', 3], ['b', 1]]) // any positive count believes
+    // denominator is neighbors.length, not the believing count
+    expect(believingNeighborShare(['a', 'b', 'c', 'd'], count)).toBe(0.5)
+    expect(believingNeighborShare(['a', 'b'], count)).toBe(1)
+    expect(believingNeighborShare(['c', 'd'], count)).toBe(0)
+    // zero neighbors never divide by zero
+    expect(believingNeighborShare([], count)).toBe(0)
+    // absence from the map = zero beliefs
+    expect(believingNeighborShare(['zzz'], count)).toBe(0)
+    // a count that DROPPED to 0 (lapsed everywhere) no longer reinforces
+    expect(believingNeighborShare(['a'], new Map([['a', 0]]))).toBe(0)
+  })
+
   it('conversionProbability: formula, clamp, no-op at zero reinforcement', () => {
     expect(conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 0)).toBe(BELIEF_CONVERSION_PROB)
     expect(conversionProbability(BELIEF_CONVERSION_PROB, 0.25, 1)).toBe(0.85)

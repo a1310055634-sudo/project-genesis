@@ -85,3 +85,13 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-14 06:07 TAKEOVER COMPLETE — run-42-49a14ea4.json digest d51e548f, 18.9M events, stable end state, belief plateau ~24%; docs-only commit
 - 2026-09-14 07:00 TAKEOVER (idle 55min, typecheck 0 err, tests GREEN) — task: EXP-021/022 re-run under reinforcement (scientific regression check)
 - 2026-09-14 07:04 TAKEOVER COMPLETE — EXP-021 direction holds (+15% vs +14%), EXP-022 clean; pre-reinforcement reports backed up; docs-only commit
+- 2026-09-14 08:00 STANDBY (idle 58min, typecheck 0 err, tests GREEN 255/255) — no eligible watchdog task; pool needs main-session decisions (KI-2 refactor, housing funding loop, source-trust semantics, audit round 6). Standing by.
+- 2026-09-15 00:00 STANDBY (idle 17h since 21ae4be, typecheck 0 err, tests GREEN) — 09:00-23:00 Sep-14 fires missed: app/machine offline again (expected behavior, no catch-up); pool unchanged, needs main-session decisions. Standing by.
+- 2026-09-15 01:00 STANDBY (idle 18h, typecheck 0 err, tests GREEN) — pool unchanged (KI-2 / housing funding / source trust / audit 6 all need main session). Standing by.
+- 2026-09-15 02:00 STANDBY (idle 19h, typecheck 0 err, tests GREEN) — pool unchanged. Standing by.
+- 2026-09-15 03:00 STANDBY (idle 20h, typecheck 0 err, tests GREEN) — pool unchanged. Standing by.
+- 2026-09-15 04:00 STANDBY (idle 21h, typecheck 0 err, tests GREEN) — pool unchanged. Standing by.
+- 2026-09-15 05:00 STANDBY (idle 22h, typecheck 0 err, tests GREEN) — pool unchanged. Standing by.
+- 2026-09-15 06:00 STANDBY (idle 23h, typecheck 0 err, tests GREEN) — pool unchanged. Standing by.
+- 2026-09-15 07:00 STANDBY (idle 24h, typecheck 0 err, tests GREEN) — pool unchanged (KI-2 / housing funding / source trust / audit 6 need main session). Standing by.
+- 2026-09-15 08:00 STANDBY (idle 25h, typecheck 0 err, tests GREEN) — pool unchanged. Standing by.

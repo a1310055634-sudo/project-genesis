@@ -179,10 +179,24 @@ describe('person dossier depth (education + housing + media side-tables)', () =>
       expect(dossier['housing']).toBeDefined()
       const housing = dossier['housing'] as Record<string, unknown>
       expect(typeof housing['burden']).toBe('number')
-      // institutions side-table block present (null for non-pupils, object for pupils)
+      // RT6-B3: institutions key always present; shape-checked either way
+      // (null for non-pupils, {schoolId, overflow, quality} for pupils —
+      // quality null for overflow pupils per RT6-B2)
       expect('institutions' in dossier).toBe(true)
+      const inst = dossier['institutions'] as Record<string, unknown> | null
+      if (inst !== null) {
+        expect(typeof inst['schoolId']).toBe('string')
+        expect(typeof inst['overflow']).toBe('boolean')
+        expect(inst['quality'] === null || typeof inst['quality'] === 'number').toBe(true)
+      }
+      // media exposure block carries the heard-piece list
+      const mediaExposure = dossier['mediaExposure'] as Record<string, unknown>
+      expect(Array.isArray(mediaExposure['piecesHeard'])).toBe(true)
     } finally {
-      srv.close()
+      // RT6-B5: same drain discipline as the shared afterAll — an unawaited
+      // close over live keep-alive sockets resurfaces the ECONNRESET flake
+      srv.closeIdleConnections()
+      await new Promise<void>((resolve) => srv.close(() => resolve()))
     }
   }, 90_000)
 })

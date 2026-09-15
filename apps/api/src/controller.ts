@@ -3,6 +3,7 @@ import { buildIndex, populationStats, Simulation, WorldIndex } from '@genesis/si
 import { attainmentOf, skillOf } from '@genesis/education'
 import { housingBurdenOf } from '@genesis/housing'
 import { ASSIGNMENTS, SCHOOLS } from '@genesis/institutions'
+import { MEDIA_PIECES } from '@genesis/media'
 import { relationshipConflictOf, socialSupportOf, RelationshipGraph } from '@genesis/social'
 import { fullStackSystems } from '../../simulation-cli/src/profile'
 
@@ -208,7 +209,7 @@ export class SimulationController {
   private heardPieces(personId: string): string[] {
     const ctx = this.sim !== null ? this.sim.ctx : null
     if (ctx === null) return []
-    const pieces = ctx.extensions.get('media.pieces') as Map<string, { pieceId: string; heardBy: Set<string> }> | undefined
+    const pieces = ctx.extensions.get(MEDIA_PIECES) as Map<string, { pieceId: string; heardBy: Set<string> }> | undefined
     if (pieces === undefined) return []
     const out: string[] = []
     for (const piece of pieces.values()) {
@@ -218,8 +219,11 @@ export class SimulationController {
   }
 
   /** Institutions side-table state for this person: school assignment,
-   * overflow flag and the assigned school's quality (null = not a pupil). */
-  private schoolAssignment(personId: string): { schoolId: string; overflow: boolean; quality: number } | null {
+   * overflow flag and the assigned school's quality (null = not a pupil).
+   * RT6-B2: overflow pupils have NO quality reading — the virtual
+   * school-overflow is not in SCHOOLS, so quality is null there (never a
+   * fabricated 0). */
+  private schoolAssignment(personId: string): { schoolId: string; overflow: boolean; quality: number | null } | null {
     const ctx = this.sim !== null ? this.sim.ctx : null
     if (ctx === null) return null
     const assignments = ctx.extensions.get(ASSIGNMENTS) as Map<string, { schoolId: string; isOverflow: boolean }> | undefined
@@ -229,15 +233,23 @@ export class SimulationController {
     return {
       schoolId: assignment.schoolId,
       overflow: assignment.isOverflow,
-      quality: schools?.get(assignment.schoolId)?.quality ?? 0
+      quality: assignment.isOverflow ? null : (schools?.get(assignment.schoolId)?.quality ?? null)
     }
   }
 
   person(personId: string): unknown {
     if (this.sim === null) throw new Error('no active simulation')
     // red team RT2-08 + RT3-04: index cached per run but REBUILT when new
-    // persons are born (persons.length is monotonic — a cheap staleness check)
-    if (this.index === null || this.indexForSim !== this.sim || this.index.personById.size !== this.sim.ctx.world.persons.length) {
+    // persons are born (persons.length is monotonic — a cheap staleness
+    // check). RT6-B1: households mutate WITHOUT any person being born
+    // (marriage creates a household, divorce moves members, GC shrinks the
+    // array) — track both sizes or dossiers show stale `household: null`.
+    if (
+      this.index === null ||
+      this.indexForSim !== this.sim ||
+      this.index.personById.size !== this.sim.ctx.world.persons.length ||
+      this.index.householdById.size !== this.sim.ctx.world.households.length
+    ) {
       this.index = buildIndex(this.sim.ctx.world)
       this.indexForSim = this.sim
     }

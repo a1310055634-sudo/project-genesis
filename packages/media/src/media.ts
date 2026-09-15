@@ -22,9 +22,9 @@ export interface MediaPiece {
   /** Per-person exposure memory (v2, red-team-proof design): who heard this
    * piece. Bounded by population; enables per-person belief modelling later. */
   heardBy: Set<string>
-  /** v2 belief layer: who BELIEVES the piece (subset of heardBy). Hearing
-   * converts to belief with flat probability; belief never decays in v1
-   * (belief-decay is the EXP-022 v3 follow-up). */
+  /** v2 belief layer: who BELIEVES the piece (subset of heardBy). Conversion
+   * at hearing (flat base + v3 social reinforcement); beliefs lapse in the
+   * per-cycle decay pass (v3) while heardBy keeps the exposure memory. */
   believedBy: Set<string>
 }
 
@@ -36,10 +36,11 @@ export function ensurePieces(ctx: SimContext): Map<string, MediaPiece> {
   return created
 }
 
-/** Weekly publication cadence (every 4 weeks). */
+/** Publication cadence: one piece every 4 weeks (672 ticks; 168 ticks/week). */
 export const PUBLISH_EVERY_TICKS = 672
 
-/** Hearing probability per week per person, scaled by tie count (degree). */
+/** Hearing probability per publication cycle (4 weeks) per person, scaled by
+ * tie count (degree). */
 export function hearingProbability(tieCount: number): number {
   // more connections → more exposure; saturates at 0.5 for 20+ ties
   return clamp01(0.05 + 0.02 * Math.min(20, tieCount))
@@ -49,9 +50,11 @@ export function hearingProbability(tieCount: number): number {
  * trust). Social reinforcement (v3) lifts this per hearer by
  * BELIEF_SOCIAL_REINFORCEMENT × believing-neighbor share. */
 export const BELIEF_CONVERSION_PROB = 0.6
-/** Per-week probability that an unreinforced belief decays (EXP-022 v3:
- * belief is no longer permanent — decay enables rumor persistence/decay
- * dynamics). Low rate: ~2% of believers lapse per week. */
+/** Per-publication-cycle (4-week) lapse probability applied to each belief in
+ * the decay pass that runs once per media fire — every 4 weeks, NOT weekly
+ * (RT6-A1: name kept for EXP-022 continuity; the EFFECTIVE weekly lapse rate
+ * is ≈0.5%, not 2%). Decay enables rumor persistence/decay dynamics
+ * (EXP-022 v3). */
 export const BELIEF_DECAY_PROB_PER_WEEK = 0.02
 /** Social reinforcement (v3): conversion bonus at a believing-neighbor share
  * of 1. Wired together with the neighbors dep; 0 or missing dep = flat v2
@@ -65,18 +68,32 @@ export function conversionProbability(base: number, reinforcement: number, belie
   return clamp01(base + reinforcement * believingNeighborShare)
 }
 
+/** Share of a hearer's neighbors that hold at least one belief (any piece —
+ * neighborhood credibility, not piece-level contagion). Pure: tests pin the
+ * denominator and the any-piece semantics (RT6-A2). */
+export function believingNeighborShare(neighbors: string[], believingCount: Map<string, number>): number {
+  if (neighbors.length === 0) return 0
+  let believing = 0
+  for (const n of neighbors) {
+    if ((believingCount.get(n) ?? 0) > 0) believing++
+  }
+  return believing / neighbors.length
+}
+
 function clamp01(v: number): number {
   return Math.min(1, Math.max(0, v))
 }
 
 /**
- * Weekly media system (priority 16 — after social(15), so tie counts are
- * fresh): publishes a piece every PUBLISH_EVERY_TICKS, then spreads hearing
- * across alive persons. Hearing count per piece grows with the person's tie
- * count (degree correlates with exposure). Belief conversion (v3) is socially
- * reinforced: hearers whose neighbors already hold beliefs convert more
- * readily (snapshot taken before the sweep — no within-piece order effects).
- * Deterministic: array-order sweep, per-person rng fork.
+ * Publication-cycle media system (priority 16 — after social(15), so tie
+ * counts are fresh; fires every PUBLISH_EVERY_TICKS = 4 weeks): publishes a
+ * piece, then spreads hearing across alive persons. Hearing count per piece
+ * grows with the person's tie count (degree correlates with exposure).
+ * Belief conversion (v3) is socially reinforced: hearers whose neighbors
+ * already hold beliefs convert more readily (snapshot taken before the
+ * sweep — no within-piece order effects). Deterministic: array-order sweep
+ * over ONE rng stream forked per fire tick (fork(label) derivation keeps
+ * replays stable; not per-person forks — RT6-A6).
  *
  * deps are injected by the composition root (domain→domain decoupling):
  * - tieCounts drives exposure; without it, hearing falls back to flat baseline.
@@ -100,11 +117,18 @@ export const mediaSystem = (deps?: {
     const reinforcement = deps?.reinforcement ?? 0
 
     // pre-sweep snapshot of who holds beliefs (any piece): the sweep's own
-    // conversions must not leak into later hearers' reinforcement input
+    // conversions must not leak into later hearers' reinforcement input.
+    // RT6-A3: only ALIVE believers count — a dead believer's frozen belief
+    // must not reinforce the living. social's weekly edge cleanup normally
+    // hides the dead from neighborsOf, but that cadence coupling is implicit;
+    // gating here makes the semantics explicit.
+    const byId = new Map(ctx.world.persons.map((p) => [p.id, p]))
     const believingNeighbors = new Map<string, number>()
     if (neighborsOf !== undefined && reinforcement > 0) {
       for (const piece of pieces.values()) {
         for (const believer of piece.believedBy) {
+          const bp = byId.get(believer)
+          if (bp === undefined || !bp.alive) continue
           believingNeighbors.set(believer, (believingNeighbors.get(believer) ?? 0) + 1)
         }
       }
@@ -128,23 +152,16 @@ export const mediaSystem = (deps?: {
       const degree = tieCounts?.get(person.id) ?? 0
       if (rng.bool(hearingProbability(degree))) {
         // per-person exposure memory: a person hears each piece only once
-        if (newest.heardBy.has(person.id)) continue
+        // (pieces are born fresh every fire — no dedup branch needed; RT6-A7)
         newest.heardBy.add(person.id)
         newest.heardCount++
         ctx.metrics.increment('media_hearings_total')
         // belief conversion (v2 base + v3 social reinforcement): believed
-        // subset ⊆ heard subset; decay handled in the weekly pass
+        // subset ⊆ heard subset; decay handled in the per-cycle pass
         let believingShare = 0
         if (neighborsOf !== undefined && reinforcement > 0) {
-            const neighbors = neighborsOf(ctx, person.id)
-          if (neighbors.length > 0) {
-            let believing = 0
-            for (const n of neighbors) {
-              if ((believingNeighbors.get(n) ?? 0) > 0) believing++
-            }
-            believingShare = believing / neighbors.length
-            if (believingShare > 0) ctx.metrics.increment('media_reinforced_hearings')
-          }
+          believingShare = believingNeighborShare(neighborsOf(ctx, person.id), believingNeighbors)
+          if (believingShare > 0) ctx.metrics.increment('media_reinforced_hearings')
         }
         if (rng.bool(conversionProbability(BELIEF_CONVERSION_PROB, reinforcement, believingShare))) {
           newest.believedBy.add(person.id)
@@ -160,11 +177,12 @@ export const mediaSystem = (deps?: {
       }
     }
 
-    // weekly belief-decay pass (EXP-022 v3): unreinforced beliefs lapse at
-    // BELIEF_DECAY_PROB_PER_WEEK — removed from believedBy (heardBy keeps the
-    // exposure memory). Reinforcement happens via re-exposure on new pieces.
+    // per-cycle belief-decay pass (EXP-022 v3): beliefs lapse at
+    // BELIEF_DECAY_PROB_PER_WEEK each media fire (every 4 weeks — see the
+    // constant's doc for the effective weekly rate) — removed from believedBy
+    // (heardBy keeps the exposure memory). Reinforcement happens via
+    // re-exposure on new pieces.
     const decayRng = ctx.rng.fork(`media.decay:${tick}`)
-    const byId = new Map(ctx.world.persons.map((p) => [p.id, p]))
     for (const piece of pieces.values()) {
       for (const believer of [...piece.believedBy]) {
         const person = byId.get(believer)

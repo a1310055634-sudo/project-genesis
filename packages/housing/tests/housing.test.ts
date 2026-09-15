@@ -137,8 +137,15 @@ describe('housing domain (HT-12)', () => {
     expect(a.digest()).toBe(b.digest())
   })
 
-  it('rent baseline is integer cents', () => {
+  it('rent is integer cents across the quality range (RT6-D1-8: real output, not constants)', () => {
     expect(Number.isInteger(HOUSING_BASE_RENT_CENTS)).toBe(true)
-    expect(Number.isInteger(TICKS_PER_MONTH * 0)).toBe(true)
+    expect(Number.isInteger(HOUSING_MEMBER_RENT_CENTS)).toBe(true)
+    for (const quality of [0, 0.25, 0.5, 0.75, 0.6]) {
+      for (const members of [1, 2, 5]) {
+        expect(Number.isInteger(computeRent(members, 1, quality))).toBe(true)
+        expect(Number.isInteger(computeRent(members, 0.8, quality))).toBe(true)
+        expect(Number.isInteger(computeRent(members, 1.4, quality))).toBe(true)
+      }
+    }
   })
 })

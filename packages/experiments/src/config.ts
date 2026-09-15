@@ -101,6 +101,14 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
    * indicator, which folds into financial strain (60/40 mixture in the
    * composition bridge) and via it into stress/wellbeing. Expected direction
    * inside the model: high-rent arm stress.mean > control, wellbeing lower.
+   *
+   * STATUS 2026-09-15 (RT6-D1-4 re-run): direction HOLDS under the
+   * quality-adjusted rent formula (b7272c9) — high-rent 0.493 vs control
+   * 0.469 early-window (CI95 disjoint). Gap narrowed vs the pre-quality
+   * record (0.530 vs 0.493): quality-driven rent raises the baseline arm's
+   * burden too, compressing the contrast but not flipping it. First re-run
+   * since the rent formula change; the recorded 2026-09-09 verdict described
+   * superseded code.
    */
   'EXP-004': validate({
     id: 'EXP-004',
@@ -123,6 +131,13 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
    * working-age residents (welfareTransferCents) softens the unemployed
    * strain floor, lowering cohort stress relative to a no-transfer economy.
    * Expected direction inside the model: welfare arm stress.mean < control.
+   *
+   * STATUS 2026-09-15 (post RT6-D1-1 fix re-run): direction HOLDS — welfare
+   * 0.441 vs control 0.469 early-window (n=3, CI95 disjoint). The stress
+   * direction was never sensitive to the pool-settlement bug (transfer
+   * income lands either way), but every recorded DEFICIT number from runs
+   * before 2026-09-15 is invalid (cumulative-counter double-deduction) —
+   * this re-run is the authoritative deficit baseline.
    */
   'EXP-030': validate({
     id: 'EXP-030',
@@ -332,11 +347,15 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
       'Model-internal policy check: do retirees covered by a 0.6-replacement pension show ' +
       'lower mean stress than retirees without any pension over 2 years? Verifies the ' +
       'pension→runway→strain pathway inside the simulator; no real-world policy claim.',
-    // STATUS 2026-09-13 (after founder bootstrap): direction CONFIRMED with
-    // clean coverage — founder seniors now accrue a founder pension
-    // (replacementRate × mean wage), so the retiree cohort is fully covered.
-    // Early-window: pension 0.470 vs control 0.495 (CI95 disjoint, paired
-    // worlds). Supersedes the earlier weak/coverage-artifact result.
+    // STATUS 2026-09-13 (after founder bootstrap): direction CONFIRMED —
+    // founder seniors accrue a founder pension (replacementRate × mean wage).
+    // RT6-D1-2 correction: coverage is NOT complete — residents who reach 65
+    // WITHOUT ever having been employed (job search fails monthly until the
+    // age-65 hard stop) still have pension 0 in both arms. The 0.470 vs 0.495
+    // early-window result (CI95 disjoint, paired worlds) survives with that
+    // symmetric noise diluted in; a minimum-pension floor for never-employed
+    // retirees is a recorded open semantic decision.
+    // Supersedes the earlier weak/coverage-artifact result.
     seeds: [42, 43, 44],
     population: 300,
     years: 2,
