@@ -101,3 +101,9 @@
 - formation.ts decay/sweep/prune passes + metrics.ts isolated stats + profile tieCounts switched to forEachEdge (per-edge-independent passes only); allEdges() kept for canonical serialization order
 - Verified behavior-preserving via stash A/B: identical digests (1k 28dd585c, 10k e579a966) and event counts with/without the patch; 10k×1y 15.7s → 12.1s (−23%), events/sec +29%
 - Tests: 266/266 green, typecheck 0 errors
+
+## 2026-09-16 03:02 (roadmap A2 — rng fork amortization)
+- psychology/system.ts: per-person-per-day fork replaced by ONE daily fork consumed in array order; replay stability rests on append-only persons + skip-before-draw invariants (documented in the class docblock)
+- Bench: 10k×1y 12.1s → 7.12s (−41% this step; −52% vs the 14.7s pre-A1 baseline — ≤10s target already met), 1k×1y 1.0s → 0.56s, events/sec 164k → 279k, peak RSS 440 → 311 MB
+- Digests changed by design (draw sequences re-based); same-code replay determinism green (266/266, incl. fullstack GEN-115 replay test)
+- Other fork sites inventoried: all remaining forks are per-tick/per-fire (cheap); psychology was the only per-person fork

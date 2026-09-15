@@ -8,9 +8,13 @@ import { dailyPsychologyUpdate, PsychEnvironment } from './update'
  * dailyPsychologyUpdate for every alive person in world.persons array order
  * (creation order — naturally deterministic; no sorting needed).
  *
- * Randomness: each person-day draws from an independent fork labeled with
- * (tick, person id), so streams are stable regardless of population
- * composition or iteration changes — replay-safe.
+ * Randomness: ONE rng stream forked per day (`psychology:${tick}`), consumed
+ * sequentially in world.persons array order. Replay stability rests on the
+ * same two invariants as before (KI-2b/A2): the persons array is append-only
+ * (births land at the end — earlier sequences unaffected) and dead persons
+ * are skipped BEFORE any draw (a death consumes nothing). The previous
+ * per-person fork (`psychology:${tick}:${person.id}`) cost a full label hash
+ * per person per day — ~11% of total CPU at 10k scale (KI2_PROFILE.md).
  *
  * Observability: at each month boundary (tick % TICKS_PER_MONTH === 0) the
  * alive population's stress / wellbeing / affectValence are streamed into
@@ -24,9 +28,11 @@ export function psychologySystem(envOf: (person: Person, ctx: SimContext) => Psy
     nextFireTick: nextDayStart,
     run(ctx: SimContext) {
       const tick = ctx.tick()
+      // KI-2b (A2): one daily fork shared across persons — see the docblock
+      // for the replay-stability argument.
+      const rng = ctx.rng.fork(`psychology:${tick}`)
       for (const person of ctx.world.persons) {
         if (!person.alive) continue
-        const rng = ctx.rng.fork(`psychology:${tick}:${person.id}`)
         dailyPsychologyUpdate(person, envOf(person, ctx), rng)
       }
       if (tick % TICKS_PER_MONTH === 0) {
