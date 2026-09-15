@@ -3,6 +3,7 @@ import { checkInvariants, demographicsSystem, Simulation } from '@genesis/simula
 import {
   BELIEF_CONVERSION_PROB,
   MEDIA_PIECES,
+  RUMOR_TRUST,
   believingNeighborShare,
   conversionProbability,
   mediaSystem
@@ -175,6 +176,65 @@ describe('belief social reinforcement (v3)', () => {
         expect(piece.heardBy.has(b)).toBe(true)
       }
     }
+  })
+})
+
+describe('source trust (v4): believer gossip spawns neighborhood rumors', () => {
+  const rumorArm = () => {
+    let ring: Map<string, string[]> | null = null
+    const sim = Simulation.create(
+      { seed: 42, populationTarget: 150, years: 2 },
+      {
+        systems: [
+          demographicsSystem,
+          mediaSystem({
+            reinforcement: 0.25,
+            neighbors: (ctx, personId) => {
+              if (ring === null) {
+                ring = new Map()
+                const ids = ctx.world.persons.map((p) => p.id)
+                ids.forEach((id, i) =>
+                  ring!.set(id, [ids[(i + 1) % ids.length], ids[(i + ids.length - 1) % ids.length]])
+                )
+              }
+              return ring.get(personId) ?? []
+            }
+          })
+        ]
+      }
+    )
+    sim.run()
+    return sim
+  }
+
+  it('rumors spawn, stay neighborhood-local, and respect believed ⊆ heard', () => {
+    const sim = rumorArm()
+    expect(sim.ctx.metrics.counterValue('media_rumors_spawned')).toBeGreaterThan(0)
+    const pieces = sim.ctx.extensions.get(MEDIA_PIECES) as Map<
+      string,
+      { origin: 'official' | 'rumor'; believedBy: Set<string>; heardBy: Set<string> }
+    >
+    let rumors = 0
+    for (const piece of pieces.values()) {
+      if (piece.origin !== 'rumor') continue
+      rumors++
+      for (const b of piece.believedBy) {
+        expect(piece.heardBy.has(b)).toBe(true)
+      }
+    }
+    expect(rumors).toBeGreaterThan(0)
+  })
+
+  it('rumor trust discounts the conversion base', () => {
+    expect(conversionProbability(BELIEF_CONVERSION_PROB * RUMOR_TRUST, 0, 0)).toBeCloseTo(
+      BELIEF_CONVERSION_PROB * RUMOR_TRUST
+    )
+  })
+
+  it('bare runs (no neighbors dep) spawn no rumors', () => {
+    const { sim } = build()
+    sim.run()
+    expect(sim.ctx.metrics.hasCounter('media_rumors_spawned')).toBe(false)
   })
 })
 

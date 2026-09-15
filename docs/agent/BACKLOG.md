@@ -76,9 +76,10 @@ Acceptance: records runtime, peak RSS, events/sec.
 
 - retirement accrues pension = pensionReplacementRate (default 0.6) × final income (side-table); monthly payout pool-funded, deficit audited; strain retiree branch (pension-as-income runway); pension.paid events in ledgers
 
-## Media belief v3 (IN PROGRESS, 2026-09-14)
-- Social reinforcement — DONE (watchdog takeover: mediaSystem deps neighbors+reinforcement, conversionProbability base+reinforcement×believing-neighbor-share, pre-sweep belief snapshot (no within-piece order effects), BELIEF_SOCIAL_REINFORCEMENT=0.25 wired in profile, media_reinforced_hearings counter; paired-world direction test green: reinforced arm > flat arm)
-- Remaining: source trust (rumor vs official newspaper) — needs a rumor source in the model (neighbor-originated pieces), bigger than one watchdog window
+## Media belief v3 ✅ (complete 2026-09-15)
+- Social reinforcement — DONE (watchdog takeover 2026-09-14: mediaSystem deps neighbors+reinforcement, conversionProbability base+reinforcement×believing-neighbor-share, pre-sweep belief snapshot, BELIEF_SOCIAL_REINFORCEMENT=0.25 wired in profile, media_reinforced_hearings counter; paired-world direction test green)
+- Source trust — DONE (main session 2026-09-15: MediaPiece.origin 'official'|'rumor'; per-cycle gossip genesis (RUMOR_GENESIS_PROB_PER_CYCLE=0.25, one alive believer of the newest piece) spawns a NEIGHBORHOOD rumor at RUMOR_TRUST=0.5 × base conversion; requires neighbors dep — bare runs unchanged; media_rumors_spawned counter; believed⊆heard held on rumor pieces)
+- Open followup (recorded, not scheduled): multi-source outlets competing on trust; rumor spread beyond one hop
 
 ## EXP-030 ✅ (batch 14, 2026-09-10)
 - welfareTransferCents policy knob + monthlyWelfare flow (money-created abstraction, audited) + strain softening; welfare arm 0.457 vs control 0.493 — direction confirmed

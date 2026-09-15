@@ -90,3 +90,8 @@
 - Config: schoolFundingPerPupilCents knob (3-point sync: interface + strip list + validation)
 - Tests: funding.test.ts (solvent/empty/pool-debit/deps-skip ×4) + 10k capacity headroom assertion; 263/263 green, typecheck 0 errors
 - Note: default world is pension-deficit-heavy → schools start underfunded (quality erodes slowly) — policy space: raise incomeTaxRate or cut the bill; documented in config doc
+
+## 2026-09-15 24:20 (main session — media source trust, v3 complete)
+- Mechanism: MediaPiece.origin 'official'|'rumor'; per-cycle genesis (RUMOR_GENESIS_PROB_PER_CYCLE=0.25) — one alive believer of the newest piece gossips into a NEIGHBORHOOD rumor at RUMOR_TRUST=0.5 × base conversion; requires neighbors dep (bare runs unchanged); media_rumors_spawned counter; media.published covers rumor genesis (auditability)
+- Tests: rumor spawn + believed⊆heard on rumors + trust-discount wiring + bare-run no-op (×3 net new); 266/266 green, typecheck 0 errors
+- Media belief v3 COMPLETE (social reinforcement + source trust); recorded open followup: competing outlets, multi-hop rumor spread

@@ -18,6 +18,9 @@ export const MEDIA_PIECES = 'media.pieces'
 export interface MediaPiece {
   pieceId: string
   originTick: number
+  /** Source trust (v4): official newspaper pieces convert at full base;
+   * rumor pieces (believer gossip, neighborhood-only) at RUMOR_TRUST × base. */
+  origin: 'official' | 'rumor'
   heardCount: number
   /** Per-person exposure memory (v2, red-team-proof design): who heard this
    * piece. Bounded by population; enables per-person belief modelling later. */
@@ -60,6 +63,12 @@ export const BELIEF_DECAY_PROB_PER_WEEK = 0.02
  * of 1. Wired together with the neighbors dep; 0 or missing dep = flat v2
  * conversion. */
 export const BELIEF_SOCIAL_REINFORCEMENT = 0.25
+/** Source trust (v4): rumor pieces convert at RUMOR_TRUST × the official base
+ * — hearing a rumor from a neighbor is less authoritative than the newspaper. */
+export const RUMOR_TRUST = 0.5
+/** Per-cycle probability that one believer gossips the newest piece into a
+ * neighborhood rumor (requires the neighbors dep; no wiring = no rumors). */
+export const RUMOR_GENESIS_PROB_PER_CYCLE = 0.25
 
 /** Conversion probability given the share of a hearer's neighbors that
  * already hold beliefs (any piece — neighborhood credibility, not piece-level
@@ -136,7 +145,14 @@ export const mediaSystem = (deps?: {
 
     // publish
     const pieceId = ctx.ids.next('piece')
-    pieces.set(pieceId, { pieceId, originTick: tick, heardCount: 0, heardBy: new Set(), believedBy: new Set() })
+    pieces.set(pieceId, {
+      pieceId,
+      originTick: tick,
+      origin: 'official',
+      heardCount: 0,
+      heardBy: new Set(),
+      believedBy: new Set()
+    })
     ctx.events.emit({
       id: ctx.ids.next('event'),
       type: 'media.published',
@@ -197,5 +213,56 @@ export const mediaSystem = (deps?: {
     ctx.metrics.gauge('media_pieces', pieces.size)
     ctx.metrics.gauge('media_last_piece_heard', newest.heardCount)
     ctx.metrics.gauge('media_last_piece_believed', newest.believedBy.size)
+
+    // rumor genesis (source trust v4): with a small per-cycle probability one
+    // alive believer gossips the newest piece into a NEIGHBORHOOD rumor at
+    // discounted trust (RUMOR_TRUST × base conversion). Requires the
+    // neighbors dep — no wiring, no rumors. Share reuses the pre-sweep
+    // snapshot (cycle-start neighborhood credibility).
+    if (neighborsOf !== undefined && rng.bool(RUMOR_GENESIS_PROB_PER_CYCLE)) {
+      const believers = [...newest.believedBy].filter((id) => byId.get(id)?.alive === true)
+      if (believers.length > 0) {
+        const gossip = believers[Math.floor(rng.next() * believers.length)]
+        const rumorId = ctx.ids.next('piece')
+        const rumor = {
+          pieceId: rumorId,
+          originTick: tick,
+          origin: 'rumor' as const,
+          heardCount: 0,
+          heardBy: new Set<string>(),
+          believedBy: new Set<string>()
+        }
+        pieces.set(rumorId, rumor)
+        ctx.metrics.increment('media_rumors_spawned')
+        ctx.events.emit({
+          id: ctx.ids.next('event'),
+          type: 'media.published',
+          tick,
+          actorIds: [],
+          payload: { pieceId: rumorId, origin: 'rumor' }
+        })
+        for (const neighbor of neighborsOf(ctx, gossip)) {
+          const np = byId.get(neighbor)
+          if (np === undefined || !np.alive) continue
+          const degree = tieCounts?.get(neighbor) ?? 0
+          if (!rng.bool(hearingProbability(degree))) continue
+          rumor.heardBy.add(neighbor)
+          rumor.heardCount++
+          ctx.metrics.increment('media_hearings_total')
+          const share = believingNeighborShare(neighborsOf(ctx, neighbor), believingNeighbors)
+          if (rng.bool(conversionProbability(BELIEF_CONVERSION_PROB * RUMOR_TRUST, reinforcement, share))) {
+            rumor.believedBy.add(neighbor)
+            ctx.metrics.increment('media_beliefs_total')
+          }
+          ctx.events.emit({
+            id: ctx.ids.next('event'),
+            type: 'information.heard',
+            tick,
+            actorIds: [neighbor],
+            payload: { pieceId: rumorId, origin: 'rumor' }
+          })
+        }
+      }
+    }
   }
 })
