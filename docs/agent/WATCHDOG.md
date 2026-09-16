@@ -114,3 +114,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 04:05 TAKEOVER COMPLETE — /api/persons/:id/timeline + dashboard Life timeline section; 273/273 green, committed
 - 2026-09-17 05:00 TAKEOVER (idle 55min, typecheck 0 err, tests GREEN 273/273 pre-run) — task: Roadmap D3 family tree
 - 2026-09-17 05:04 TAKEOVER COMPLETE — /api/persons/:id/kinship + dashboard Family tree section; 273/273 green, committed
+- 2026-09-17 06:00 TAKEOVER (idle 56min, typecheck 0 err, tests GREEN 273/273 pre-run) — task: Roadmap D4 belief network view
+- 2026-09-17 06:02 TAKEOVER COMPLETE — /api/persons/:id/beliefs + graph retention + dashboard section; Phase D COMPLETE; 273/273 green, committed

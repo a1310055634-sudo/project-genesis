@@ -223,6 +223,29 @@ describe('person dossier depth (education + housing + media side-tables)', () =>
         expect(typeof node['alive']).toBe('boolean')
         expect(typeof node['ageYears']).toBe('number')
       }
+
+      // D4: belief-network slice — heard pieces + neighbor stats
+      const bnRes = await fetch(base + '/api/persons/person-000001/beliefs')
+      expect(bnRes.status).toBe(200)
+      const bn = (await bnRes.json()) as {
+        graphAvailable: boolean
+        piecesHeard: number
+        heard: Array<Record<string, unknown>>
+        neighbors: Array<Record<string, unknown>>
+      }
+      expect(bn['graphAvailable']).toBe(true)
+      expect(bn['piecesHeard']).toBeGreaterThanOrEqual(0)
+      expect(Array.isArray(bn['heard'])).toBe(true)
+      expect(Array.isArray(bn['neighbors'])).toBe(true)
+      expect(bn['neighbors'].length).toBeLessThanOrEqual(30)
+      for (const piece of bn['heard']) {
+        expect(typeof piece['pieceId']).toBe('string')
+        expect(typeof piece['believedCount']).toBe('number')
+      }
+      for (const neighbor of bn['neighbors']) {
+        expect(typeof neighbor['id']).toBe('string')
+        expect(neighbor['believed'] as number).toBeLessThanOrEqual(neighbor['heard'] as number)
+      }
     } finally {
       // RT6-B5: same drain discipline as the shared afterAll — an unawaited
       // close over live keep-alive sockets resurfaces the ECONNRESET flake

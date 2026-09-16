@@ -16,6 +16,7 @@ import { dashboardHtml } from './dashboard'
  *   GET  /api/persons/:id     full person dossier
  *   GET  /api/persons/:id/timeline  life milestones (Roadmap D2)
  *   GET  /api/persons/:id/kinship   family tree around a person (Roadmap D3)
+ *   GET  /api/persons/:id/beliefs   belief-network slice (Roadmap D4)
  *   GET  /api/events?limit=n  recent events (bounded window)
  *   GET  /api/export          run manifest JSON
  */
@@ -93,6 +94,11 @@ export function createApiServer(controller: SimulationController = new Simulatio
           const body = JSON.parse((await readBody()) || '{}') as { ticksPerChunk?: number }
           controller.setSpeed(Number(body.ticksPerChunk ?? 720))
           send(200, { chunkTicks: Number(body.ticksPerChunk ?? 720) })
+          return
+        }
+        const beliefsMatch = path.match(/^\/api\/persons\/([\w-]+)\/beliefs$/)
+        if (req.method === 'GET' && beliefsMatch !== null) {
+          send(200, controller.beliefNetwork(beliefsMatch[1] as string))
           return
         }
         const kinshipMatch = path.match(/^\/api\/persons\/([\w-]+)\/kinship$/)

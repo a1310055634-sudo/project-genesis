@@ -140,3 +140,9 @@
 - API: GET /api/persons/:id/kinship — root + disjoint sections (parents, grandparents via parents' links, partners incl. deceased spouse via spouseAtDeathId, siblings by shared parent, children); dead relatives included (lineage outlives members); O(N) scans per request
 - Dashboard: Family tree section (comma lists with † for dead, relation + age badges) — grouped lists keep the dependency-free render trivial; svg layout is future work
 - Tests: kinship endpoint (200/root id/5 sections/node payload shape) in the dossier flow; 273/273 green, typecheck 0 errors
+
+## 2026-09-17 06:02 (roadmap D4 — belief network view; Phase D COMPLETE)
+- controller retains the run's social graph (start() now keeps fullStackSystems' graph; was discarded)
+- API: GET /api/persons/:id/beliefs — heard pieces (origin + believed/heard counts) + per-neighbor hearing/belief stats sampled from the social graph (capped 30, ranked by belief), graphAvailable flag for bare runs
+- Dashboard: Belief network section in the person inspector (own pieces + top believing neighbors)
+- Tests: beliefs endpoint (payload shapes, believed ≤ heard invariant, 30-cap); 273/273 green, typecheck 0 errors

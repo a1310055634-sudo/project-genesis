@@ -56,12 +56,15 @@ export class SimulationController {
   private runtimeMs = 0
   private index: WorldIndex | null = null
   private indexForSim: Simulation | null = null
+  /** Social graph of the active run (Roadmap D4 belief-network views). */
+  private graph: import('@genesis/social').RelationshipGraph | null = null
 
   start(cfg: StartConfig): StatusPayload {
     if (this.state === 'running' || this.state === 'paused') {
       throw new Error('a simulation is already active — stop it first')
     }
-    const { systems } = fullStackSystems()
+    const { systems, graph } = fullStackSystems()
+    this.graph = graph
     this.sim = Simulation.create(
       { seed: cfg.seed, populationTarget: cfg.population, years: cfg.years },
       { systems, checkInvariants: true }
@@ -413,6 +416,53 @@ export class SimulationController {
     return {
       root: node(person, 'root'),
       sections: { parents, grandparents, partners, siblings, children }
+    }
+  }
+
+  /**
+   * Belief network slice around one person (Roadmap D4): their heard pieces
+   * (origin + how many believe each) and per-neighbor hearing/belief stats
+   * sampled from the social graph (capped 30 neighbors). Requires a run
+   * started in-session (the graph and media side-table are live state).
+   */
+  beliefNetwork(personId: string): unknown {
+    const person = this.resolvePerson(personId)
+    const ctx = this.sim!.ctx
+    const pieces = ctx.extensions.get(MEDIA_PIECES) as
+      | Map<string, { pieceId: string; origin: string; heardBy: Set<string>; believedBy: Set<string> }>
+      | undefined
+    const heard: Array<Record<string, unknown>> = []
+    const neighborBeliefs = new Map<string, { heard: number; believed: number }>()
+    const neighbors = this.graph !== null ? new Set(this.graph.neighborsOf(personId)) : new Set<string>()
+    if (pieces !== undefined) {
+      for (const piece of pieces.values()) {
+        if (piece.heardBy.has(personId)) {
+          heard.push({
+            pieceId: piece.pieceId,
+            origin: piece.origin,
+            believedCount: piece.believedBy.size,
+            heardCount: piece.heardBy.size
+          })
+        }
+        for (const neighbor of neighbors) {
+          if (!piece.heardBy.has(neighbor)) continue
+          const acc = neighborBeliefs.get(neighbor) ?? { heard: 0, believed: 0 }
+          acc.heard++
+          if (piece.believedBy.has(neighbor)) acc.believed++
+          neighborBeliefs.set(neighbor, acc)
+        }
+      }
+    }
+    const ranked = [...neighborBeliefs.entries()]
+      .map(([id, stats]) => ({ id, ...stats }))
+      .sort((x, y) => y.believed - x.believed || y.heard - x.heard || x.id.localeCompare(y.id))
+      .slice(0, 30)
+    return {
+      person: { id: person.id, alive: person.alive },
+      graphAvailable: this.graph !== null,
+      piecesHeard: heard.length,
+      heard,
+      neighbors: ranked
     }
   }
 

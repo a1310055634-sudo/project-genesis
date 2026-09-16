@@ -185,6 +185,17 @@ async function loadPerson() {
         ['partners', rel(s.partners)], ['siblings', rel(s.siblings)], ['children', rel(s.children)]
       ]);
     } catch (_) { /* kinship is optional sugar */ }
+    try {
+      const bn = await api('/api/persons/' + id + '/beliefs');
+      const heardRows = (bn.heard || []).slice(-5).map(p => [p.pieceId + ' (' + p.origin + ')', p.believedCount + ' of ' + p.heardCount + ' believe']);
+      const topNeighbors = (bn.neighbors || []).slice(0, 8).map(n => [n.id, 'believes ' + n.believed + ' / heard ' + n.heard]);
+      html += section('Belief network', [
+        ['pieces heard by person', bn.piecesHeard],
+        ...heardRows,
+        ['— top believing neighbors —', ''],
+        ...topNeighbors
+      ]);
+    } catch (_) { /* belief network is optional sugar */ }
     html += '<details><summary style="cursor:pointer;color:#8b949e;">raw JSON</summary><pre>' +
       esc(JSON.stringify(p, null, 2)) + '</pre></details>';
     document.getElementById('person').innerHTML = html;
