@@ -107,3 +107,7 @@
 - Bench: 10k×1y 12.1s → 7.12s (−41% this step; −52% vs the 14.7s pre-A1 baseline — ≤10s target already met), 1k×1y 1.0s → 0.56s, events/sec 164k → 279k, peak RSS 440 → 311 MB
 - Digests changed by design (draw sequences re-based); same-code replay determinism green (266/266, incl. fullstack GEN-115 replay test)
 - Other fork sites inventoried: all remaining forks are per-tick/per-fire (cheap); psychology was the only per-person fork
+
+## 2026-09-16 04:01 (roadmap A3 — formal bench record)
+- RESULTS.md updated: 10k×1y 7.69s (journey 18.6 → 12.1 → 7.7s, cumulative −59%, ≤10s target met); 100y projection ~21 min
+- Tests: 266/266 green, typecheck 0 errors

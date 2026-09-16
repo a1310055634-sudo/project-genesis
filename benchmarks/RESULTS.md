@@ -85,3 +85,21 @@ hearing, O(degree) lookup from a pre-sweep snapshot):
 lookup (within run-to-run noise, machine quieter overnight). Digest changed by
 design (belief dynamics now reinforcement-shaped); same-code replay
 determinism stays covered by the media/social determinism tests.
+
+## 2026-09-16 04:01 — after KI-2a/b (A1 graph micro-opt + A2 rng amortization)
+
+| population | years | runtime | peak RSS | alive | events | events/sec | digest |
+|---|---|---|---|---|---|---|---|
+| 1,000 | 1 | 567 ms | 130.3 MB | 981 | 203,496 | 358,899 | a55a91d6 |
+| 10,000 | 1 | 7,693 ms | 289.2 MB | 9,920 | 1,986,843 | 258,266 | a91b20cb |
+
+Journey: 18.6s (pre-A1 entry above) → 12.1s after A1 (edge-carrying adjacency,
+forEachEdge passes; −23% via stash A/B with byte-identical digests) → 7.7s
+after A2 (one daily psychology fork; −38% this step). Cumulative 10k×1y:
+**−59%** vs the previous recorded entry; ≤10s target met with margin.
+events/sec 127k → 258k; peak RSS 424 → 289 MB.
+
+Digests re-based by design: A1 verified byte-identical (stash A/B); A2 changed
+draw sequences (one shared daily psychology stream — replay determinism green,
+266/266). 10k×100y projection at this speed: ~13 min/year-linear ≈ **~21 min**
+(if per-year cost stays flat as population saturates).

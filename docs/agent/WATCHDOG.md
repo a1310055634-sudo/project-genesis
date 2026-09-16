@@ -101,3 +101,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-16 02:05 TAKEOVER COMPLETE — zero-alloc edge lookup + forEachEdge passes; stash A/B verified identical digests, 10k×1y −23%; 266/266 green, committed
 - 2026-09-16 03:00 TAKEOVER (idle 55min, typecheck 0 err, tests GREEN 266/266) — task: Roadmap A2 rng fork amortization
 - 2026-09-16 03:02 TAKEOVER COMPLETE — one daily fork in psychology (array-order consumption, invariants documented); 10k×1y 7.12s (−52% cumulative); 266/266 green, committed
+- 2026-09-16 04:00 TAKEOVER (idle 58min, typecheck 0 err, tests GREEN 266/266) — task: Roadmap A3 formal bench record
+- 2026-09-16 04:01 TAKEOVER COMPLETE — 10k×1y 7.69s recorded (cumulative −59%), RESULTS.md updated; 266/266 green, committed
