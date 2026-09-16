@@ -111,3 +111,10 @@
 ## 2026-09-16 04:01 (roadmap A3 — formal bench record)
 - RESULTS.md updated: 10k×1y 7.69s (journey 18.6 → 12.1 → 7.7s, cumulative −59%, ≤10s target met); 100y projection ~21 min
 - Tests: 266/266 green, typecheck 0 errors
+
+## 2026-09-17 00:12 (roadmap A4 — birth-cohort analytics)
+- New packages/simulation/src/cohort.ts: recordCohortMetrics groups alive residents by birth DECADE (founders carry negative decades — born before tick 0); per-cohort gauges alive/mean_wealth_cents/employment_rate + cohort.tracked; dead cohorts ZERO out (anti-freeze) via a seen-set in ctx.extensions
+- Hook: demographics monthly pass stamps cohorts after births; O(N)/month
+- Sampling cadence: controller history cap (2,000) already covers 100y monthly sampling (1,200 points) — no change needed (documented)
+- Digest note: cohort.* gauges enter the metrics snapshot → run digests re-base (replay determinism green)
+- Tests: cohort.test.ts ×3 (gauge shape/founders-negative-decade/anti-freeze consistency, decade helper arithmetic, digest determinism); 269/269 green, typecheck 0 errors

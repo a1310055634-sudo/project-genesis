@@ -1,5 +1,6 @@
 import { ageYears } from '@genesis/core'
 import { GenesisSystem, nextMonthStart, SimContext } from './context'
+import { recordCohortMetrics } from './cohort'
 import { createPerson } from './factory'
 import { Household, Person } from './types'
 
@@ -130,6 +131,9 @@ export const demographicsSystem: GenesisSystem = {
     }
 
     ctx.metrics.gauge('population', ctx.world.persons.filter((p) => p.alive).length)
+    // Roadmap A4: birth-cohort gauges (per-decade alive/wealth/employment),
+    // stamped after births so the month's newborns land in their cohort
+    recordCohortMetrics(ctx)
     ctx.metrics.increment('demographics.months_processed')
   }
 }
