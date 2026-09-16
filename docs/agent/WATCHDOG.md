@@ -107,3 +107,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 00:12 TAKEOVER COMPLETE — cohort.ts + demographics hook + 3 tests; 269/269 green, committed
 - 2026-09-17 01:00 TAKEOVER (idle 48min, typecheck 0 err, simulation tests 44 GREEN) — task: Roadmap A5 10k×100y century run + report
 - 2026-09-17 01:24 TAKEOVER COMPLETE — century run 618s/digest 8fa67f00; CENTURY_REPORT.md written; headline: demographic collapse 10,000→648; Phase A COMPLETE; 269/269 green, committed
+- 2026-09-17 02:00 RUNNING (Phase A complete; next: D1 run compare at 03:00 if idle)
+- 2026-09-17 03:00 TAKEOVER (idle 96min, typecheck 0 err, tests GREEN 269/269 pre-run) — task: Roadmap D1 run compare (GEN-135)
+- 2026-09-17 03:04 TAKEOVER COMPLETE — npm run compare CLI + pure core + 4 tests; real-data demo on 10y vs 100y manifests; 273/273 green, committed

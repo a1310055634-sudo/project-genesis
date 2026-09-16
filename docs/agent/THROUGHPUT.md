@@ -125,3 +125,8 @@
 - Pension 100% deficit ($3.5B), schools never funded (ratio=0, predicted), wealth concentrated to $3.16M mean + $6.7B unclaimed estates; belief churn balanced at century scale (1.6M conversions vs 1.48M lapses)
 - Semantic decisions recorded for user: fertility coupling, school funding direct-budget, employer-slots artifact
 - Phase A COMPLETE → next fire starts Phase D (D1 run compare)
+
+## 2026-09-17 03:04 (roadmap D1 — run compare, GEN-135)
+- npm run compare -- <a.json> <b.json> [--out report.md]: identity (digest/configHash), population rows, full metrics diff (changed sorted by |Δ|, pct relative to |A|, null on 0→x rise), only-in sets, event-type deltas; pure core (compare.ts) + CLI wiring, formatter caps long sections
+- Demo: 10y vs 100y manifests — alive −92.9%, estates_unclaimed 2.88B→674.59B cents, pension deficit ×10, cohort turnover −100% rows — collapse narrative surfaced in one command
+- Tests: compare.test.ts ×4 (identity flags, delta/pct/zero-rise null, empty diff, formatter); 273/273 green, typecheck 0 errors
