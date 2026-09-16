@@ -118,3 +118,10 @@
 - Sampling cadence: controller history cap (2,000) already covers 100y monthly sampling (1,200 points) — no change needed (documented)
 - Digest note: cohort.* gauges enter the metrics snapshot → run digests re-base (replay determinism green)
 - Tests: cohort.test.ts ×3 (gauge shape/founders-negative-decade/anti-freeze consistency, decade helper arithmetic, digest determinism); 269/269 green, typecheck 0 errors
+
+## 2026-09-17 01:24 (roadmap A5 — 10k×100y century run + report)
+- out/run-42-c5357eaa.json (digest 8fa67f00): 618s runtime, 132M events, 1,200 months
+- HEADLINE: demographic collapse 10,000 → 648 alive (births 2,440 vs deaths 11,792) — married-fertility × spouse-pool shrinkage spiral; CENTURY_REPORT.md has the full analysis
+- Pension 100% deficit ($3.5B), schools never funded (ratio=0, predicted), wealth concentrated to $3.16M mean + $6.7B unclaimed estates; belief churn balanced at century scale (1.6M conversions vs 1.48M lapses)
+- Semantic decisions recorded for user: fertility coupling, school funding direct-budget, employer-slots artifact
+- Phase A COMPLETE → next fire starts Phase D (D1 run compare)

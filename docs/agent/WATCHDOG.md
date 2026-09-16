@@ -105,3 +105,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-16 04:01 TAKEOVER COMPLETE — 10k×1y 7.69s recorded (cumulative −59%), RESULTS.md updated; 266/266 green, committed
 - 2026-09-17 00:00 TAKEOVER (idle ≥40min, typecheck 0 err, tests GREEN 269/269 pre-run) — task: Roadmap A4 birth-cohort analytics
 - 2026-09-17 00:12 TAKEOVER COMPLETE — cohort.ts + demographics hook + 3 tests; 269/269 green, committed
+- 2026-09-17 01:00 TAKEOVER (idle 48min, typecheck 0 err, simulation tests 44 GREEN) — task: Roadmap A5 10k×100y century run + report
+- 2026-09-17 01:24 TAKEOVER COMPLETE — century run 618s/digest 8fa67f00; CENTURY_REPORT.md written; headline: demographic collapse 10,000→648; Phase A COMPLETE; 269/269 green, committed
