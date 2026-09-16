@@ -2,9 +2,9 @@
 
 
 ## Roadmap（2026-09-16 用户选定的大框架，按此顺序推进）
-- **Phase A 百年文明跑**（当前）: A1 社交图微优化（edgeKey/byKey/allEdges 热点，画像见 KI2_PROFILE.md）→ A2 RNG fork 摊销（psychology 每人每天 fork）→ A3 bench 验证（目标 10k×1y ≤10s）→ A4 世代分析指标（出生队列财富/就业/世代更替标记 + 世纪采样节奏）→ A5 10k×100y 参考跑 + 世纪报告
-- **Phase C 社会实验室**: C1 政策组合实验（因子网格 + 交互效应读出）→ C2 多 seed 批量（GEN-151 深化）→ C3 洞察报告生成器（财富分布/代际流动等 stylized facts）
-- **Phase D 探索者产品面**: D1 双 run 对比（GEN-135）→ D2 个人一生时间线 → D3 家谱树 → D4 信念网络视图
+- **Phase A 百年文明跑**（进行中：A1-A3 ✅ 2026-09-16，10k×1y 7.69s 累计 −59%）: A4 世代分析指标（出生队列财富/就业/世代更替标记 + 世纪采样节奏）→ A5 10k×100y 参考跑 + 世纪报告
+- **Phase D 探索者产品面**（2026-09-16 调整为 A 后紧接：百年数据需要消费工具）: D1 双 run 对比（GEN-135）→ D2 个人一生时间线 → D3 家谱树 → D4 信念网络视图
+- **Phase C 社会实验室**（D 之后）: C1 政策组合实验（因子网格 + 交互效应读出）→ C2 多 seed 批量（GEN-151 深化）→ C3 洞察报告生成器（财富分布/代际流动等 stylized facts）
 - 未选：B 新社会机制域（健康/迁移/治理/文化）——挂起，不排期
 
 Format per guide §19. Ready Queue target: 40–120 well-defined tasks (HT-11). Quality gate: never pad the queue without Acceptance (HT-11).
