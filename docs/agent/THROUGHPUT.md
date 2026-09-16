@@ -130,3 +130,8 @@
 - npm run compare -- <a.json> <b.json> [--out report.md]: identity (digest/configHash), population rows, full metrics diff (changed sorted by |Δ|, pct relative to |A|, null on 0→x rise), only-in sets, event-type deltas; pure core (compare.ts) + CLI wiring, formatter caps long sections
 - Demo: 10y vs 100y manifests — alive −92.9%, estates_unclaimed 2.88B→674.59B cents, pension deficit ×10, cohort turnover −100% rows — collapse narrative surfaced in one command
 - Tests: compare.test.ts ×4 (identity flags, delta/pct/zero-rise null, empty diff, formatter); 273/273 green, typecheck 0 errors
+
+## 2026-09-17 04:05 (roadmap D2 — person life timeline)
+- API: GET /api/persons/:id/timeline — milestones from canonical state (birth, school_enrolled@6 if assigned, came_of_age@18, child_born per real child birthTick, retired@65, death) sorted by tick; marriage has no stored tick → honest `undated` section (not fabricated into the sequence); recent log-window activity attached
+- controller: index/staleness block extracted to resolvePerson (shared by person() + timeline()); dashboard person inspector renders a Life timeline section (undated entries appended)
+- Tests: timeline endpoint (200/birth-first/sorted/undated array) in the dossier flow; 273/273 green, typecheck 0 errors

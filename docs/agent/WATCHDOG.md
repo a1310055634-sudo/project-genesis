@@ -110,3 +110,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 02:00 RUNNING (Phase A complete; next: D1 run compare at 03:00 if idle)
 - 2026-09-17 03:00 TAKEOVER (idle 96min, typecheck 0 err, tests GREEN 269/269 pre-run) — task: Roadmap D1 run compare (GEN-135)
 - 2026-09-17 03:04 TAKEOVER COMPLETE — npm run compare CLI + pure core + 4 tests; real-data demo on 10y vs 100y manifests; 273/273 green, committed
+- 2026-09-17 04:00 TAKEOVER (idle 56min, typecheck 0 err, tests GREEN 273/273 pre-run) — task: Roadmap D2 person life timeline
+- 2026-09-17 04:05 TAKEOVER COMPLETE — /api/persons/:id/timeline + dashboard Life timeline section; 273/273 green, committed

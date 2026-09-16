@@ -237,7 +237,7 @@ export class SimulationController {
     }
   }
 
-  person(personId: string): unknown {
+  private resolvePerson(personId: string) {
     if (this.sim === null) throw new Error('no active simulation')
     // red team RT2-08 + RT3-04: index cached per run but REBUILT when new
     // persons are born (persons.length is monotonic — a cheap staleness
@@ -255,8 +255,14 @@ export class SimulationController {
     }
     const person = this.index.personById.get(personId)
     if (person === undefined) throw new Error(`unknown person '${personId}'`)
-    const household = person.householdId !== null ? this.index.householdById.get(person.householdId) : undefined
-    const events = this.sim.ctx.log
+    return person
+  }
+
+  person(personId: string): unknown {
+    const person = this.resolvePerson(personId)
+    const ctx = this.sim!.ctx
+    const household = person.householdId !== null ? this.index!.householdById.get(person.householdId) : undefined
+    const events = ctx.log
       .recentEvents()
       .filter((e) => e.actorIds.includes(personId))
       .slice(-20)
@@ -264,7 +270,7 @@ export class SimulationController {
       identity: {
         id: person.id,
         sex: person.sex,
-        ageYears: ageYears(person.birthTick, this.sim.ctx.clock.tick),
+        ageYears: ageYears(person.birthTick, ctx.clock.tick),
         lifeStage: person.lifeStage,
         alive: person.alive,
         birthTick: person.birthTick
@@ -281,11 +287,11 @@ export class SimulationController {
       },
       social: { relationshipIds: person.social.relationshipIds },
       education: {
-        attainment: attainmentOf(this.sim.ctx, person.id),
-        skill: skillOf(this.sim.ctx, person.id)
+        attainment: attainmentOf(ctx, person.id),
+        skill: skillOf(ctx, person.id)
       },
       housing: {
-        burden: housingBurdenOf(this.sim.ctx, person)
+        burden: housingBurdenOf(ctx, person)
       },
       institutions: this.schoolAssignment(person.id),
       mediaExposure: {
@@ -293,6 +299,54 @@ export class SimulationController {
         piecesHeard: this.heardPieces(person.id)
       },
       recentEvents: events
+    }
+  }
+
+  /**
+   * Life timeline (Roadmap D2): milestones derived from canonical state.
+   * Exact ticks: birth, each child's birth (child birthTick), death.
+   * Exact age boundaries: school enrollment (6, current assignment implies
+   * it), adulthood (18), retirement (65). Marriage has NO stored tick —
+   * it lands in `undated` rather than being fabricated into the sequence.
+   * Recent activity (log ring window) is attached separately.
+   */
+  timeline(personId: string): unknown {
+    const person = this.resolvePerson(personId)
+    const ctx = this.sim!.ctx
+    const YEAR = 8_640
+    const milestones: Array<{ tick: number; type: string; detail: string; ageYears: number }> = []
+    const push = (tick: number, type: string, detail: string): void => {
+      milestones.push({
+        tick,
+        type,
+        detail,
+        ageYears: Math.round(((tick - person.birthTick) / YEAR) * 10) / 10
+      })
+    }
+    push(person.birthTick, 'birth', person.id)
+    const now = ctx.clock.tick
+    const assignment = this.schoolAssignment(person.id)
+    if (assignment !== null) push(person.birthTick + 6 * YEAR, 'school_enrolled', assignment.schoolId)
+    if (now >= person.birthTick + 18 * YEAR) push(person.birthTick + 18 * YEAR, 'came_of_age', 'adult')
+    for (const other of ctx.world.persons) {
+      if (other.motherId === person.id || other.fatherId === person.id) {
+        push(other.birthTick, 'child_born', other.id)
+      }
+    }
+    if (now >= person.birthTick + 65 * YEAR) push(person.birthTick + 65 * YEAR, 'retired', 'senior')
+    if (!person.alive && person.deathTick !== null) push(person.deathTick, 'death', '')
+    milestones.sort((x, y) => x.tick - y.tick || x.type.localeCompare(y.type))
+    const undated: Array<{ type: string; detail: string }> = []
+    if (person.partnerId !== null) undated.push({ type: 'marriage', detail: person.partnerId })
+    const recentEvents = ctx.log
+      .recentEvents()
+      .filter((e) => e.actorIds.includes(personId))
+      .slice(-20)
+    return {
+      identity: { id: person.id, alive: person.alive, birthTick: person.birthTick, deathTick: person.deathTick ?? null },
+      milestones,
+      undated,
+      recentEvents
     }
   }
 

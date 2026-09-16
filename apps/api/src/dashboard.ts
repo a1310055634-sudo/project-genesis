@@ -169,6 +169,13 @@ async function loadPerson() {
     html += section('Media exposure', [
       ['pieces heard', heard.length], ['recent', heard.slice(-5).join(', ')]
     ]);
+    let timelineRows = [];
+    try {
+      const tl = await api('/api/persons/' + id + '/timeline');
+      for (const m of tl.milestones || []) timelineRows.push([m.type + (m.detail ? ' · ' + m.detail : ''), 'age ' + m.ageYears]);
+      for (const u of tl.undated || []) timelineRows.push([u.type + ' (undated)', u.detail]);
+    } catch (_) { /* timeline is optional sugar */ }
+    html += section('Life timeline', timelineRows);
     html += '<details><summary style="cursor:pointer;color:#8b949e;">raw JSON</summary><pre>' +
       esc(JSON.stringify(p, null, 2)) + '</pre></details>';
     document.getElementById('person').innerHTML = html;

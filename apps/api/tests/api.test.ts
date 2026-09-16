@@ -192,6 +192,19 @@ describe('person dossier depth (education + housing + media side-tables)', () =>
       // media exposure block carries the heard-piece list
       const mediaExposure = dossier['mediaExposure'] as Record<string, unknown>
       expect(Array.isArray(mediaExposure['piecesHeard'])).toBe(true)
+
+      // D2: life timeline — birth first, ticks sorted, undated list present
+      const tlRes = await fetch(base + '/api/persons/person-000001/timeline')
+      expect(tlRes.status).toBe(200)
+      const tl = (await tlRes.json()) as {
+        milestones: Array<{ tick: number; type: string }>
+        undated: unknown[]
+      }
+      expect(tl.milestones.length).toBeGreaterThan(0)
+      expect(tl.milestones[0]['type']).toBe('birth')
+      const ticks = tl.milestones.map((m) => m['tick'] as number)
+      expect([...ticks].sort((x, y) => x - y)).toEqual(ticks)
+      expect(Array.isArray(tl.undated)).toBe(true)
     } finally {
       // RT6-B5: same drain discipline as the shared afterAll — an unawaited
       // close over live keep-alive sockets resurfaces the ECONNRESET flake

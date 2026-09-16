@@ -14,6 +14,7 @@ import { dashboardHtml } from './dashboard'
  *   POST /api/sim/step        — advance one chunk while paused
  *   POST /api/sim/speed       {ticksPerChunk}
  *   GET  /api/persons/:id     full person dossier
+ *   GET  /api/persons/:id/timeline  life milestones (Roadmap D2)
  *   GET  /api/events?limit=n  recent events (bounded window)
  *   GET  /api/export          run manifest JSON
  */
@@ -91,6 +92,11 @@ export function createApiServer(controller: SimulationController = new Simulatio
           const body = JSON.parse((await readBody()) || '{}') as { ticksPerChunk?: number }
           controller.setSpeed(Number(body.ticksPerChunk ?? 720))
           send(200, { chunkTicks: Number(body.ticksPerChunk ?? 720) })
+          return
+        }
+        const timelineMatch = path.match(/^\/api\/persons\/([\w-]+)\/timeline$/)
+        if (req.method === 'GET' && timelineMatch !== null) {
+          send(200, controller.timeline(timelineMatch[1] as string))
           return
         }
         const personMatch = path.match(/^\/api\/persons\/([\w-]+)$/)
