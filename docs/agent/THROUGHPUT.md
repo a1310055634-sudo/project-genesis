@@ -146,3 +146,9 @@
 - API: GET /api/persons/:id/beliefs — heard pieces (origin + believed/heard counts) + per-neighbor hearing/belief stats sampled from the social graph (capped 30, ranked by belief), graphAvailable flag for bare runs
 - Dashboard: Belief network section in the person inspector (own pieces + top believing neighbors)
 - Tests: beliefs endpoint (payload shapes, believed ≤ heard invariant, 30-cap); 273/273 green, typecheck 0 errors
+
+## 2026-09-17 07:10 (roadmap C1 — factorial experiments)
+- packages/experiments/src/factorial.ts: FactorialSpec grid → arms (baseline-first cartesian), runFactorial wraps runExperiment, main effects (level mean − grand mean), pairwise interactions (2-level diff-in-differences), markdown report; FACTORIALS registry + FTX-001 (incomeTaxRate × welfareTransferCents × schoolFundingPerPupilCents on stress.mean)
+- CLI: npm run exp -- --factorial FTX-001
+- FTX-001 verdict: welfare main effect −0.017 (matches EXP-030), tax +0.008, tax×welfare ≈ additive (+0.0001); SCHOOL FUNDING main effect EXACTLY 0 across all cells — the pool is chronically dry in every combination, confirming the century-report diagnosis with a clean grid experiment
+- Tests: factorial.test.ts ×3 (grid/product+reserved, hand-computed effects/interaction, end-to-end report); 276/276 green, typecheck 0 errors

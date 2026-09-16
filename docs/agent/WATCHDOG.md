@@ -116,3 +116,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 05:04 TAKEOVER COMPLETE — /api/persons/:id/kinship + dashboard Family tree section; 273/273 green, committed
 - 2026-09-17 06:00 TAKEOVER (idle 56min, typecheck 0 err, tests GREEN 273/273 pre-run) — task: Roadmap D4 belief network view
 - 2026-09-17 06:02 TAKEOVER COMPLETE — /api/persons/:id/beliefs + graph retention + dashboard section; Phase D COMPLETE; 273/273 green, committed
+- 2026-09-17 07:00 TAKEOVER (idle 58min, typecheck 0 err, tests GREEN 273/273 pre-run) — task: Roadmap C1 factorial experiments
+- 2026-09-17 07:10 TAKEOVER COMPLETE — factorial grid + effects/interactions + FTX-001; school-funding dead-channel confirmed by grid; 276/276 green, committed

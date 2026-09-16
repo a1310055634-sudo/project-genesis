@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import { TICKS_PER_MONTH } from '@genesis/core'
 import * as path from 'node:path'
-import { EXPERIMENTS, reportMarkdown, runExperiment, sampleSummarize, toCsv } from '@genesis/experiments'
+import { EXPERIMENTS, FACTORIALS, reportMarkdown, runExperiment, runFactorial, sampleSummarize, toCsv } from '@genesis/experiments'
 import { fullStackSystems } from './profile'
 
 /**
@@ -41,6 +41,25 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
   return { csvPath, mdPath }
 }
 
+function runFactorialCli(id: string, outDir: string): void {
+  const spec = FACTORIALS[id]
+  if (spec === undefined) {
+    throw new Error(`unknown factorial '${id}'. Available: ${Object.keys(FACTORIALS).sort().join(', ')}`)
+  }
+  console.log(`=== Factorial ${spec.id}: ${spec.question} ===`)
+  const { result, report } = runFactorial(spec, () => fullStackSystems().systems)
+  for (const outcome of result.outcomes) {
+    console.log(`  arm=${outcome.arm} seed=${outcome.seed} digest=${outcome.digest}`)
+  }
+  fs.mkdirSync(outDir, { recursive: true })
+  const csvPath = path.join(outDir, `${spec.id}.csv`)
+  const mdPath = path.join(outDir, `${spec.id}.md`)
+  fs.writeFileSync(csvPath, toCsv(result))
+  fs.writeFileSync(mdPath, report + '\n')
+  console.log(`csv     : ${csvPath}`)
+  console.log(`report  : ${mdPath}`)
+}
+
 /** Headline metric per experiment (the one its question is about). */
 const PRIMARY_METRIC: Record<string, string> = {
   'EXP-004': 'stress.mean',
@@ -56,7 +75,7 @@ const PRIMARY_METRIC: Record<string, string> = {
   'EXP-SANITY': 'population'
 }
 
-function parseArgs(argv: string[]): { id: string; out: string } {
+function parseArgs(argv: string[]): { id: string; out: string; factorial: string | null } {
   const args: Record<string, string> = {}
   for (let i = 2; i < argv.length; i++) {
     const key = argv[i]
@@ -64,10 +83,11 @@ function parseArgs(argv: string[]): { id: string; out: string } {
     args[key.slice(2)] = argv[i + 1] ?? ''
     i++
   }
-  return { id: args.id ?? 'EXP-002', out: args.out ?? 'out/experiments' }
+  return { id: args.id ?? 'EXP-002', out: args.out ?? 'out/experiments', factorial: args.factorial ?? null }
 }
 
 if (require.main === module) {
-  const { id, out } = parseArgs(process.argv)
-  runExperimentCli(id, out)
+  const { id, out, factorial } = parseArgs(process.argv)
+  if (factorial !== null) runFactorialCli(factorial, out)
+  else runExperimentCli(id, out)
 }
