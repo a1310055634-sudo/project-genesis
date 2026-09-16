@@ -350,6 +350,72 @@ export class SimulationController {
     }
   }
 
+  /**
+   * Kinship view (Roadmap D3): the family tree around one person — parents,
+   * grandparents, partners (current + deceased spouse), siblings (shared
+   * parent) and children. Nodes carry alive/age; sections are disjoint lists
+   * (a partner who co-parented a child appears in both — grouped views, not a
+   * single graph, keeps the dependency-free dashboard render trivial).
+   */
+  kinship(personId: string): unknown {
+    const person = this.resolvePerson(personId)
+    const ctx = this.sim!.ctx
+    const YEAR = 8_640
+    const node = (p: { id: string; alive: boolean; birthTick: number } | undefined, relation: string) =>
+      p === undefined
+        ? null
+        : {
+            id: p.id,
+            alive: p.alive,
+            ageYears: Math.round(((ctx.clock.tick - p.birthTick) / YEAR) * 10) / 10,
+            relation
+          }
+    const parentOf = (p: { motherId: string | null; fatherId: string | null }, which: 'motherId' | 'fatherId') =>
+      p[which] !== null ? node(ctx.world.persons.find((x) => x.id === p[which]), which === 'motherId' ? 'mother' : 'father') : null
+
+    const parents = [parentOf(person, 'motherId'), parentOf(person, 'fatherId')].filter((x) => x !== null)
+    const grandparents: Array<Record<string, unknown>> = []
+    for (const parent of [person.motherId, person.fatherId]) {
+      if (parent === null) continue
+      const pp = ctx.world.persons.find((x) => x.id === parent)
+      if (pp === undefined) continue
+      for (const gp of [parentOf(pp, 'motherId'), parentOf(pp, 'fatherId')]) {
+        if (gp !== null) grandparents.push(gp)
+      }
+    }
+    const partners: Array<Record<string, unknown>> = []
+    for (const [pid, relation] of [
+      [person.partnerId, 'partner'],
+      [person.spouseAtDeathId, 'deceased spouse']
+    ] as const) {
+      if (pid === null) continue
+      const p = ctx.world.persons.find((x) => x.id === pid)
+      const n = node(p, relation)
+      if (n !== null) partners.push(n)
+    }
+    const siblings: Array<Record<string, unknown>> = []
+    const children: Array<Record<string, unknown>> = []
+    // dead relatives stay in the tree — lineage outlives its members
+    for (const other of ctx.world.persons) {
+      if (other.id === person.id) continue
+      const sharedParent =
+        (person.motherId !== null && other.motherId === person.motherId) ||
+        (person.fatherId !== null && other.fatherId === person.fatherId)
+      if (sharedParent) {
+        const n = node(other, 'sibling')
+        if (n !== null) siblings.push(n)
+      }
+      if (other.motherId === person.id || other.fatherId === person.id) {
+        const n = node(other, 'child')
+        if (n !== null) children.push(n)
+      }
+    }
+    return {
+      root: node(person, 'root'),
+      sections: { parents, grandparents, partners, siblings, children }
+    }
+  }
+
   events(limit: number): unknown[] {
     if (this.sim === null) throw new Error('no active simulation')
     const capped = Math.max(1, Math.min(500, Math.floor(limit) || 50))

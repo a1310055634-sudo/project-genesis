@@ -176,6 +176,15 @@ async function loadPerson() {
       for (const u of tl.undated || []) timelineRows.push([u.type + ' (undated)', u.detail]);
     } catch (_) { /* timeline is optional sugar */ }
     html += section('Life timeline', timelineRows);
+    try {
+      const k = await api('/api/persons/' + id + '/kinship');
+      const s = k.sections || {};
+      const rel = (arr) => (arr || []).map(n => n.id + (n.alive ? '' : ' †') + ' (' + n.relation + ', ' + n.ageYears + ')').join(', ') || '—';
+      html += section('Family tree', [
+        ['parents', rel(s.parents)], ['grandparents', rel(s.grandparents)],
+        ['partners', rel(s.partners)], ['siblings', rel(s.siblings)], ['children', rel(s.children)]
+      ]);
+    } catch (_) { /* kinship is optional sugar */ }
     html += '<details><summary style="cursor:pointer;color:#8b949e;">raw JSON</summary><pre>' +
       esc(JSON.stringify(p, null, 2)) + '</pre></details>';
     document.getElementById('person').innerHTML = html;

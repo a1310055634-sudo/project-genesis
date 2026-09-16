@@ -205,6 +205,24 @@ describe('person dossier depth (education + housing + media side-tables)', () =>
       const ticks = tl.milestones.map((m) => m['tick'] as number)
       expect([...ticks].sort((x, y) => x - y)).toEqual(ticks)
       expect(Array.isArray(tl.undated)).toBe(true)
+
+      // D3: kinship view — root identity + disjoint relation sections
+      const kinRes = await fetch(base + '/api/persons/person-000001/kinship')
+      expect(kinRes.status).toBe(200)
+      const kin = (await kinRes.json()) as {
+        root: { id: string; alive: boolean }
+        sections: Record<string, Array<Record<string, unknown>>>
+      }
+      expect(kin['root']['id']).toBe('person-000001')
+      for (const sectionName of ['parents', 'grandparents', 'partners', 'siblings', 'children']) {
+        expect(Array.isArray(kin['sections'][sectionName])).toBe(true)
+      }
+      // nodes carry the rendering payload
+      for (const node of [...kin['sections']['parents'], ...kin['sections']['children']]) {
+        expect(typeof node['id']).toBe('string')
+        expect(typeof node['alive']).toBe('boolean')
+        expect(typeof node['ageYears']).toBe('number')
+      }
     } finally {
       // RT6-B5: same drain discipline as the shared afterAll — an unawaited
       // close over live keep-alive sockets resurfaces the ECONNRESET flake

@@ -135,3 +135,8 @@
 - API: GET /api/persons/:id/timeline — milestones from canonical state (birth, school_enrolled@6 if assigned, came_of_age@18, child_born per real child birthTick, retired@65, death) sorted by tick; marriage has no stored tick → honest `undated` section (not fabricated into the sequence); recent log-window activity attached
 - controller: index/staleness block extracted to resolvePerson (shared by person() + timeline()); dashboard person inspector renders a Life timeline section (undated entries appended)
 - Tests: timeline endpoint (200/birth-first/sorted/undated array) in the dossier flow; 273/273 green, typecheck 0 errors
+
+## 2026-09-17 05:04 (roadmap D3 — family tree)
+- API: GET /api/persons/:id/kinship — root + disjoint sections (parents, grandparents via parents' links, partners incl. deceased spouse via spouseAtDeathId, siblings by shared parent, children); dead relatives included (lineage outlives members); O(N) scans per request
+- Dashboard: Family tree section (comma lists with † for dead, relation + age badges) — grouped lists keep the dependency-free render trivial; svg layout is future work
+- Tests: kinship endpoint (200/root id/5 sections/node payload shape) in the dossier flow; 273/273 green, typecheck 0 errors
