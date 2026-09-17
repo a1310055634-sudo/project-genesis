@@ -124,3 +124,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 09:03 TAKEOVER COMPLETE — npm run insights CLI verified on century manifest; Phase C COMPLETE — Roadmap A→D→C fully delivered; 281/281 green, committed
 - 2026-09-17 09:0x TAKEOVER (281/281 green pre-run) — task: collapse robustness verification — century runs seed 43/44/45 launched in background (~31 min); report + comparison on completion; user-approved recommendation A from the run-menu
 - 2026-09-17 09:4x ROBUSTNESS VERIFIED — collapse reproduces on 4/4 seeds (5.2-6.4% survival); CENTURY_REPORT appendix committed; structural finding
+- 2026-09-17 10:00 RUNNING (robustness batch just closed; next: B = FTX-002 fertility grid at 11:00 if idle)
+- 2026-09-17 10:0x TAKEOVER (idle ≥40min, typecheck 0 err, tests GREEN 281/281 pre-run) — task: Roadmap B — FTX-002 fertility policy grid + 10k confirmations
+- 2026-09-17 10:1x TAKEOVER COMPLETE — dose-response complete: 0.02 slows (70% @30y), 0.04 reverses (140%); CLI knob passthrough fixed; 281/281 green, committed

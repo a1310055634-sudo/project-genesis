@@ -83,6 +83,15 @@ export function normalizeConfig(partial: Partial<SimulationConfig>): SimulationC
   for (const key of ['economicShock', 'wageSpreadMultiplier', 'welfareTransferCents', 'pensionReplacementRate', 'incomeTaxRate', 'schoolFundingPerPupilCents'] as const) {
     if (merged[key] === undefined) delete merged[key]
   }
+  // the same clobber hazard applies to DEFAULT-carrying keys: a caller passing
+  // `birthProbabilityPerMonth: undefined` (e.g. a CLI layer forwarding an
+  // unset flag) must not erase the default — restore every clobbered default
+  for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
+    const current = (merged as unknown as Record<string, unknown>)[key]
+    if (current === undefined) {
+      ;(merged as unknown as Record<string, unknown>)[key] = value
+    }
+  }
   if (!Number.isInteger(merged.populationTarget) || merged.populationTarget <= 0) {
     throw new Error(`populationTarget must be a positive integer, got ${merged.populationTarget}`)
   }

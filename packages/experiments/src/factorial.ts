@@ -227,5 +227,23 @@ export const FACTORIALS: Record<string, FactorialSpec> = {
       welfareTransferCents: [0, 250_000],
       schoolFundingPerPupilCents: [100_000, 400_000]
     }
+  },
+  'FTX-002': {
+    id: 'FTX-002',
+    question:
+      'CENTURY_REPORT follow-up: the 10k society collapses demographically within a century ' +
+      '(survival 5.2-6.4% on 4/4 seeds) because births require MARRIED women aged 18-45 and the ' +
+      'spouse pool shrinks. Does raising birthProbabilityPerMonth avert the collapse, and does ' +
+      'taxation (pool strain) interact with it? Metric is the FINAL alive population after 30y ' +
+      '(collapse is visible by then on 4/4 seeds). Grid: birthProbabilityPerMonth' +
+      '[0.008 (default), 0.02, 0.04] × incomeTaxRate[0, 0.1], 30-year horizon. Model-internal only.',
+    seeds: [42, 43, 44],
+    population: 150,
+    years: 30,
+    metric: 'population.alive',
+    factors: {
+      birthProbabilityPerMonth: [0.008, 0.02, 0.04],
+      incomeTaxRate: [0, 0.1]
+    }
   }
 }

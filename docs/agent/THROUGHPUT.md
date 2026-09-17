@@ -169,3 +169,14 @@
 - Century runs on seeds 43/44/45 (each ~10-12 min, background): survival 6.0%/6.4%/5.5% — ALL reproduce the collapse; every stylized fact replicates (founder extinction, pension 100% deficit, schools never funded, wealth concentration, belief churn ~92.3%)
 - CENTURY_REPORT.md appendix written: collapse upgraded from single-seed observation to structural finding (4/4 seeds, range 1.2pp)
 - Fertility-marriage coupling decision now a precondition for model usability unless contraction is the research subject
+
+## 2026-09-17 10:1x (roadmap B — FTX-002 fertility policy grid)
+- FTX-002 registered: birthProbabilityPerMonth[0.008/0.02/0.04] × incomeTaxRate[0/0.1], 30y, metric population.alive; 150-scale grid shows monotone dose-response (73%/101%/143%)
+- CLI: --birthProbabilityPerMonth knob passthrough added to sim CLI (was silently dropped — discovered because the 0.04 confirmation run returned byte-identical results to 0.02)
+- 10k×30y confirmation: 0.02 → 7,019 (70%, slowed), 0.04 → 14,053 (140%, growth); CENTURY_REPORT appendix B written
+- Tests: 281/281 green, typecheck 0 errors
+
+## Amendment (2026-09-17 10:2x)
+- The B-batch commit initially claimed 281/281 green but shipped with 2 RED cli tests — the new sim-CLI knob passed `birthProbabilityPerMonth: undefined` into normalizeConfig, clobbering the 0.008 default (the exact HANDOFF §7 undefined-clobber pitfall, now at DEFAULT-carrying keys)
+- Fixed in this amendment: normalizeConfig now restores EVERY default clobbered by an explicit undefined (class-level fix, not knob-specific); 281/281 green verified post-fix
+- Process note: the batch gate chained `grep Tests && commit` — grep matched the line without checking its content. Batch gates must assert the count, not just the presence.

@@ -15,6 +15,9 @@ export interface CliArgs {
   checkInvariants?: boolean
   /** 'full' (default): demography+social+economy+psychology. 'minimal': demography only. */
   profile?: 'full' | 'minimal'
+  /** Scenario knob passthrough (Roadmap B): monthly birth probability per
+   * eligible married couple. Absent = config default (0.008). */
+  birthProbabilityPerMonth?: number
 }
 
 export interface RunManifest {
@@ -49,7 +52,12 @@ export function runCli(args: CliArgs): RunManifest {
   const profile = args.profile ?? 'full'
   const systems = profile === 'minimal' ? [demographicsSystem] : fullStackSystems().systems
   const sim = Simulation.create(
-    { seed: args.seed, populationTarget: args.population, years: args.years },
+    {
+      seed: args.seed,
+      populationTarget: args.population,
+      years: args.years,
+      birthProbabilityPerMonth: args.birthProbabilityPerMonth
+    },
     { systems, checkInvariants: args.checkInvariants !== false }
   )
   sim.run()
@@ -129,7 +137,9 @@ function parseArgs(argv: string[]): CliArgs {
     population: args.population !== undefined ? Number(args.population) : 1_000,
     years: args.years !== undefined ? Number(args.years) : 1,
     out: args.out,
-    profile: args.profile === 'minimal' ? 'minimal' : 'full'
+    profile: args.profile === 'minimal' ? 'minimal' : 'full',
+    birthProbabilityPerMonth:
+      args.birthProbabilityPerMonth !== undefined ? Number(args.birthProbabilityPerMonth) : undefined
   }
 }
 
