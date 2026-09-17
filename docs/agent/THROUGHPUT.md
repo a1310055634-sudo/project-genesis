@@ -180,3 +180,9 @@
 - The B-batch commit initially claimed 281/281 green but shipped with 2 RED cli tests — the new sim-CLI knob passed `birthProbabilityPerMonth: undefined` into normalizeConfig, clobbering the 0.008 default (the exact HANDOFF §7 undefined-clobber pitfall, now at DEFAULT-carrying keys)
 - Fixed in this amendment: normalizeConfig now restores EVERY default clobbered by an explicit undefined (class-level fix, not knob-specific); 281/281 green verified post-fix
 - Process note: the batch gate chained `grep Tests && commit` — grep matched the line without checking its content. Batch gates must assert the count, not just the presence.
+
+## 2026-09-17 05:1x (roadmap C — stress scenario pack; run-menu item C complete)
+- Four extreme scenarios all green (no NaN/negative/invariant violations; CLI runs with checkInvariants):
+  S1 extreme unemployment (0.3, 10k×5y — knob honored 0.299); S2 zero-birth aging (10k×50y → 2,795, children 0); S3 tiny (50×50y → 22 alive, sustained); S4 huge (50k×5y → 47,467 alive, 48M events, dynamics match 10k baseline)
+- CLI: --employmentRate scenario passthrough added (same pattern as fertility knob)
+- docs/agent/SCENARIOS.md written; scenarios join the regression rotation after engine changes

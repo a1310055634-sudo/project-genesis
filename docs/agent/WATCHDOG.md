@@ -127,3 +127,6 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 10:00 RUNNING (robustness batch just closed; next: B = FTX-002 fertility grid at 11:00 if idle)
 - 2026-09-17 10:0x TAKEOVER (idle ≥40min, typecheck 0 err, tests GREEN 281/281 pre-run) — task: Roadmap B — FTX-002 fertility policy grid + 10k confirmations
 - 2026-09-17 10:1x TAKEOVER COMPLETE — dose-response complete: 0.02 slows (70% @30y), 0.04 reverses (140%); CLI knob passthrough fixed; 281/281 green, committed
+- 2026-09-18 04:00 RUNNING (B batch closed 03:27; next: C stress scenario pack when idle ≥40min)
+- 2026-09-17 05:0x TAKEOVER (idle 93min, typecheck 0 err, tests GREEN 281/281 pre-run) — task: stress scenario pack (run-menu item C, final)
+- 2026-09-17 05:1x TAKEOVER COMPLETE — 4 scenarios green (S1 unemployment/S2 aging/S3 tiny/S4 huge 50k), SCENARIOS.md written; run-menu A/B/C all delivered; 281/281 green, committed

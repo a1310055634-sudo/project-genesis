@@ -18,6 +18,9 @@ export interface CliArgs {
   /** Scenario knob passthrough (Roadmap B): monthly birth probability per
    * eligible married couple. Absent = config default (0.008). */
   birthProbabilityPerMonth?: number
+  /** Scenario knob passthrough (stress pack C): share of adults placed into
+   * jobs at generation. Absent = config default (0.62). */
+  employmentRate?: number
 }
 
 export interface RunManifest {
@@ -56,7 +59,8 @@ export function runCli(args: CliArgs): RunManifest {
       seed: args.seed,
       populationTarget: args.population,
       years: args.years,
-      birthProbabilityPerMonth: args.birthProbabilityPerMonth
+      birthProbabilityPerMonth: args.birthProbabilityPerMonth,
+      employmentRate: args.employmentRate
     },
     { systems, checkInvariants: args.checkInvariants !== false }
   )
@@ -139,7 +143,8 @@ function parseArgs(argv: string[]): CliArgs {
     out: args.out,
     profile: args.profile === 'minimal' ? 'minimal' : 'full',
     birthProbabilityPerMonth:
-      args.birthProbabilityPerMonth !== undefined ? Number(args.birthProbabilityPerMonth) : undefined
+      args.birthProbabilityPerMonth !== undefined ? Number(args.birthProbabilityPerMonth) : undefined,
+    employmentRate: args.employmentRate !== undefined ? Number(args.employmentRate) : undefined
   }
 }
 
