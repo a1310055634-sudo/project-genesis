@@ -14,7 +14,8 @@
     "exp": "tsx apps/simulation-cli/src/experiment-cli.ts",
     "api": "tsx apps/api/src/main.ts",
     "bench": "tsx benchmarks/bench.ts",
-    "compare": "tsx apps/simulation-cli/src/compare-cli.ts"
+    "compare": "tsx apps/simulation-cli/src/compare-cli.ts",
+    "insights": "tsx apps/simulation-cli/src/insights-cli.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

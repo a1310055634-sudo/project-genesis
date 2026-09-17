@@ -158,3 +158,9 @@
 - CLI: npm run exp -- --id EXP-030 --stability (opt-in flag; existing reports unchanged without it)
 - Real-data verdict: EXP-030 welfare effect −0.0178 ± 0.0015, agreement 3/3 seeds — the recorded conclusion is per-seed robust, not a pooled artifact
 - Tests: robustness.test.ts ×3 (pooling/agreement, flip surfacing, partial-grid throw); 279/279 green, typecheck 0 errors
+
+## 2026-09-17 09:03 (roadmap C3 — insight report generator; Phase C COMPLETE)
+- apps/simulation-cli/src/insights.ts + insights-cli.ts: npm run insights -- <manifest> — stylized facts from the final snapshot across 6 lenses (demography survival/pyramid, generational turnover incl. founder extinction + dominant cohort, wealth/pension sustainability, institutions funding, belief churn/rumor share/penetration, social fabric); every fact degrades to n/a when keys are absent
+- Verified on the century manifest: survival 5.2% CONTRACTION, founder generation EXTINCT, pension 0% sustainable, schools never funded, churn 92.3%, rumor share 19.9%
+- Tests: insights.test.ts ×2 (full-fact derivation + n/a degradation); 281/281 green, typecheck 0 errors
+- Phase C COMPLETE (C1 factorial / C2 seed stability / C3 insights) — Roadmap A→D→C fully delivered

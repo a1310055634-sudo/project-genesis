@@ -120,3 +120,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 07:10 TAKEOVER COMPLETE — factorial grid + effects/interactions + FTX-001; school-funding dead-channel confirmed by grid; 276/276 green, committed
 - 2026-09-17 08:00 TAKEOVER (idle 58min, typecheck 0 err, tests GREEN 276/276 pre-run) — task: Roadmap C2 seed stability (GEN-151 deepening)
 - 2026-09-17 08:04 TAKEOVER COMPLETE — per-seed paired effects + agreement share + flip surfacing, --stability flag; EXP-030 verified 3/3 seeds; 279/279 green, committed
+- 2026-09-17 09:00 TAKEOVER (idle 57min, typecheck 0 err, tests GREEN 279/279 pre-run) — task: Roadmap C3 insight report generator
+- 2026-09-17 09:03 TAKEOVER COMPLETE — npm run insights CLI verified on century manifest; Phase C COMPLETE — Roadmap A→D→C fully delivered; 281/281 green, committed
