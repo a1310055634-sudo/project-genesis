@@ -164,3 +164,8 @@
 - Verified on the century manifest: survival 5.2% CONTRACTION, founder generation EXTINCT, pension 0% sustainable, schools never funded, churn 92.3%, rumor share 19.9%
 - Tests: insights.test.ts ×2 (full-fact derivation + n/a degradation); 281/281 green, typecheck 0 errors
 - Phase C COMPLETE (C1 factorial / C2 seed stability / C3 insights) — Roadmap A→D→C fully delivered
+
+## 2026-09-17 09:4x (roadmap follow-up — collapse robustness verification)
+- Century runs on seeds 43/44/45 (each ~10-12 min, background): survival 6.0%/6.4%/5.5% — ALL reproduce the collapse; every stylized fact replicates (founder extinction, pension 100% deficit, schools never funded, wealth concentration, belief churn ~92.3%)
+- CENTURY_REPORT.md appendix written: collapse upgraded from single-seed observation to structural finding (4/4 seeds, range 1.2pp)
+- Fertility-marriage coupling decision now a precondition for model usability unless contraction is the research subject

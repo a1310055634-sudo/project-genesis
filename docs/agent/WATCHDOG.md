@@ -122,3 +122,5 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-17 08:04 TAKEOVER COMPLETE — per-seed paired effects + agreement share + flip surfacing, --stability flag; EXP-030 verified 3/3 seeds; 279/279 green, committed
 - 2026-09-17 09:00 TAKEOVER (idle 57min, typecheck 0 err, tests GREEN 279/279 pre-run) — task: Roadmap C3 insight report generator
 - 2026-09-17 09:03 TAKEOVER COMPLETE — npm run insights CLI verified on century manifest; Phase C COMPLETE — Roadmap A→D→C fully delivered; 281/281 green, committed
+- 2026-09-17 09:0x TAKEOVER (281/281 green pre-run) — task: collapse robustness verification — century runs seed 43/44/45 launched in background (~31 min); report + comparison on completion; user-approved recommendation A from the run-menu
+- 2026-09-17 09:4x ROBUSTNESS VERIFIED — collapse reproduces on 4/4 seeds (5.2-6.4% survival); CENTURY_REPORT appendix committed; structural finding
