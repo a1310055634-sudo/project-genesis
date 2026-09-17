@@ -152,3 +152,9 @@
 - CLI: npm run exp -- --factorial FTX-001
 - FTX-001 verdict: welfare main effect −0.017 (matches EXP-030), tax +0.008, tax×welfare ≈ additive (+0.0001); SCHOOL FUNDING main effect EXACTLY 0 across all cells — the pool is chronically dry in every combination, confirming the century-report diagnosis with a clean grid experiment
 - Tests: factorial.test.ts ×3 (grid/product+reserved, hand-computed effects/interaction, end-to-end report); 276/276 green, typecheck 0 errors
+
+## 2026-09-17 08:04 (roadmap C2 — seed stability, GEN-151 deepening)
+- packages/experiments/src/robustness.ts: seedStability computes PER-SEED paired effects (treatment − baseline within each seed's world), then aggregates mean/stdDev/ci95 + agreementShare + flippedSeeds; partial grids throw (no silent biasing); formatSeedStability markdown section
+- CLI: npm run exp -- --id EXP-030 --stability (opt-in flag; existing reports unchanged without it)
+- Real-data verdict: EXP-030 welfare effect −0.0178 ± 0.0015, agreement 3/3 seeds — the recorded conclusion is per-seed robust, not a pooled artifact
+- Tests: robustness.test.ts ×3 (pooling/agreement, flip surfacing, partial-grid throw); 279/279 green, typecheck 0 errors

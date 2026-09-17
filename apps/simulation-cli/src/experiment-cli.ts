@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import { TICKS_PER_MONTH } from '@genesis/core'
 import * as path from 'node:path'
-import { EXPERIMENTS, FACTORIALS, reportMarkdown, runExperiment, runFactorial, sampleSummarize, toCsv } from '@genesis/experiments'
+import { EXPERIMENTS, FACTORIALS, formatSeedStability, reportMarkdown, runExperiment, runFactorial, sampleSummarize, seedStability, toCsv } from '@genesis/experiments'
 import { fullStackSystems } from './profile'
 
 /**
@@ -9,7 +9,7 @@ import { fullStackSystems } from './profile'
  * Runs every arm × seed of a preset experiment with the full society stack
  * and writes byte-reproducible CSV + a markdown report.
  */
-export function runExperimentCli(id: string, outDir: string): { csvPath: string; mdPath: string } {
+export function runExperimentCli(id: string, outDir: string, stability: boolean): { csvPath: string; mdPath: string } {
   const config = EXPERIMENTS[id]
   if (config === undefined) {
     throw new Error(`unknown experiment '${id}'. Available: ${Object.keys(EXPERIMENTS).sort().join(', ')}`)
@@ -36,6 +36,12 @@ export function runExperimentCli(id: string, outDir: string): { csvPath: string;
   fs.appendFileSync(mdPath, `\n## Early-window means (months 1-6, ${primaryMetric})\n\n${windowLines}\n`)
   console.log(`window (months 1-6):`)
   console.log(windowLines)
+  // Roadmap C2: per-seed paired effects — sign flips must surface, not average away
+  if (stability) {
+    const section = formatSeedStability(seedStability(result, primaryMetric), primaryMetric)
+    fs.appendFileSync(mdPath, section + '\n')
+    console.log(section)
+  }
   console.log(`csv     : ${csvPath}`)
   console.log(`report  : ${mdPath}`)
   return { csvPath, mdPath }
@@ -75,19 +81,30 @@ const PRIMARY_METRIC: Record<string, string> = {
   'EXP-SANITY': 'population'
 }
 
-function parseArgs(argv: string[]): { id: string; out: string; factorial: string | null } {
+function parseArgs(argv: string[]): { id: string; out: string; factorial: string | null; stability: boolean } {
   const args: Record<string, string> = {}
+  const valueless = new Set(['stability'])
   for (let i = 2; i < argv.length; i++) {
     const key = argv[i]
     if (!key.startsWith('--')) throw new Error(`unknown argument: ${key}`)
-    args[key.slice(2)] = argv[i + 1] ?? ''
-    i++
+    const name = key.slice(2)
+    if (valueless.has(name)) {
+      args[name] = '1'
+    } else {
+      args[name] = argv[i + 1] ?? ''
+      i++
+    }
   }
-  return { id: args.id ?? 'EXP-002', out: args.out ?? 'out/experiments', factorial: args.factorial ?? null }
+  return {
+    id: args.id ?? 'EXP-002',
+    out: args.out ?? 'out/experiments',
+    factorial: args.factorial ?? null,
+    stability: args.stability === '1'
+  }
 }
 
 if (require.main === module) {
-  const { id, out, factorial } = parseArgs(process.argv)
+  const { id, out, factorial, stability } = parseArgs(process.argv)
   if (factorial !== null) runFactorialCli(factorial, out)
-  else runExperimentCli(id, out)
+  else runExperimentCli(id, out, stability)
 }
