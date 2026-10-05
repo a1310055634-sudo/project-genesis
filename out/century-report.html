@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>世纪对比 — 10年 vs 100年</title>
+<style>
+body { font-family: Consolas, 'Microsoft YaHei', monospace; background: #0d1117; color: #c9d1d9; margin: 0; padding: 24px; }
+h1 { color: #58a6ff; font-size: 22px; } h2 { color: #8b949e; font-size: 14px; border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+.sub { color: #8b949e; font-size: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+.card .k { color: #8b949e; font-size: 12px; } .card .v { font-size: 26px; font-weight: bold; margin: 4px 0; } .card .note { color: #8b949e; font-size: 11px; }
+.grp { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+.lbl { color: #e6edf3; font-size: 13px; margin-bottom: 6px; }
+.row { display: flex; align-items: center; margin: 3px 0; }
+.tag { width: 130px; font-size: 11px; color: #8b949e; flex-shrink: 0; }
+.track { flex: 1; background: #21262d; border-radius: 4px; height: 14px; }
+.fill { height: 100%; border-radius: 4px; }
+.fill.a { background: #58a6ff; } .fill.b { background: #f85149; }
+.cohort { display: flex; align-items: center; margin: 2px 0; }
+.cohort .cd { width: 90px; font-size: 11px; color: #8b949e; }
+.cohort .ct { flex: 1; background: #21262d; border-radius: 3px; height: 12px; }
+.cohort .cf { height: 100%; border-radius: 3px; }
+.cohort .cv { width: 60px; font-size: 11px; text-align: right; color: #c9d1d9; }
+.foot { margin-top: 24px; color: #8b949e; font-size: 11px; }
+</style></head><body>
+<h1>世纪对比 — 一个虚拟社会的 100 年</h1>
+<div class="sub">A = 10 年后（9,077 人） · B = 100 年后（648 人） · seed 42 · digest 6477bfec → 8fa67f00</div>
+
+<h2>关键结论卡片</h2>
+<div class="grid">
+<div class="card"><div class="k">百年末存活率</div><div class="v" style="color:#f85149">5.2%</div><div class="note">4 个 seed 全部复现</div></div>
+<div class="card"><div class="k">人均财富</div><div class="v" style="color:#e3b341">$3,162,402</div><div class="note">继承集中，暴增 40 倍</div></div>
+<div class="card"><div class="k">无主遗产</div><div class="v" style="color:#f85149">$6,745,917,431</div><div class="note">死者无人继承的财富</div></div>
+<div class="card"><div class="k">养老金</div><div class="v" style="color:#f85149">100% 赤字</div><div class="note">$3,505,433,931 全凭空创造</div></div>
+<div class="card"><div class="k">学校经费</div><div class="v" style="color:#f85149">0%</div><div class="note">一个世纪从未获得资助</div></div>
+<div class="card"><div class="k">创始世代</div><div class="v" style="color:#f85149">灭绝</div><div class="note">9 个十年组全部清零</div></div>
+</div>
+
+<h2>人口结构对比</h2>
+<div class="grp"><div class="lbl">存活人口</div>
+  <div class="row"><span class="tag a">10年 9,077</span><div class="track"><div class="fill a" style="width:100%"></div></div></div>
+  <div class="row"><span class="tag b">100年 648</span><div class="track"><div class="fill b" style="width:7.138922551503802%"></div></div></div></div>
+<div class="grp"><div class="lbl">儿童</div>
+  <div class="row"><span class="tag a">10年 2,076</span><div class="track"><div class="fill a" style="width:100%"></div></div></div>
+  <div class="row"><span class="tag b">100年 49</span><div class="track"><div class="fill b" style="width:2.3603082851637764%"></div></div></div></div>
+<div class="grp"><div class="lbl">成年人</div>
+  <div class="row"><span class="tag a">10年 5,980</span><div class="track"><div class="fill a" style="width:100%"></div></div></div>
+  <div class="row"><span class="tag b">100年 415</span><div class="track"><div class="fill b" style="width:6.9397993311036785%"></div></div></div></div>
+<div class="grp"><div class="lbl">老年人</div>
+  <div class="row"><span class="tag a">10年 1,021</span><div class="track"><div class="fill a" style="width:100%"></div></div></div>
+  <div class="row"><span class="tag b">100年 184</span><div class="track"><div class="fill b" style="width:18.02154750244858%"></div></div></div></div>
+<div class="grp"><div class="lbl">家庭数</div>
+  <div class="row"><span class="tag a">10年 5,560</span><div class="track"><div class="fill a" style="width:100%"></div></div></div>
+  <div class="row"><span class="tag b">100年 502</span><div class="track"><div class="fill b" style="width:9.028776978417266%"></div></div></div></div>
+<div class="grp"><div class="lbl">社交边</div>
+  <div class="row"><span class="tag a">10年 65,533</span><div class="track"><div class="fill a" style="width:100%"></div></div></div>
+  <div class="row"><span class="tag b">100年 4,431</span><div class="track"><div class="fill b" style="width:6.761478949536874%"></div></div></div></div>
+
+<h2>世代金字塔 — 100 年末各出生十年的存活人数</h2>
+<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;">
+<div class="cohort"><div class="cd">出生 decade -9</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -8</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -7</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -6</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -5</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -4</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -3</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -2</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade -1</div><div class="ct"><div class="cf" style="width:1%;background:#f85149"></div></div><div class="cv">0</div></div><div class="cohort"><div class="cd">出生 decade 0</div><div class="ct"><div class="cf" style="width:1%;background:#3fb950"></div></div><div class="cv">4</div></div><div class="cohort"><div class="cd">出生 decade 1</div><div class="ct"><div class="cf" style="width:1.261127596439169%;background:#3fb950"></div></div><div class="cv">17</div></div><div class="cohort"><div class="cd">出生 decade 2</div><div class="ct"><div class="cf" style="width:6.379821958456973%;background:#3fb950"></div></div><div class="cv">86</div></div><div class="cohort"><div class="cd">出生 decade 3</div><div class="ct"><div class="cf" style="width:11.42433234421365%;background:#3fb950"></div></div><div class="cv">154</div></div><div class="cohort"><div class="cd">出生 decade 4</div><div class="ct"><div class="cf" style="width:7.195845697329377%;background:#3fb950"></div></div><div class="cv">97</div></div><div class="cohort"><div class="cd">出生 decade 5</div><div class="ct"><div class="cf" style="width:6.824925816023739%;background:#3fb950"></div></div><div class="cv">92</div></div><div class="cohort"><div class="cd">出生 decade 6</div><div class="ct"><div class="cf" style="width:6.973293768545995%;background:#3fb950"></div></div><div class="cv">94</div></div><div class="cohort"><div class="cd">出生 decade 7</div><div class="ct"><div class="cf" style="width:3.783382789317508%;background:#3fb950"></div></div><div class="cv">51</div></div><div class="cohort"><div class="cd">出生 decade 8</div><div class="ct"><div class="cf" style="width:2.0771513353115725%;background:#3fb950"></div></div><div class="cv">28</div></div><div class="cohort"><div class="cd">出生 decade 9</div><div class="ct"><div class="cf" style="width:1.8545994065281897%;background:#3fb950"></div></div><div class="cv">25</div></div>
+<div class="sub" style="margin-top:8px">红色 = 创始世代（模拟开始前出生，已全部死亡，故 100 年末为 0 的行未显示）· 绿色 = 模拟开始后出生的世代</div>
+</div>
+
+<h2>崩塌机制一图流</h2>
+<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;font-size:13px;line-height:1.9;">
+婚姻机器空转（12,289 场婚礼 vs 184,045 场关系终结）<br>
+→ 出生不足（person.born 仅 +1,421）<br>
+→ 死亡 7 倍于出生（person.died 11,792）<br>
+→ 世代一条比一条细 → 金字塔倒置 → 剩 648 人守着 $3,162,402 的人均财富
+</div>
+
+<div class="foot">由 npm run compare / insights 同源数据生成 · 修复方案：生育率提到 0.04 可逆转（FTX-002，详见 CENTURY_REPORT.md 附录 B）</div>
+</body></html>
