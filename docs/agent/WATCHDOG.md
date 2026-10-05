@@ -130,3 +130,23 @@ Hourly keepalive checks. `- <time> RUNNING` = healthy; takeover entries describe
 - 2026-09-18 04:00 RUNNING (B batch closed 03:27; next: C stress scenario pack when idle ≥40min)
 - 2026-09-17 05:0x TAKEOVER (idle 93min, typecheck 0 err, tests GREEN 281/281 pre-run) — task: stress scenario pack (run-menu item C, final)
 - 2026-09-17 05:1x TAKEOVER COMPLETE — 4 scenarios green (S1 unemployment/S2 aging/S3 tiny/S4 huge 50k), SCENARIOS.md written; run-menu A/B/C all delivered; 281/281 green, committed
+- 2026-09-17 06:00 STANDBY (idle 42min, typecheck 0 err, tests GREEN 281/281) — roadmap A→D→C AND run-menu A/B/C all delivered; no eligible task remains (open items are user semantic decisions: fertility coupling, school direct-budget, employer slots, B-phase domains). Standing by.
+- 2026-09-17 07:00 STANDBY (idle 1h42m, typecheck 0 err, tests GREEN 281/281) — no eligible task (all open items are user semantic decisions). Standing by.
+- 2026-09-17 08:00 STANDBY (idle 2h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 09:00 STANDBY (idle 3h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 10:00 STANDBY (idle 4h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 11:00 STANDBY (idle 5h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 12:00 STANDBY (idle 6h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 13:00 STANDBY (idle 7h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 14:00 STANDBY (idle 8h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 15:00 STANDBY (idle 9h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 16:00 STANDBY (idle 10h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 17:00 STANDBY (idle 11h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 18:00 STANDBY (idle 12h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 19:00 STANDBY (idle 13h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 20:00 STANDBY (idle 14h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 21:00 STANDBY (idle 15h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 22:00 STANDBY (idle 16h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-17 23:00 STANDBY (idle 17h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-18 00:00 STANDBY (idle 18h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
+- 2026-09-18 01:00 STANDBY (idle 19h45m, typecheck 0 err, tests GREEN 281/281) — no eligible task; awaiting user direction. Standing by.
